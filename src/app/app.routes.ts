@@ -10,5 +10,8 @@ export const routes: Routes = [
   { path: 'connexion', loadComponent: login, canActivate: [guestGuard] },
   { path: 'inscription', loadComponent: placeholder, canActivate: [guestGuard] },
   { path: 'accueil', loadComponent: placeholder, canActivate: [authGuard] },
-  { path: '**', loadComponent: placeholder },
+  {
+    path: '**',
+    loadComponent: () => import('./features/not-found/not-found').then((m) => m.NotFound),
+  },
 ];
