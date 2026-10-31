@@ -78,7 +78,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f
 .zb-button:disabled { opacity: .45; cursor: not-allowed; }
 
 /* Poster */
-.zb-poster { display: block; width: 160px; color: inherit; text-decoration: none; border-radius: var(--radius-md); }
+.zb-poster { display: block; width: var(--poster-width, 160px); color: inherit; text-decoration: none; border-radius: var(--radius-md); }
 .zb-poster-frame { position: relative; aspect-ratio: 2 / 3; border-radius: var(--radius-md); overflow: hidden; background: var(--surface-raised); transition: box-shadow .15s, transform .15s; }
 .zb-poster:hover .zb-poster-frame { box-shadow: var(--shadow-poster); transform: translateY(-2px); }
 .zb-poster-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }

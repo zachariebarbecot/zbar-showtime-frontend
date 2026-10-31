@@ -12,6 +12,7 @@ import { POSTER_WALL } from './fixtures/posters';
         <div class="pw-col">
           @for (poster of column; track poster.title) {
             <app-poster
+              class="pw-poster"
               [title]="poster.title"
               [status]="poster.status"
               [next]="poster.next"
@@ -27,7 +28,7 @@ import { POSTER_WALL } from './fixtures/posters';
       height: 620px;
       overflow: hidden;
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: var(--space-4);
       border-radius: var(--radius-md);
     }
@@ -45,14 +46,14 @@ import { POSTER_WALL } from './fixtures/posters';
     .pw-col:nth-child(4) {
       display: none;
     }
-    .pw .zb-poster {
-      width: 100%;
+    .pw-poster {
+      --poster-width: 100%;
     }
 
     @media (max-width: 1023px) {
       .pw {
         height: 360px;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(4, minmax(0, 1fr));
       }
       .pw-col:nth-child(4) {
         display: flex;
@@ -62,7 +63,7 @@ import { POSTER_WALL } from './fixtures/posters';
     @media (max-width: 599px) {
       .pw {
         height: 260px;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: var(--space-2);
       }
       .pw-col:nth-child(4) {
