@@ -525,6 +525,27 @@ describe('Signup', () => {
       });
     });
 
+    describe('email already used', () => {
+      it('should explain it on the email field only and focus it', async () => {
+        const page = await render();
+        await fillValid(page);
+        await page.submit();
+
+        page.http
+          .expectOne('/auth/register')
+          .flush({ detail: 'Email already used' }, { status: 409, statusText: 'Conflict' });
+        await page.harness.fixture.whenStable();
+
+        const messages = Array.from(page.root.querySelectorAll('.zb-field-error')).map((m) =>
+          m.textContent?.trim(),
+        );
+        expect(messages).toEqual(['Un compte existe déjà avec cet email.']);
+        expect(page.root.querySelector('[role="alert"]')).toBeNull();
+        expect(document.activeElement).toBe(page.input('email'));
+        page.http.expectNone('/auth/login');
+      });
+    });
+
     describe('login failure after registration', () => {
       it('should still welcome the user and lead to the login page', async () => {
         const page = await render();
