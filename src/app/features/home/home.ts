@@ -14,7 +14,9 @@ const isUnauthorized = (error: unknown): boolean =>
   selector: 'app-home',
   imports: [AppHeader, FormAlert],
   template: `
-    <app-header [user]="user()" (logout)="logout()" />
+    @if (user() || failed()) {
+      <app-header [user]="user()" (logout)="logout()" />
+    }
     <main class="hm-wrap">
       @if (user(); as me) {
         <!-- prettier-ignore -->
