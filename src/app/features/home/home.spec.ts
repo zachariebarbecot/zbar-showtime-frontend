@@ -118,4 +118,16 @@ describe('Home', () => {
       expect(router.url).toBe('/connexion?returnUrl=%2Faccueil');
     });
   });
+
+  describe('expired session', () => {
+    it('should drop the token and go to /connexion when GET /users/me answers 401', async () => {
+      const { harness, http, router } = await render();
+
+      http.expectOne('/users/me').flush(null, { status: 401, statusText: 'Unauthorized' });
+      await harness.fixture.whenStable();
+
+      expect(store.has('token')).toBe(false);
+      expect(router.url).toBe('/connexion');
+    });
+  });
 });
