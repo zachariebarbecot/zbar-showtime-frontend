@@ -151,4 +151,55 @@ describe('Signup', () => {
       expect(root.textContent).toContain('ce que tu as vu.');
     });
   });
+
+  describe('first name, last name and email validation', () => {
+    it.each([
+      ['firstName', '', 'Indique ton prénom.'],
+      ['firstName', '   ', 'Indique ton prénom.'],
+      ['lastName', '', 'Indique ton nom.'],
+      ['lastName', '   ', 'Indique ton nom.'],
+      ['email', '', 'Indique ton email.'],
+      ['email', 'zoe@', "Cet email n'a pas l'air valide."],
+      ['email', 'zoe@example', "Cet email n'a pas l'air valide."],
+    ])('should show the %s error for "%s" on blur', async (name, value, message) => {
+      const { root, type, blur } = await render();
+
+      await type(name, value);
+      await blur(name);
+
+      expect(root.textContent).toContain(message);
+    });
+
+    it('should show nothing while the first typing is in progress', async () => {
+      const { root, type } = await render();
+
+      await type('firstName', 'Z');
+      await type('firstName', '');
+      await type('email', 'zoe@');
+
+      expect(root.querySelector('.zb-field-error')).toBeNull();
+    });
+
+    it('should accept valid values on blur', async () => {
+      const { root, type, blur } = await render();
+
+      await type('firstName', 'Zoé');
+      await blur('firstName');
+      await type('lastName', 'Martin');
+      await blur('lastName');
+      await type('email', 'zoe@example.org');
+      await blur('email');
+
+      expect(root.querySelector('.zb-field-error')).toBeNull();
+    });
+
+    it('should clear the error once the value becomes valid', async () => {
+      const { root, type, blur } = await render();
+      await blur('firstName');
+
+      await type('firstName', 'Zoé');
+
+      expect(root.querySelector('.zb-field-error')).toBeNull();
+    });
+  });
 });
