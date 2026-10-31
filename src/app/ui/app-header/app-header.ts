@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { User } from '../../core/auth/auth.service';
 import { Icon } from '../icon/icon';
@@ -30,4 +30,5 @@ import { UserMenu } from '../user-menu/user-menu';
 })
 export class AppHeader {
   readonly user = input.required<User>();
+  readonly logout = output<void>();
 }

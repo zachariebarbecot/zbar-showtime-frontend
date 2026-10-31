@@ -2,8 +2,9 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component, provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { authGuard } from '../../core/auth/auth.guard';
 import { authInterceptor } from '../../core/auth/auth.interceptor';
 import { TOKEN_STORAGE } from '../../core/auth/auth.service';
 import { Home } from './home';
@@ -12,6 +13,8 @@ import { Home } from './home';
 class Page {}
 
 const USER = { firstName: 'Camille', lastName: 'Durand', email: 'camille.durand@exemple.fr' };
+
+const validToken = `h.${btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 }))}.s`;
 
 describe('Home', () => {
   const store = new Map<string, string>();
@@ -23,7 +26,7 @@ describe('Home', () => {
 
   beforeEach(() => {
     store.clear();
-    store.set('token', 'token');
+    store.set('token', validToken);
   });
 
   async function render() {
@@ -33,7 +36,7 @@ describe('Home', () => {
         provideHttpClient(withInterceptors([authInterceptor])),
         provideHttpClientTesting(),
         provideRouter([
-          { path: 'accueil', component: Home },
+          { path: 'accueil', component: Home, canActivate: [authGuard] },
           { path: 'connexion', component: Page },
           { path: '', component: Page },
         ]),
@@ -44,7 +47,7 @@ describe('Home', () => {
     await harness.navigateByUrl('/accueil', Home);
     const http = TestBed.inject(HttpTestingController);
     const root = harness.routeNativeElement as HTMLElement;
-    return { harness, root, http };
+    return { harness, root, http, router: TestBed.inject(Router) };
   }
 
   describe('greeting and header', () => {
@@ -83,6 +86,36 @@ describe('Home', () => {
       expect(text).not.toContain('Watchlist');
       expect(text).not.toContain('Recherche');
       expect(text).not.toContain('Profil');
+    });
+  });
+
+  describe('logout', () => {
+    it('should drop the token and go to / when Se déconnecter is activated', async () => {
+      const { harness, root, http, router } = await render();
+      http.expectOne('/users/me').flush(USER);
+      await harness.fixture.whenStable();
+
+      root.querySelector<HTMLButtonElement>('header button[aria-haspopup]')?.click();
+      await harness.fixture.whenStable();
+      root.querySelector<HTMLButtonElement>('[role="menuitem"]')?.click();
+      await harness.fixture.whenStable();
+
+      expect(store.has('token')).toBe(false);
+      expect(router.url).toBe('/');
+    });
+
+    it('should redirect a later visit of /accueil to /connexion with the returnUrl', async () => {
+      const { harness, root, http, router } = await render();
+      http.expectOne('/users/me').flush(USER);
+      await harness.fixture.whenStable();
+      root.querySelector<HTMLButtonElement>('header button[aria-haspopup]')?.click();
+      await harness.fixture.whenStable();
+      root.querySelector<HTMLButtonElement>('[role="menuitem"]')?.click();
+      await harness.fixture.whenStable();
+
+      await router.navigateByUrl('/accueil');
+
+      expect(router.url).toBe('/connexion?returnUrl=%2Faccueil');
     });
   });
 });
