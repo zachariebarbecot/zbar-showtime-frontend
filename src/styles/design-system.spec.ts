@@ -101,3 +101,14 @@ describe('global styles and index.html', () => {
     expect(html).toContain('href="favicon.svg"');
   });
 });
+
+describe('zoneless setup', () => {
+  it('provides zoneless change detection in appConfig', () => {
+    expect(read('src/app/app.config.ts')).toContain('provideZonelessChangeDetection()');
+  });
+
+  it('does not depend on zone.js', () => {
+    const { dependencies, devDependencies } = JSON.parse(read('package.json'));
+    expect({ ...dependencies, ...devDependencies }).not.toHaveProperty('zone.js');
+  });
+});
