@@ -209,4 +209,65 @@ describe('Login', () => {
       http.expectOne('/auth/login');
     });
   });
+
+  describe('failed login', () => {
+    it('should show one incorrect credentials alert on 401 and empty the password', async () => {
+      const { harness, root, field, submit, http, fillValid } = await render();
+      await fillValid();
+
+      await submit();
+      http.expectOne('/auth/login').flush(null, { status: 401, statusText: 'Unauthorized' });
+      await harness.fixture.whenStable();
+
+      const alerts = root.querySelectorAll('[role="alert"]');
+      expect(alerts).toHaveLength(1);
+      expect(alerts[0].textContent).toContain('Email ou mot de passe incorrect.');
+      expect(field('password').value).toBe('');
+      expect(field('email').value).toBe('zoe@example.org');
+      expect(storage.setItem).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['a server error', { status: 500, statusText: 'Server Error' }],
+      ['a network error', { status: 0, statusText: 'Unknown Error' }],
+    ])('should show the generic alert on %s', async (_, status) => {
+      const { harness, root, submit, http, fillValid } = await render();
+      await fillValid();
+
+      await submit();
+      http.expectOne('/auth/login').flush(null, status);
+      await harness.fixture.whenStable();
+
+      const alerts = root.querySelectorAll('[role="alert"]');
+      expect(alerts).toHaveLength(1);
+      expect(alerts[0].textContent).toContain('Une erreur est survenue. Réessaie dans un instant.');
+    });
+
+    it('should keep the button enabled and allow a new attempt', async () => {
+      const { harness, root, submit, http, fillValid } = await render();
+      await fillValid();
+      await submit();
+      http.expectOne('/auth/login').flush(null, { status: 401, statusText: 'Unauthorized' });
+      await harness.fixture.whenStable();
+
+      expect(root.querySelector<HTMLButtonElement>('button[type="submit"]')?.disabled).toBe(false);
+
+      await submit();
+      expect(root.textContent).toContain('Indique ton mot de passe.');
+      http.expectNone('/auth/login');
+    });
+
+    it('should replace a previous alert when the next attempt succeeds', async () => {
+      const { harness, root, type, submit, http, fillValid } = await render();
+      await fillValid();
+      await submit();
+      http.expectOne('/auth/login').flush(null, { status: 401, statusText: 'Unauthorized' });
+      await harness.fixture.whenStable();
+      await type('password', 'secret');
+
+      await submit();
+      expect(root.querySelector('[role="alert"]')).toBeNull();
+      http.expectOne('/auth/login').flush({ token: 'jwt-token' });
+    });
+  });
 });
