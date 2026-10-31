@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import { AuthService, User } from '../../core/auth/auth.service';
 import { AppHeader } from '../../ui/app-header/app-header';
 
@@ -9,7 +10,7 @@ import { AppHeader } from '../../ui/app-header/app-header';
   imports: [AppHeader],
   template: `
     @if (user(); as user) {
-      <app-header [user]="user" />
+      <app-header [user]="user" (logout)="logout()" />
       <main class="hm-wrap">
         <h1 class="hm-hello">Salut, <span>{{ user.firstName }}.</span></h1>
       </main>
@@ -47,12 +48,20 @@ import { AppHeader } from '../../ui/app-header/app-header';
   `,
 })
 export class Home {
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+
   protected readonly user = signal<User | null>(null);
 
   constructor() {
-    inject(AuthService)
+    this.auth
       .me()
       .pipe(takeUntilDestroyed())
       .subscribe((user) => this.user.set(user));
+  }
+
+  protected logout(): void {
+    this.auth.logout();
+    void this.router.navigateByUrl('/');
   }
 }

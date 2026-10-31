@@ -23,6 +23,7 @@ import { UserMenu } from '../user-menu/user-menu';
           [firstName]="user().firstName"
           [lastName]="user().lastName"
           [email]="user().email"
+          (logout)="logout.emit()"
         />
       </div>
     </header>
