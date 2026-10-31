@@ -311,6 +311,16 @@ describe('Signup', () => {
       expect(root.textContent).toContain(withEmail);
     });
 
+    it('should not compare the password with an invalid email', async () => {
+      const { root, type, blur } = await render();
+      await type('email', 'zoe');
+
+      await type('password', 'My-zoe-Abcdef1!');
+      await blur('password');
+
+      expect(root.textContent).not.toContain(withEmail);
+    });
+
     it('should check the password again when the email changes', async () => {
       const { root, type, blur } = await render();
       await type('email', 'other@example.org');
