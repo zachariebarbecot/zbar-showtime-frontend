@@ -1,8 +1,16 @@
-import { Component, computed, forwardRef, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  forwardRef,
+  input,
+  signal,
+} from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Icon } from '../icon/icon';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-text-field',
   imports: [Icon],
   template: `
@@ -13,10 +21,11 @@ import { Icon } from '../icon/icon';
           [id]="id()"
           [name]="name()"
           [type]="inputType()"
+          #field
           [value]="value()"
           [attr.aria-invalid]="!!error()"
           [attr.aria-describedby]="error() ? messageId() : null"
-          (input)="onInput($event)"
+          (input)="onInput(field.value)"
           (blur)="onTouched()"
         />
         @if (type() === 'password') {
@@ -60,14 +69,13 @@ export class TextField implements ControlValueAccessor {
   private propagateChange: (value: string) => void = () => {};
   protected onTouched: () => void = () => {};
 
-  protected onInput(event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
+  protected onInput(value: string): void {
     this.value.set(value);
     this.propagateChange(value);
   }
 
-  writeValue(value: string): void {
-    this.value.set(value);
+  writeValue(value: string | null): void {
+    this.value.set(value ?? '');
   }
 
   registerOnChange(fn: (value: string) => void): void {
