@@ -1,12 +1,11 @@
 import { HttpClient } from '@angular/common/http';
-import { HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { TOKEN_STORAGE } from './core/auth/auth.service';
 import { App } from './app';
 import { appConfig } from './app.config';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('App', () => {
   const setup = async (storedToken: string | null): Promise<RouterTestingHarness> => {
