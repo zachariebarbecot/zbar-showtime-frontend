@@ -546,6 +546,68 @@ describe('Signup', () => {
       });
     });
 
+    describe('rejected fields', () => {
+      const reject = async (
+        page: Awaited<ReturnType<typeof render>>,
+        errors: { field: string; message: string }[],
+      ) => {
+        await fillValid(page);
+        await page.submit();
+        page.http
+          .expectOne('/auth/register')
+          .flush({ errors }, { status: 400, statusText: 'Bad Request' });
+        await page.harness.fixture.whenStable();
+      };
+      const messages = (root: HTMLElement) =>
+        Array.from(root.querySelectorAll('.zb-field-error')).map((m) => m.textContent?.trim());
+
+      it('should show a French message on each rejected field and the summary', async () => {
+        const page = await render();
+
+        await reject(page, [
+          { field: 'password', message: 'Password must contain a digit' },
+          { field: 'lastName', message: 'Last name cannot be blank' },
+          { field: 'birthDate', message: 'Birth date must be in the past' },
+        ]);
+
+        expect(messages(page.root)).toEqual([
+          'Indique ton nom.',
+          'Indique une date de naissance valide.',
+          'Ton mot de passe ne respecte pas encore toutes les règles.',
+        ]);
+        expect(page.root.querySelector('[role="alert"]')?.textContent).toContain(
+          '3 champs sont à corriger.',
+        );
+        expect(document.activeElement).toBe(page.input('lastName'));
+      });
+
+      it('should cover first name, gender and email', async () => {
+        const page = await render();
+
+        await reject(page, [
+          { field: 'gender', message: 'Gender must be MALE or FEMALE' },
+          { field: 'email', message: 'Email must be valid' },
+          { field: 'firstName', message: 'First name cannot be blank' },
+        ]);
+
+        expect(messages(page.root)).toEqual([
+          'Indique ton prénom.',
+          "Cet email n'a pas l'air valide.",
+          'Choisis une option.',
+        ]);
+        expect(document.activeElement).toBe(page.input('firstName'));
+      });
+
+      it('should show the generic message in an alert for an unknown field', async () => {
+        const page = await render();
+
+        await reject(page, [{ field: 'nickname', message: 'Nickname is taken' }]);
+
+        expect(page.root.querySelector('[role="alert"]')?.textContent).toContain(generic);
+        expect(messages(page.root)).toEqual([]);
+      });
+    });
+
     describe('login failure after registration', () => {
       it('should still welcome the user and lead to the login page', async () => {
         const page = await render();
