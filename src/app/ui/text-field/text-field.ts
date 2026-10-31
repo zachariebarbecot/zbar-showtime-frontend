@@ -1,4 +1,4 @@
-import { Component, forwardRef, input, signal } from '@angular/core';
+import { Component, computed, forwardRef, input, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Icon } from '../icon/icon';
 
@@ -12,13 +12,24 @@ import { Icon } from '../icon/icon';
         <input
           [id]="id()"
           [name]="name()"
-          [type]="type()"
+          [type]="inputType()"
           [value]="value()"
           [attr.aria-invalid]="!!error()"
           [attr.aria-describedby]="error() ? messageId() : null"
           (input)="onInput($event)"
           (blur)="onTouched()"
         />
+        @if (type() === 'password') {
+          <button
+            type="button"
+            class="zb-icon-btn zb-icon-btn-sm"
+            [attr.aria-pressed]="revealed()"
+            [attr.aria-label]="revealed() ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+            (click)="revealed.set(!revealed())"
+          >
+            <svg appIcon [name]="revealed() ? 'eyeOff' : 'eye'"></svg>
+          </button>
+        }
       </div>
       @if (error()) {
         <div class="zb-field-msg zb-field-error" [id]="messageId()" aria-live="polite">
@@ -40,6 +51,10 @@ export class TextField implements ControlValueAccessor {
   readonly error = input<string>();
 
   protected readonly value = signal('');
+  protected readonly revealed = signal(false);
+  protected readonly inputType = computed(() =>
+    this.type() === 'password' && this.revealed() ? 'text' : this.type(),
+  );
   private propagateChange: (value: string) => void = () => {};
   protected onTouched: () => void = () => {};
 
