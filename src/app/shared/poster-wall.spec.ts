@@ -33,6 +33,15 @@ describe('PosterWall', () => {
     );
   });
 
+  it('should let every poster fill the width of its column', async () => {
+    const wall = await render();
+
+    const hosts = Array.from(wall.querySelectorAll('app-poster'));
+
+    expect(hosts).toHaveLength(titles.length);
+    hosts.forEach((host) => expect(host.classList).toContain('pw-poster'));
+  });
+
   it('should contain no image and send no request', async () => {
     const wall = await render();
 
