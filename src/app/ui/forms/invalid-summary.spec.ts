@@ -40,6 +40,14 @@ describe('focusFirstInvalid', () => {
     expect(document.activeElement).toBe(root.querySelector('[name="third"]'));
   });
 
+  it('should ignore wrapper elements carrying the field name', () => {
+    const root = document.createElement('form');
+    root.innerHTML = '<app-text-field name="first"><input name="first"></app-text-field>';
+    document.body.append(root);
+    focusFirstInvalid(formWith(['first']), root);
+    expect(document.activeElement).toBe(root.querySelector('input'));
+  });
+
   it('should skip valid fields', () => {
     const root = domWith('first', 'second');
 
