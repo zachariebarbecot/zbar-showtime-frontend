@@ -1,7 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { FormAlert } from '../../ui/form-alert/form-alert';
+import { focusFirstInvalid, invalidSummary } from '../../ui/forms/invalid-summary';
 import { Button } from '../../ui/button/button';
 import { Logo } from '../../ui/logo/logo';
 import { TextField } from '../../ui/text-field/text-field';
@@ -11,15 +13,18 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-login',
-  imports: [ReactiveFormsModule, RouterLink, Button, Logo, TextField],
+  imports: [ReactiveFormsModule, RouterLink, Button, FormAlert, Logo, TextField],
   template: `
     <main class="li">
       <app-logo size="lg" />
-      <form class="li-card" novalidate [formGroup]="form">
+      <form class="li-card" novalidate [formGroup]="form" (ngSubmit)="submit()">
         <div>
           <h1 class="li-h1">Se connecter</h1>
           <p class="li-lead">Content de te revoir.</p>
         </div>
+        @if (summary(); as message) {
+          <app-form-alert [message]="message" />
+        }
         <app-text-field
           name="email"
           label="Email"
@@ -109,6 +114,9 @@ export class Login {
     password: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
   });
 
+  protected readonly summary = signal<string | undefined>(undefined);
+
+  private readonly root = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
   private readonly formEvents = toSignal(this.form.events);
 
   protected readonly emailError = computed(() =>
@@ -125,5 +133,13 @@ export class Login {
     this.formEvents();
     const failed = Object.keys(control.errors ?? {})[0];
     return control.touched && failed ? messages[failed] : undefined;
+  }
+
+  protected submit(): void {
+    this.form.markAllAsTouched();
+    if (this.form.invalid) {
+      this.summary.set(invalidSummary(this.form));
+      focusFirstInvalid(this.form, this.root);
+    }
   }
 }
