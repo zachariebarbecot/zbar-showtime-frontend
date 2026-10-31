@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -25,7 +26,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
           <h1 class="li-h1">Se connecter</h1>
           <p class="li-lead">Content de te revoir.</p>
         </div>
-        @if (summary(); as message) {
+        @if (alert(); as message) {
           <app-form-alert [message]="message" />
         }
         <app-text-field
@@ -117,7 +118,7 @@ export class Login {
     password: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
   });
 
-  protected readonly summary = signal<string | undefined>(undefined);
+  protected readonly alert = signal<string | undefined>(undefined);
 
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
@@ -147,18 +148,31 @@ export class Login {
   protected submit(): void {
     this.form.markAllAsTouched();
     if (this.form.invalid) {
-      this.summary.set(invalidSummary(this.form));
+      this.alert.set(invalidSummary(this.form));
       focusFirstInvalid(this.form, this.root);
       return;
     }
     if (this.pending) {
       return;
     }
+    this.alert.set(undefined);
     this.pending = true;
     const { email, password } = this.form.getRawValue();
     this.auth
       .login(email, password)
       .pipe(finalize(() => (this.pending = false)))
-      .subscribe(() => this.router.navigateByUrl(this.returnUrl));
+      .subscribe({
+        next: () => this.router.navigateByUrl(this.returnUrl),
+        error: (error: HttpErrorResponse) => this.fail(error),
+      });
+  }
+
+  private fail(error: HttpErrorResponse): void {
+    if (error.status === 401) {
+      this.alert.set('Email ou mot de passe incorrect.');
+      this.form.controls.password.reset();
+    } else {
+      this.alert.set('Une erreur est survenue. Réessaie dans un instant.');
+    }
   }
 }
