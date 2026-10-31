@@ -33,7 +33,8 @@ describe('Login', () => {
     const harness = await RouterTestingHarness.create();
     await harness.navigateByUrl(url, Login);
     const root = harness.routeNativeElement as HTMLElement;
-    const field = (name: string) => root.querySelector<HTMLInputElement>(`input[name="${name}"]`) as HTMLInputElement;
+    const field = (name: string) =>
+      root.querySelector<HTMLInputElement>(`input[name="${name}"]`) as HTMLInputElement;
     const type = async (name: string, value: string) => {
       field(name).value = value;
       field(name).dispatchEvent(new Event('input'));
@@ -63,7 +64,9 @@ describe('Login', () => {
       expect(root.querySelector('h1')?.textContent).toContain('Se connecter');
       expect(root.textContent).toContain('Content de te revoir.');
       expect(root.querySelector<HTMLInputElement>('input[name="email"]')?.type).toBe('email');
-      expect(root.querySelector<HTMLInputElement>('input[name="email"]')?.autocomplete).toBe('email');
+      expect(root.querySelector<HTMLInputElement>('input[name="email"]')?.autocomplete).toBe(
+        'email',
+      );
       const password = root.querySelector<HTMLInputElement>('input[name="password"]');
       expect(password?.type).toBe('password');
       expect(password?.autocomplete).toBe('current-password');
@@ -76,7 +79,9 @@ describe('Login', () => {
       expect(submit?.classList).toContain('zb-button-block');
 
       expect(root.textContent).toContain('Pas encore de compte ?');
-      expect(root.querySelector('a[href="/inscription"]')?.textContent).toContain('Créer un compte');
+      expect(root.querySelector('a[href="/inscription"]')?.textContent).toContain(
+        'Créer un compte',
+      );
     });
 
     it('should not offer a forgotten password link', async () => {
