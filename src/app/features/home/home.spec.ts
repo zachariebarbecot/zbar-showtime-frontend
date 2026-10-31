@@ -148,6 +148,22 @@ describe('Home', () => {
       expect(root.querySelector('[role="alert"]')?.textContent?.trim()).toBe(MESSAGE);
     });
 
+    it('should still offer Se déconnecter in the header, which drops the token and goes to /', async () => {
+      const { harness, root, http, router } = await render();
+      http.expectOne('/users/me').flush(null, { status: 500, statusText: 'Server Error' });
+      await harness.fixture.whenStable();
+
+      const logout = Array.from(root.querySelectorAll<HTMLButtonElement>('header button')).find(
+        (button) => button.textContent?.trim() === 'Se déconnecter',
+      );
+      logout?.click();
+      await harness.fixture.whenStable();
+
+      expect(logout).toBeDefined();
+      expect(store.has('token')).toBe(false);
+      expect(router.url).toBe('/');
+    });
+
     it('should not show the error alert while the session is rejected', async () => {
       const { harness, root, http } = await render();
 
