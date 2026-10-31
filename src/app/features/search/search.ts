@@ -26,7 +26,7 @@ const DEBOUNCE_MS = 300;
 type SearchState =
   | { readonly kind: 'idle' }
   | { readonly kind: 'loading' }
-  | ({ readonly kind: 'done' } & SearchResults);
+  | ({ readonly kind: 'done'; readonly query: string } & SearchResults);
 
 const IDLE: SearchState = { kind: 'idle' };
 const LOADING: SearchState = { kind: 'loading' };
@@ -47,6 +47,8 @@ const LOADING: SearchState = { kind: 'loading' };
         />
       } @else if (current.kind === 'loading') {
         <p role="status">Recherche en cours…</p>
+      } @else if (current.items.length === 0) {
+        <app-empty-state title="Aucun résultat pour &quot;{{ current.query }}&quot;" />
       } @else {
         <p class="sr-count">
           {{ current.total }} {{ current.total === 1 ? 'résultat' : 'résultats' }}
@@ -104,7 +106,11 @@ export class Search {
         query.length < MIN_LENGTH
           ? of(IDLE)
           : this.searchApi.search({ query, page: 1 }).pipe(
-              map((response): SearchState => ({ kind: 'done', ...toSearchResults(response) })),
+              map((response): SearchState => ({
+                kind: 'done',
+                query,
+                ...toSearchResults(response),
+              })),
               startWith(LOADING),
             ),
       ),
