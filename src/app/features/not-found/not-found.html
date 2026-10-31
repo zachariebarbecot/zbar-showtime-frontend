@@ -1,5 +1,5 @@
 <div class="nf">
-  <header class="nf-top"><app-logo [href]="home()" /></header>
+  <header class="nf-top"><app-logo [href]="home" /></header>
   <main class="nf-main">
     <div class="nf-bulbs" aria-hidden="true">
       @for (bulb of bulbs; track bulb) {
@@ -13,7 +13,7 @@
       t’attend.
     </p>
     <div class="nf-ctas">
-      <app-button size="lg" [routerLink]="home()">Retour à l’accueil</app-button>
+      <app-button size="lg" [routerLink]="home">Retour à l’accueil</app-button>
     </div>
   </main>
 </div>
