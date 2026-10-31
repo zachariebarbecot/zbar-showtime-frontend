@@ -2,10 +2,10 @@ import { ChangeDetectionStrategy, Component, ElementRef, inject, signal } from '
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { EMAIL_PATTERN, fieldError } from '../../ui/forms/field-error';
-import { focusFirstInvalid, invalidSummary } from '../../ui/forms/invalid-summary';
 import { Button } from '../../ui/button/button';
 import { FormAlert } from '../../ui/form-alert/form-alert';
+import { EMAIL_PATTERN, fieldError } from '../../ui/forms/field-error';
+import { focusFirstInvalid, invalidSummary } from '../../ui/forms/invalid-summary';
 import { Logo } from '../../ui/logo/logo';
 import { PasswordRules } from '../../ui/password-rules/password-rules';
 import { RadioChips, RadioOption } from '../../ui/radio-chips/radio-chips';
@@ -266,7 +266,7 @@ export class Signup {
     required: 'Retape ton mot de passe.',
     mismatch: 'Les deux mots de passe ne correspondent pas.',
   });
-  protected readonly emailError = fieldError(this.form.controls.email, {
+  protected readonly emailError = fieldError(this.email, {
     required: 'Indique ton email.',
     pattern: "Cet email n'a pas l'air valide.",
   });
