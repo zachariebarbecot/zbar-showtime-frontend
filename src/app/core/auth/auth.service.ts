@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, InjectionToken, inject, signal } from '@angular/core';
-import { Observable, map, tap } from 'rxjs';
+import { EMPTY, Observable, map, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export type TokenStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
@@ -28,6 +28,12 @@ export interface RegisterRequest {
   readonly gender: Gender;
   readonly email: string;
   readonly password: string;
+}
+
+export interface User {
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly email: string;
 }
 
 interface LoginResponse {
@@ -79,6 +85,10 @@ export class AuthService {
 
   register(request: RegisterRequest): Observable<void> {
     return this.http.post<void>(`${authUrl()}register`, request);
+  }
+
+  me(): Observable<User> {
+    return EMPTY;
   }
 
   logout(): void {

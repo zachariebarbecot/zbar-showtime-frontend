@@ -107,4 +107,18 @@ describe('AuthService', () => {
     expect(service.token()).toBeNull();
     expect(service.isAuthenticated()).toBe(false);
   });
+
+  it('me reads the current user', () => {
+    const user = { firstName: 'Zoé', lastName: 'Martin', email: 'zoe@example.org' };
+    let received: unknown;
+
+    create()
+      .me()
+      .subscribe((value) => (received = value));
+    const request = TestBed.inject(HttpTestingController).expectOne('/users/me');
+    expect(request.request.method).toBe('GET');
+    request.flush(user);
+
+    expect(received).toEqual(user);
+  });
 });
