@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "zbar-showtime-backend",
-    "version": "v0"
+    "version": "e3683f1"
   },
   "servers": [
     {
@@ -23,7 +23,7 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UserResponse"
                 }
@@ -82,7 +82,7 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UserResponse"
                 }
@@ -197,7 +197,7 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UserResponse"
                 }
@@ -310,7 +310,7 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/LoginResponse"
                 }
@@ -389,59 +389,9 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SearchResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/hello": {
-      "get": {
-        "tags": [
-          "hello-controller"
-        ],
-        "operationId": "hello",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/HelloResponse"
                 }
               }
             }
@@ -637,14 +587,6 @@
             "items": {
               "$ref": "#/components/schemas/Result"
             }
-          }
-        }
-      },
-      "HelloResponse": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string"
           }
         }
       },

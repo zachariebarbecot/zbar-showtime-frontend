@@ -6,22 +6,5 @@
   "services": true,
   "promises": false,
   "apiService": false,
-  "removeStaleFiles": true,
-  "customizedResponseType": {
-    "/users/me": {
-      "toUse": "json"
-    },
-    "/users/me/email": {
-      "toUse": "json"
-    },
-    "/auth/login": {
-      "toUse": "json"
-    },
-    "/search": {
-      "toUse": "json"
-    },
-    "/hello": {
-      "toUse": "json"
-    }
-  }
+  "removeStaleFiles": true
 }
