@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { Icon } from '../icon/icon';
 
 @Component({
@@ -19,6 +19,8 @@ export class UserMenu {
   readonly firstName = input.required<string>();
   readonly lastName = input.required<string>();
   readonly email = input.required<string>();
+
+  readonly logout = output<void>();
 
   protected readonly initials = computed(() =>
     `${this.firstName().charAt(0)}${this.lastName().charAt(0)}`.toUpperCase(),
