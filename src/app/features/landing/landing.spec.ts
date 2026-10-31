@@ -37,10 +37,16 @@ describe('Landing', () => {
 
       const buttons = Array.from(page.querySelectorAll<HTMLAnchorElement>('a.zb-button'));
 
-      expect(buttons.map((b) => b.textContent?.trim())).toEqual(['Créer un compte', 'Se connecter']);
+      expect(buttons.map((b) => b.textContent?.trim())).toEqual([
+        'Créer un compte',
+        'Se connecter',
+      ]);
       expect(buttons.map((b) => b.getAttribute('href'))).toEqual(['/inscription', '/connexion']);
       expect(buttons.map((b) => b.classList.contains('zb-button-primary'))).toEqual([true, false]);
-      expect(buttons.map((b) => b.classList.contains('zb-button-secondary'))).toEqual([false, true]);
+      expect(buttons.map((b) => b.classList.contains('zb-button-secondary'))).toEqual([
+        false,
+        true,
+      ]);
       expect(buttons.every((b) => b.classList.contains('zb-button-lg'))).toBe(true);
     });
 
