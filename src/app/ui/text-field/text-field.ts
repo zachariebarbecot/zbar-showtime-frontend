@@ -20,6 +20,7 @@ import { Icon } from '../icon/icon';
         <input
           [id]="id()"
           [name]="name()"
+          [attr.autocomplete]="autocomplete()"
           [type]="inputType()"
           #field
           [value]="value()"
