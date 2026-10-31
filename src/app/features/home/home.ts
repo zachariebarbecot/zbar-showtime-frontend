@@ -57,7 +57,7 @@ export class Home {
     this.auth
       .me()
       .pipe(takeUntilDestroyed())
-      .subscribe((user) => this.user.set(user));
+      .subscribe({ next: (user) => this.user.set(user), error: () => undefined });
   }
 
   protected logout(): void {
