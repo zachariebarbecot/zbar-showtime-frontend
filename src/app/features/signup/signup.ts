@@ -1,9 +1,11 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { EMAIL_PATTERN, fieldError } from '../../ui/forms/field-error';
+import { focusFirstInvalid, invalidSummary } from '../../ui/forms/invalid-summary';
 import { Button } from '../../ui/button/button';
+import { FormAlert } from '../../ui/form-alert/form-alert';
 import { Logo } from '../../ui/logo/logo';
 import { PasswordRules } from '../../ui/password-rules/password-rules';
 import { RadioChips, RadioOption } from '../../ui/radio-chips/radio-chips';
@@ -14,7 +16,16 @@ import { notBlank, passwordRules, sameAs, withoutEmail } from './signup-validato
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-signup',
-  imports: [ReactiveFormsModule, RouterLink, Button, Logo, PasswordRules, RadioChips, TextField],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    Button,
+    FormAlert,
+    Logo,
+    PasswordRules,
+    RadioChips,
+    TextField,
+  ],
   template: `
     <div class="su">
       <aside class="su-side" aria-hidden="true">
@@ -28,6 +39,9 @@ import { notBlank, passwordRules, sameAs, withoutEmail } from './signup-validato
             <h1 class="su-h1">Créer un compte</h1>
             <p class="su-lead">Tous les champs sont obligatoires.</p>
           </div>
+          @if (alert(); as message) {
+            <app-form-alert [message]="message" />
+          }
           <div class="su-row">
             <app-text-field
               name="firstName"
@@ -78,7 +92,7 @@ import { notBlank, passwordRules, sameAs, withoutEmail } from './signup-validato
             [describedBy]="rulesId"
             formControlName="password"
           />
-          <app-password-rules [id]="rulesId" [value]="password()" />
+          <app-password-rules [id]="rulesId" [value]="password()" [showErrors]="submitted()" />
           <app-text-field
             name="confirmation"
             label="Confirme le mot de passe"
@@ -224,6 +238,10 @@ export class Signup {
     confirmation: this.confirmation,
   });
 
+  protected readonly alert = signal<string | undefined>(undefined);
+  protected readonly submitted = signal(false);
+  private readonly root = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+
   protected readonly password = toSignal(this.passwordControl.valueChanges, { initialValue: '' });
 
   protected readonly firstNameError = fieldError(this.form.controls.firstName, {
@@ -260,5 +278,12 @@ export class Signup {
 
   protected submit(): void {
     this.form.markAllAsTouched();
+    this.submitted.set(true);
+    if (this.form.invalid) {
+      this.alert.set(invalidSummary(this.form));
+      focusFirstInvalid(this.form, this.root);
+      return;
+    }
+    this.alert.set(undefined);
   }
 }
