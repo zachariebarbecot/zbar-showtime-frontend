@@ -25,7 +25,9 @@ import { Icon } from '../icon/icon';
           #field
           [value]="value()"
           [attr.aria-invalid]="!!error()"
-          [attr.aria-describedby]="error() ? messageId() : null"
+          [attr.aria-describedby]="describedByIds()"
+          [attr.min]="min()"
+          [attr.max]="max()"
           (input)="onInput(field.value)"
           (blur)="onTouched()"
         />
@@ -80,6 +82,11 @@ export class TextField implements ControlValueAccessor {
   protected readonly revealed = signal(false);
   protected readonly inputType = computed(() =>
     this.type() === 'password' && this.revealed() ? 'text' : this.type(),
+  );
+  protected readonly describedByIds = computed(
+    () =>
+      [this.error() ? this.messageId() : undefined, this.describedBy()].filter(Boolean).join(' ') ||
+      null,
   );
   private propagateChange: (value: string) => void = () => {};
   protected onTouched: () => void = () => {};
