@@ -31,7 +31,7 @@ import { Icon } from '../icon/icon';
         @if (type() === 'password') {
           <button
             type="button"
-            class="zb-icon-btn zb-icon-btn-sm"
+            class="zb-icon-btn zb-icon-btn-sm field-eye"
             [attr.aria-pressed]="revealed()"
             [attr.aria-label]="revealed() ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
             (click)="revealed.set(!revealed())"
@@ -47,6 +47,16 @@ import { Icon } from '../icon/icon';
         </div>
       }
     </div>
+  `,
+  styles: `
+    .field-eye {
+      position: relative;
+    }
+    .field-eye::after {
+      content: '';
+      position: absolute;
+      inset: -8px;
+    }
   `,
   host: { style: 'display: contents' },
   providers: [
