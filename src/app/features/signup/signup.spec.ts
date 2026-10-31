@@ -258,4 +258,117 @@ describe('Signup', () => {
       expect(root.textContent).not.toContain('Choisis une option.');
     });
   });
+
+  describe('password validation', () => {
+    const rules = 'Ton mot de passe ne respecte pas encore toutes les règles.';
+    const tooLong = 'Ton mot de passe ne doit pas dépasser 64 caractères.';
+    const withEmail = 'Ton mot de passe ne doit pas contenir ton email.';
+    const mismatch = 'Les deux mots de passe ne correspondent pas.';
+    const strong = 'Abcdefghij1!';
+
+    it('should ask for a password when left empty', async () => {
+      const { root, blur } = await render();
+
+      await blur('password');
+
+      expect(root.textContent).toContain('Choisis un mot de passe.');
+    });
+
+    it.each([
+      ['shorter than 12 characters', 'Abcdefghij1'],
+      ['without an uppercase letter', 'abcdefghij1!'],
+      ['without a lowercase letter', 'ABCDEFGHIJ1!'],
+      ['without a digit', 'Abcdefghijk!'],
+      ['without a special character', 'Abcdefghijk1'],
+    ])('should refuse a password %s', async (_, value) => {
+      const { root, type, blur } = await render();
+
+      await type('password', value);
+      await blur('password');
+
+      expect(root.textContent).toContain(rules);
+    });
+
+    it('should refuse a password longer than 64 characters and accept 64', async () => {
+      const { root, type, blur } = await render();
+
+      await type('password', `Aa1!${'x'.repeat(61)}`);
+      await blur('password');
+      expect(root.textContent).toContain(tooLong);
+
+      await type('password', `Aa1!${'x'.repeat(60)}`);
+      expect(root.textContent).not.toContain(tooLong);
+    });
+
+    it('should refuse a password containing the email whatever the case', async () => {
+      const { root, type, blur } = await render();
+      await type('email', 'zoe@example.org');
+
+      await type('password', 'My-ZOE@Example.ORG-1');
+      await blur('password');
+
+      expect(root.textContent).toContain(withEmail);
+    });
+
+    it('should check the password again when the email changes', async () => {
+      const { root, type, blur } = await render();
+      await type('email', 'other@example.org');
+      await type('password', 'My-zoe@example.org-1');
+      await blur('password');
+      expect(root.textContent).not.toContain(withEmail);
+
+      await type('email', 'zoe@example.org');
+
+      expect(root.textContent).toContain(withEmail);
+    });
+
+    it('should accept a strong password', async () => {
+      const { root, type, blur } = await render();
+      await type('email', 'zoe@example.org');
+
+      await type('password', strong);
+      await blur('password');
+
+      expect(root.querySelector('.zb-field-error')).toBeNull();
+    });
+
+    it('should refuse a different confirmation on blur', async () => {
+      const { root, type, blur } = await render();
+      await type('password', strong);
+
+      await type('confirmation', 'Abcdefghij1?');
+      await blur('confirmation');
+
+      expect(root.textContent).toContain(mismatch);
+    });
+
+    it('should ask to retype the password when the confirmation is empty', async () => {
+      const { root, blur } = await render();
+
+      await blur('confirmation');
+
+      expect(root.textContent).toContain('Retape ton mot de passe.');
+    });
+
+    it('should accept a matching confirmation', async () => {
+      const { root, type, blur } = await render();
+      await type('password', strong);
+
+      await type('confirmation', strong);
+      await blur('confirmation');
+
+      expect(root.textContent).not.toContain(mismatch);
+    });
+
+    it('should check the confirmation again when the password changes', async () => {
+      const { root, type, blur } = await render();
+      await type('password', strong);
+      await type('confirmation', strong);
+      await blur('confirmation');
+
+      await type('password', 'Abcdefghij2!');
+
+      expect(root.textContent).toContain(mismatch);
+    });
+  });
 });
