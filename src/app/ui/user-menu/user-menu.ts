@@ -29,10 +29,10 @@ import { Icon } from '../icon/icon';
       >
         <span class="zb-avatar" aria-hidden="true">{{ initials() }}</span>
         <span class="zb-um-name">{{ firstName() }} {{ lastName() }}</span>
-        <svg appIcon name="chevron"></svg>
+        <svg appIcon name="down"></svg>
       </button>
       @if (open()) {
-        <div class="zb-um-menu" role="menu">
+        <div class="zb-um-menu" role="menu" aria-label="Compte">
           <div class="zb-um-who">
             <div class="zb-um-who-name">{{ firstName() }} {{ lastName() }}</div>
             <div class="zb-meta">{{ email() }}</div>
