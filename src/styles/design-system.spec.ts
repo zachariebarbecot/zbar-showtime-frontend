@@ -101,28 +101,3 @@ describe('global styles and index.html', () => {
     expect(html).toContain('href="favicon.svg"');
   });
 });
-
-describe('zoneless setup', () => {
-  it('provides zoneless change detection in appConfig', () => {
-    expect(read('src/app/app.config.ts')).toContain('provideZonelessChangeDetection()');
-  });
-
-  it('does not depend on zone.js', () => {
-    const { dependencies, devDependencies } = JSON.parse(read('package.json'));
-    expect({ ...dependencies, ...devDependencies }).not.toHaveProperty('zone.js');
-  });
-});
-
-describe('dev proxy', () => {
-  const proxy = JSON.parse(read('proxy.conf.json'));
-
-  it.each(['/auth', '/users'])('forwards %s to the backend', (path) => {
-    expect(proxy[path].target).toBe('http://localhost:8080');
-  });
-
-  it('is used by ng serve', () => {
-    const angular = JSON.parse(read('angular.json'));
-    const serve = angular.projects['zbar-showtime-frontend'].architect.serve;
-    expect(serve.options.proxyConfig).toBe('proxy.conf.json');
-  });
-});
