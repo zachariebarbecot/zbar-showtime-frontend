@@ -2,12 +2,12 @@ import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
-import { AuthService, authUrl } from './auth.service';
+import { AuthService, authUrl, isApiRequest } from './auth.service';
 
 const isAuthRequest = (url: string): boolean => url.startsWith(authUrl());
 
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
-  if (isAuthRequest(request.url)) {
+  if (!isApiRequest(request.url) || isAuthRequest(request.url)) {
     return next(request);
   }
   const auth = inject(AuthService);

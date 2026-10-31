@@ -14,6 +14,11 @@ const STORAGE_KEY = 'token';
 
 export const authUrl = (): string => `${environment.apiUrl}/auth/`;
 
+export const isApiRequest = (url: string): boolean =>
+  environment.apiUrl === ''
+    ? url.startsWith('/') && !url.startsWith('//')
+    : url.startsWith(`${environment.apiUrl}/`);
+
 interface LoginResponse {
   readonly token: string;
 }
