@@ -130,4 +130,41 @@ describe('Home', () => {
       expect(router.url).toBe('/connexion');
     });
   });
+
+  describe('failures other than a rejected session', () => {
+    const MESSAGE = 'Une erreur est survenue. Réessaie dans un instant.';
+
+    it.each([
+      ['a server error', { status: 500, statusText: 'Server Error' }],
+      ['a network error', { status: 0, statusText: 'Unknown Error' }],
+    ])('should keep the header and replace the title on %s', async (_label, init) => {
+      const { harness, root, http } = await render();
+
+      http.expectOne('/users/me').flush(null, init);
+      await harness.fixture.whenStable();
+
+      expect(root.querySelector('header nav a')?.textContent).toContain('Accueil');
+      expect(root.querySelector('h1')).toBeNull();
+      expect(root.querySelector('[role="alert"]')?.textContent?.trim()).toBe(MESSAGE);
+    });
+
+    it('should not show the error alert while the session is rejected', async () => {
+      const { harness, root, http } = await render();
+
+      http.expectOne('/users/me').flush(null, { status: 401, statusText: 'Unauthorized' });
+      await harness.fixture.whenStable();
+
+      expect(root.querySelector('[role="alert"]')).toBeNull();
+    });
+  });
+
+  it('should display a first name containing HTML as text', async () => {
+    const { harness, root, http } = await render();
+
+    http.expectOne('/users/me').flush({ ...USER, firstName: '<b>Cam</b>' });
+    await harness.fixture.whenStable();
+
+    expect(root.querySelector('h1')?.textContent).toBe('Salut, <b>Cam</b>.');
+    expect(root.querySelector('h1 b')).toBeNull();
+  });
 });
