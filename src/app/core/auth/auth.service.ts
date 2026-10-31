@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, InjectionToken, inject, signal } from '@angular/core';
-import { Observable, map, tap } from 'rxjs';
+import { EMPTY, Observable, map, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export type TokenStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
@@ -18,6 +18,15 @@ export const isApiRequest = (url: string): boolean =>
   environment.apiUrl === ''
     ? url.startsWith('/') && !url.startsWith('//')
     : url.startsWith(`${environment.apiUrl}/`);
+
+export interface RegisterRequest {
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly birthDate: string;
+  readonly gender: string;
+  readonly email: string;
+  readonly password: string;
+}
 
 interface LoginResponse {
   readonly token: string;
@@ -64,6 +73,10 @@ export class AuthService {
       }),
       map(() => undefined),
     );
+  }
+
+  register(request: RegisterRequest): Observable<void> {
+    return EMPTY;
   }
 
   logout(): void {

@@ -31,6 +31,7 @@ describe('Signup', () => {
         provideRouter([
           { path: 'inscription', component: Signup },
           { path: 'connexion', component: Page },
+          { path: 'accueil', component: Page },
         ]),
         { provide: TOKEN_STORAGE, useValue: storage },
       ],
@@ -448,6 +449,92 @@ describe('Signup', () => {
       await page.submit();
 
       expect(summary(page.root)).toBeUndefined();
+    });
+  });
+  describe('submission', () => {
+    const generic = 'Une erreur est survenue. Réessaie dans un instant.';
+
+    async function fillValid(page: Awaited<ReturnType<typeof render>>, firstName = ' Zoé ') {
+      await page.type('firstName', firstName);
+      await page.type('lastName', 'Martin');
+      await page.type('birthDate', '2000-02-29');
+      await page.chooseGender(1);
+      await page.type('email', 'zoe@example.org');
+      await page.type('password', 'Abcdefghij1!');
+      await page.type('confirmation', 'Abcdefghij1!');
+    }
+
+    const registered = {
+      firstName: ' Zoé ',
+      lastName: 'Martin',
+      birthDate: '2000-02-29',
+      gender: 'FEMALE',
+      email: 'zoe@example.org',
+      password: 'Abcdefghij1!',
+    };
+
+    async function register(page: Awaited<ReturnType<typeof render>>, loginOk = true) {
+      await fillValid(page);
+      await page.submit();
+      page.http.expectOne('/auth/register').flush(null, { status: 201, statusText: 'Created' });
+      const login = page.http.expectOne('/auth/login');
+      if (loginOk) {
+        login.flush({ token: 'jwt' });
+      } else {
+        login.flush(null, { status: 500, statusText: 'Server Error' });
+      }
+      await page.harness.fixture.whenStable();
+    }
+
+    const start = (root: HTMLElement) =>
+      Array.from(root.querySelectorAll('a')).find((a) => a.textContent?.includes('Commencer'));
+
+    describe('success', () => {
+      it('should send the account once, without confirmation, then log in', async () => {
+        const page = await render();
+        await fillValid(page);
+
+        await page.submit();
+        await page.submit();
+
+        const request = page.http.expectOne('/auth/register');
+        expect(request.request.method).toBe('POST');
+        expect(request.request.body).toEqual(registered);
+        request.flush(null, { status: 201, statusText: 'Created' });
+        const login = page.http.expectOne('/auth/login');
+        expect(login.request.body).toEqual({
+          email: 'zoe@example.org',
+          password: 'Abcdefghij1!',
+        });
+        login.flush({ token: 'jwt' });
+        expect(storage.setItem).toHaveBeenCalledWith('token', 'jwt');
+      });
+
+      it('should welcome the user by trimmed first name, as text, with a link to the home', async () => {
+        const page = await render();
+        await fillValid(page, ' <b>Zoé</b> ');
+        await page.submit();
+        page.http.expectOne('/auth/register').flush(null, { status: 201, statusText: 'Created' });
+        page.http.expectOne('/auth/login').flush({ token: 'jwt' });
+        await page.harness.fixture.whenStable();
+
+        const title = page.root.querySelector('h1');
+        expect(title?.textContent).toBe('Bienvenue, <b>Zoé</b>.');
+        expect(title?.querySelector('b')).toBeNull();
+        expect(start(page.root)?.getAttribute('href')).toBe('/accueil');
+        expect(page.root.querySelector('form')).toBeNull();
+      });
+    });
+
+    describe('login failure after registration', () => {
+      it('should still welcome the user and lead to the login page', async () => {
+        const page = await render();
+
+        await register(page, false);
+
+        expect(page.root.querySelector('h1')?.textContent).toBe('Bienvenue, Zoé.');
+        expect(start(page.root)?.getAttribute('href')).toBe('/connexion');
+      });
     });
   });
 });

@@ -75,6 +75,28 @@ describe('AuthService', () => {
     expect(service.isAuthenticated()).toBe(true);
   });
 
+  it('register posts the account fields', () => {
+    const body = {
+      firstName: 'Zoé',
+      lastName: 'Martin',
+      birthDate: '2000-02-29',
+      gender: 'FEMALE',
+      email: 'zoe@example.org',
+      password: 'Abcdefghij1!',
+    };
+    let done = false;
+
+    create()
+      .register(body)
+      .subscribe(() => (done = true));
+    const request = TestBed.inject(HttpTestingController).expectOne('/auth/register');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual(body);
+    request.flush(null, { status: 201, statusText: 'Created' });
+
+    expect(done).toBe(true);
+  });
+
   it('logout removes the token', () => {
     storage.setItem(STORAGE_KEY, jwt({ exp: inSeconds(3600) }));
     const service = create();
