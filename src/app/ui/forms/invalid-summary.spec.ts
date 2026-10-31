@@ -55,4 +55,20 @@ describe('focusFirstInvalid', () => {
 
     expect(document.activeElement).toBe(root.querySelector('[name="second"]'));
   });
+
+  it('should focus the tabbable chip of an invalid radiogroup in DOM order', () => {
+    const root = document.createElement('form');
+    root.innerHTML = `
+      <input name="first">
+      <div role="radiogroup" data-name="second">
+        <button type="button" role="radio" tabindex="-1" id="no"></button>
+        <button type="button" role="radio" tabindex="0" id="yes"></button>
+      </div>
+      <input name="third">`;
+    document.body.append(root);
+
+    focusFirstInvalid(formWith(['second', 'third']), root);
+
+    expect(document.activeElement).toBe(root.querySelector('#yes'));
+  });
 });
