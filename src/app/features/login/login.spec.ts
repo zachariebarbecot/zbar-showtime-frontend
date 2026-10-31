@@ -13,6 +13,8 @@ class Page {}
 describe('Login', () => {
   const storage = { getItem: vi.fn(() => null), setItem: vi.fn(), removeItem: vi.fn() };
 
+  beforeEach(() => storage.setItem.mockClear());
+
   async function render(url = '/connexion') {
     TestBed.configureTestingModule({
       providers: [
