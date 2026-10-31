@@ -166,4 +166,94 @@ describe('Search', () => {
       expect(rendered.root.querySelector('.zb-empty')?.textContent).toContain('2 caractères');
     });
   });
+
+  describe('results', () => {
+    const RESULTS = {
+      page: 1,
+      totalPages: 3,
+      totalResults: 42,
+      results: [
+        {
+          id: 1,
+          title: 'Dune',
+          type: 'MOVIE',
+          releaseDate: '2021-09-15',
+          posterUrl: 'https://img.exemple.fr/dune.jpg',
+        },
+        { id: 2, title: 'Dune: Prophecy', type: 'TV', releaseDate: '2024-11-17' },
+        { id: 3, title: 'Dune, le film', type: 'MOVIE' },
+        { title: 'Sans identifiant', type: 'MOVIE', releaseDate: '2000-01-01' },
+        { id: 5, type: 'TV', releaseDate: '2000-01-01' },
+      ],
+    };
+
+    async function searchFor(
+      rendered: Awaited<ReturnType<typeof open>>,
+      value: string,
+      response: object,
+    ) {
+      vi.useFakeTimers();
+      await type(rendered, value);
+      await settle(rendered);
+      rendered.http.expectOne((req) => req.url === '/search').flush(response);
+      rendered.harness.detectChanges();
+    }
+
+    it('should show one poster per usable result with image, title and kind with year', async () => {
+      const rendered = await open();
+
+      await searchFor(rendered, 'dune', RESULTS);
+
+      const posters = Array.from(rendered.root.querySelectorAll('.zb-poster'));
+      expect(
+        posters.map((poster) => poster.querySelector('.zb-poster-title')?.textContent),
+      ).toEqual(['Dune', 'Dune: Prophecy', 'Dune, le film']);
+      expect(posters.map((poster) => poster.querySelector('.zb-poster-meta')?.textContent)).toEqual(
+        ['Film · 2021', 'Série · 2024', 'Film'],
+      );
+      expect(posters[0].querySelector('img')?.getAttribute('src')).toBe(
+        'https://img.exemple.fr/dune.jpg',
+      );
+    });
+
+    it('should fall back to the poster without image when a result has none', async () => {
+      const rendered = await open();
+
+      await searchFor(rendered, 'dune', RESULTS);
+
+      const poster = rendered.root.querySelectorAll('.zb-poster')[1];
+      expect(poster.querySelector('img')).toBeNull();
+      expect(poster.querySelector('.zb-poster-title')?.textContent).toBe('Dune: Prophecy');
+    });
+
+    it('should show the total number of results', async () => {
+      const rendered = await open();
+
+      await searchFor(rendered, 'dune', RESULTS);
+
+      expect(rendered.root.querySelector('main')?.textContent).toContain('42 résultats');
+    });
+
+    it('should use the singular for a single result', async () => {
+      const rendered = await open();
+
+      await searchFor(rendered, 'dune', {
+        ...RESULTS,
+        totalResults: 1,
+        results: [RESULTS.results[0]],
+      });
+
+      expect(rendered.root.querySelector('main')?.textContent).toContain('1 résultat');
+      expect(rendered.root.querySelector('main')?.textContent).not.toContain('1 résultats');
+    });
+
+    it('should not make the results clickable and hide the prompt', async () => {
+      const rendered = await open();
+
+      await searchFor(rendered, 'dune', RESULTS);
+
+      expect(rendered.root.querySelectorAll('main a, main button')).toHaveLength(0);
+      expect(rendered.root.querySelector('.zb-empty')).toBeNull();
+    });
+  });
 });
