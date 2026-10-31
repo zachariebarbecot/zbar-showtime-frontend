@@ -73,3 +73,31 @@ describe('ui.css', () => {
     }
   });
 });
+
+describe('global styles and index.html', () => {
+  const html = read('src/index.html');
+  const global = read('src/styles/global.css');
+
+  it('declares the French language', () => {
+    expect(html).toContain('<html lang="fr">');
+  });
+
+  it.each([
+    '@fontsource/big-shoulders-display/700.css',
+    '@fontsource/big-shoulders-display/800.css',
+    '@fontsource/instrument-sans/400.css',
+    '@fontsource/instrument-sans/600.css',
+    '@fontsource/ibm-plex-mono/500.css',
+  ])('imports %s', (font) => {
+    expect(global).toContain(`@import '${font}'`);
+  });
+
+  it('imports the design tokens and component styles', () => {
+    expect(global).toContain("@import './tokens.css'");
+    expect(global).toContain("@import './ui.css'");
+  });
+
+  it('uses the Logo mark as favicon', () => {
+    expect(html).toContain('href="favicon.svg"');
+  });
+});
