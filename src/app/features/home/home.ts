@@ -15,7 +15,7 @@ const isUnauthorized = (error: unknown): boolean =>
   imports: [AppHeader, FormAlert],
   template: `
     @if (answered()) {
-      <app-header [user]="user()" (logout)="logout()" />
+      <app-header active="home" [user]="user()" (logout)="logout()" />
     }
     <main class="hm-wrap">
       @if (user(); as me) {
