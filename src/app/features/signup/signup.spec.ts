@@ -3,8 +3,9 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { Component, provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { throwError } from 'rxjs';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { TOKEN_STORAGE } from '../../core/auth/auth.service';
+import { AuthService, TOKEN_STORAGE } from '../../core/auth/auth.service';
 import { Signup } from './signup';
 
 @Component({ template: '' })
@@ -37,7 +38,7 @@ describe('Signup', () => {
       ],
     });
     const harness = await RouterTestingHarness.create();
-    await harness.navigateByUrl('/inscription', Signup);
+    const page = await harness.navigateByUrl('/inscription', Signup);
     const root = harness.routeNativeElement as HTMLElement;
     document.body.append(root);
     const input = (name: string) =>
@@ -65,7 +66,19 @@ describe('Signup', () => {
       await harness.fixture.whenStable();
     };
     const http = TestBed.inject(HttpTestingController);
-    return { harness, root, input, chips, type, blur, chooseGender, leaveGender, submit, http };
+    return {
+      harness,
+      page,
+      root,
+      input,
+      chips,
+      type,
+      blur,
+      chooseGender,
+      leaveGender,
+      submit,
+      http,
+    };
   }
 
   describe('page content', () => {
@@ -615,6 +628,32 @@ describe('Signup', () => {
 
         expect(page.root.querySelector('[role="alert"]')?.textContent).toContain(generic);
         expect(messages(page.root)).toEqual([]);
+      });
+    });
+
+    describe('after success', () => {
+      it('should not keep the passwords in memory', async () => {
+        const page = await render();
+
+        await register(page);
+
+        const { password, confirmation } = page.page['form'].getRawValue();
+        expect(password).toBe('');
+        expect(confirmation).toBe('');
+      });
+    });
+
+    describe('unexpected error', () => {
+      it('should show the generic message for an error that is not an HTTP one', async () => {
+        const page = await render();
+        vi.spyOn(TestBed.inject(AuthService), 'register').mockReturnValue(
+          throwError(() => new Error('boom')),
+        );
+        await fillValid(page);
+
+        await page.submit();
+
+        expect(page.root.querySelector('[role="alert"]')?.textContent).toContain(generic);
       });
     });
 
