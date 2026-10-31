@@ -4,7 +4,7 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { catchError, finalize, map, of, switchMap } from 'rxjs';
-import { AuthService } from '../../core/auth/auth.service';
+import { AuthService, Gender } from '../../core/auth/auth.service';
 import { Button } from '../../ui/button/button';
 import { FormAlert } from '../../ui/form-alert/form-alert';
 import { EMAIL_PATTERN, fieldError } from '../../ui/forms/field-error';
@@ -267,7 +267,10 @@ export class Signup {
     firstName: new FormControl('', { nonNullable: true, validators: [notBlank] }),
     lastName: new FormControl('', { nonNullable: true, validators: [notBlank] }),
     birthDate: new FormControl('', { nonNullable: true, validators: [validBirthDate] }),
-    gender: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    gender: new FormControl<Gender | ''>('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
     email: this.email,
     password: this.passwordControl,
     confirmation: this.confirmation,
@@ -331,14 +334,15 @@ export class Signup {
     }
     this.form.markAllAsTouched();
     this.submitted.set(true);
-    if (this.form.invalid) {
+    const { confirmation: _, gender, ...fields } = this.form.getRawValue();
+    if (this.form.invalid || gender === '') {
       this.alert.set(invalidSummary(this.form));
       focusFirstInvalid(this.form, this.root);
       return;
     }
     this.alert.set(undefined);
     this.pending = true;
-    const { confirmation: _, ...account } = this.form.getRawValue();
+    const account = { ...fields, gender };
     this.auth
       .register(account)
       .pipe(
@@ -351,12 +355,19 @@ export class Signup {
         finalize(() => (this.pending = false)),
       )
       .subscribe({
-        next: (next) => this.welcome.set({ firstName: account.firstName.trim(), next }),
-        error: (error: HttpErrorResponse) => this.fail(error),
+        next: (next) => {
+          this.form.reset();
+          this.welcome.set({ firstName: account.firstName.trim(), next });
+        },
+        error: (error: unknown) => this.fail(error),
       });
   }
 
-  private fail(error: HttpErrorResponse): void {
+  private fail(error: unknown): void {
+    if (!(error instanceof HttpErrorResponse)) {
+      this.alert.set(GENERIC_ERROR);
+      return;
+    }
     if (error.status === 409) {
       this.email.setErrors({ conflict: true });
       focusFirstInvalid(this.form, this.root);

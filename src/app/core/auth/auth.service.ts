@@ -19,11 +19,13 @@ export const isApiRequest = (url: string): boolean =>
     ? url.startsWith('/') && !url.startsWith('//')
     : url.startsWith(`${environment.apiUrl}/`);
 
+export type Gender = 'MALE' | 'FEMALE';
+
 export interface RegisterRequest {
   readonly firstName: string;
   readonly lastName: string;
   readonly birthDate: string;
-  readonly gender: string;
+  readonly gender: Gender;
   readonly email: string;
   readonly password: string;
 }

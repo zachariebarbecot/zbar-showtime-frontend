@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { AuthService, TOKEN_STORAGE } from './auth.service';
+import { AuthService, RegisterRequest, TOKEN_STORAGE } from './auth.service';
 
 const STORAGE_KEY = 'token';
 
@@ -76,7 +76,7 @@ describe('AuthService', () => {
   });
 
   it('register posts the account fields', () => {
-    const body = {
+    const body: RegisterRequest = {
       firstName: 'Zoé',
       lastName: 'Martin',
       birthDate: '2000-02-29',
