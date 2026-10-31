@@ -64,6 +64,17 @@ describe('TextField', () => {
     expect(input().value).toBe('lea@example.org');
   });
 
+  it('should empty the input when the control is reset', async () => {
+    const { host, input, fixture } = await render();
+    host.control.setValue('lea@example.org');
+    await fixture.whenStable();
+
+    host.control.reset();
+    await fixture.whenStable();
+
+    expect(input().value).toBe('');
+  });
+
   it('should mark the control touched on blur', async () => {
     const { host, input } = await render();
 
