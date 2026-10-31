@@ -8,7 +8,7 @@ import { Logo } from '../../ui/logo/logo';
 import { PasswordRules } from '../../ui/password-rules/password-rules';
 import { RadioChips, RadioOption } from '../../ui/radio-chips/radio-chips';
 import { TextField } from '../../ui/text-field/text-field';
-import { EARLIEST_BIRTH_DATE, latestBirthDate } from './birth-date';
+import { EARLIEST_BIRTH_DATE, latestBirthDate, validBirthDate } from './birth-date';
 import { notBlank } from './signup-validators';
 
 @Component({
@@ -22,7 +22,7 @@ import { notBlank } from './signup-validators';
         <p class="su-slogan">Ce que tu veux voir,<span>ce que tu as vu.</span></p>
       </aside>
       <main class="su-main">
-        <form class="su-form" novalidate [formGroup]="form">
+        <form class="su-form" novalidate [formGroup]="form" (ngSubmit)="submit()">
           <div class="su-mobile-logo"><app-logo /></div>
           <div>
             <h1 class="su-h1">Créer un compte</h1>
@@ -49,6 +49,7 @@ import { notBlank } from './signup-validators';
             label="Date de naissance"
             type="date"
             autocomplete="bday"
+            [error]="birthDateError()"
             [min]="earliestBirthDate"
             [max]="latestBirthDate"
             formControlName="birthDate"
@@ -57,6 +58,7 @@ import { notBlank } from './signup-validators';
             name="gender"
             label="Genre"
             [options]="genders"
+            [error]="genderError()"
             formControlName="gender"
           />
           <app-text-field
@@ -195,8 +197,8 @@ export class Signup {
   protected readonly form = new FormGroup({
     firstName: new FormControl('', { nonNullable: true, validators: [notBlank] }),
     lastName: new FormControl('', { nonNullable: true, validators: [notBlank] }),
-    birthDate: new FormControl('', { nonNullable: true }),
-    gender: new FormControl('', { nonNullable: true }),
+    birthDate: new FormControl('', { nonNullable: true, validators: [validBirthDate] }),
+    gender: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     email: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.pattern(EMAIL_PATTERN)],
@@ -215,8 +217,18 @@ export class Signup {
   protected readonly lastNameError = fieldError(this.form.controls.lastName, {
     required: 'Indique ton nom.',
   });
+  protected readonly birthDateError = fieldError(this.form.controls.birthDate, {
+    birthDate: 'Indique une date de naissance valide.',
+  });
+  protected readonly genderError = fieldError(this.form.controls.gender, {
+    required: 'Choisis une option.',
+  });
   protected readonly emailError = fieldError(this.form.controls.email, {
     required: 'Indique ton email.',
     pattern: "Cet email n'a pas l'air valide.",
   });
+
+  protected submit(): void {
+    this.form.markAllAsTouched();
+  }
 }

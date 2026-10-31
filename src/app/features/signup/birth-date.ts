@@ -10,4 +10,10 @@ export function latestBirthDate(now = new Date()): string {
   return `${yesterday.getFullYear()}-${month}-${day}`;
 }
 
-export const validBirthDate: ValidatorFn = (): ValidationErrors | null => null;
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+export const validBirthDate: ValidatorFn = (control): ValidationErrors | null => {
+  const value = String(control.value);
+  const valid = ISO_DATE.test(value) && value >= EARLIEST_BIRTH_DATE && value <= latestBirthDate();
+  return valid ? null : { birthDate: true };
+};
