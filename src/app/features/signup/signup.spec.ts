@@ -164,6 +164,30 @@ describe('Signup', () => {
       expect(root.textContent).toContain('Ce que tu veux voir,');
       expect(root.textContent).toContain('ce que tu as vu.');
     });
+
+    describe('side column', () => {
+      it('should stack the logo, the poster wall and the slogan in that order', async () => {
+        const { root } = await render();
+
+        const side = root.querySelector('.su-side') as HTMLElement;
+
+        expect(Array.from(side.children, (child) => child.tagName.toLowerCase())).toEqual([
+          'app-logo',
+          'app-poster-wall',
+          'p',
+        ]);
+      });
+
+      it('should be hidden from assistive technologies with nothing focusable and no request', async () => {
+        const { root, http } = await render();
+
+        const side = root.querySelector('.su-side') as HTMLElement;
+
+        expect(side.getAttribute('aria-hidden')).toBe('true');
+        expect(side.querySelector('a, button, input, select, textarea, [tabindex]')).toBeNull();
+        http.expectNone(() => true);
+      });
+    });
   });
 
   describe('first name, last name and email validation', () => {
