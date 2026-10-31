@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { AuthService, User } from '../../core/auth/auth.service';
@@ -14,7 +14,7 @@ const isUnauthorized = (error: unknown): boolean =>
   selector: 'app-home',
   imports: [AppHeader, FormAlert],
   template: `
-    @if (user() || failed()) {
+    @if (answered()) {
       <app-header [user]="user()" (logout)="logout()" />
     }
     <main class="hm-wrap">
@@ -63,6 +63,7 @@ export class Home {
 
   protected readonly user = signal<User | undefined>(undefined);
   protected readonly failed = signal(false);
+  protected readonly answered = computed(() => this.user() !== undefined || this.failed());
 
   constructor() {
     this.auth
