@@ -1,6 +1,7 @@
-import { Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-form-alert',
   template: `<div class="form-alert" role="alert">{{ message() }}</div>`,
   styles: `

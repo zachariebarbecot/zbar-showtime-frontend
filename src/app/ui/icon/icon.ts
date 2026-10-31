@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
 const PATHS = {
   seen: 'M5 12.5l4.5 4.5L19 7.5',
@@ -13,6 +13,7 @@ const PATHS = {
 export type IconName = keyof typeof PATHS;
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'svg[appIcon]',
   template: '<svg:path [attr.d]="path()" />',
   host: {

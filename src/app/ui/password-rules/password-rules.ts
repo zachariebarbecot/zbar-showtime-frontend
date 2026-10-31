@@ -1,8 +1,9 @@
-import { Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { passwordChecks } from '../forms/password-checks';
 import { Icon } from '../icon/icon';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-password-rules',
   imports: [Icon],
   template: `
