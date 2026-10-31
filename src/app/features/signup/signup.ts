@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, ElementRef, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { catchError, finalize, map, of, switchMap } from 'rxjs';
@@ -317,8 +317,12 @@ export class Signup {
   });
 
   constructor() {
-    this.email.valueChanges.subscribe(() => this.passwordControl.updateValueAndValidity());
-    this.passwordControl.valueChanges.subscribe(() => this.confirmation.updateValueAndValidity());
+    this.email.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.passwordControl.updateValueAndValidity());
+    this.passwordControl.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.confirmation.updateValueAndValidity());
   }
 
   protected submit(): void {
