@@ -371,4 +371,83 @@ describe('Signup', () => {
       expect(root.textContent).toContain(mismatch);
     });
   });
+
+  describe('invalid submission', () => {
+    const summary = (root: HTMLElement) => root.querySelector('[role="alert"]')?.textContent;
+
+    async function fillAllButGender({ type }: Awaited<ReturnType<typeof render>>) {
+      await type('firstName', 'Zoé');
+      await type('lastName', 'Martin');
+      await type('birthDate', '2000-02-29');
+      await type('email', 'zoe@example.org');
+      await type('password', 'Abcdefghij1!');
+      await type('confirmation', 'Abcdefghij1!');
+    }
+
+    it('should count every invalid field, focus the first one and send nothing', async () => {
+      const { root, input, submit, http } = await render();
+
+      await submit();
+
+      expect(summary(root)).toContain('7 champs sont à corriger.');
+      expect(document.activeElement).toBe(input('firstName'));
+      http.expectNone(() => true);
+    });
+
+    it('should use the singular and focus the gender chip, in visual order', async () => {
+      const page = await render();
+      await fillAllButGender(page);
+
+      await page.submit();
+
+      expect(summary(page.root)).toContain('1 champ est à corriger.');
+      expect(document.activeElement).toBe(page.chips()[0]);
+      page.http.expectNone(() => true);
+    });
+
+    it('should count a mismatching confirmation and a weak password', async () => {
+      const page = await render();
+      await fillAllButGender(page);
+      await page.chooseGender(0);
+      await page.type('password', 'weak');
+      await page.type('confirmation', 'other');
+
+      await page.submit();
+
+      expect(summary(page.root)).toContain('2 champs sont à corriger.');
+      expect(document.activeElement).toBe(page.input('password'));
+    });
+
+    it('should mark the missing password rules as errors', async () => {
+      const { root, submit } = await render();
+      expect(root.querySelector('.zb-rule-error')).toBeNull();
+
+      await submit();
+
+      expect(root.querySelector('.zb-rule-error')).not.toBeNull();
+    });
+
+    it('should show no summary and send nothing when the form is valid', async () => {
+      const page = await render();
+      await fillAllButGender(page);
+      await page.chooseGender(1);
+
+      await page.submit();
+
+      expect(summary(page.root)).toBeUndefined();
+      page.http.expectNone(() => true);
+    });
+
+    it('should remove the summary once the form becomes valid and is submitted', async () => {
+      const page = await render();
+      await fillAllButGender(page);
+      await page.submit();
+      expect(summary(page.root)).toContain('1 champ est à corriger.');
+      await page.chooseGender(1);
+
+      await page.submit();
+
+      expect(summary(page.root)).toBeUndefined();
+    });
+  });
 });
