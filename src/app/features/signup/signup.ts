@@ -14,7 +14,10 @@ import { PasswordRules } from '../../ui/password-rules/password-rules';
 import { RadioChips, RadioOption } from '../../ui/radio-chips/radio-chips';
 import { TextField } from '../../ui/text-field/text-field';
 import { EARLIEST_BIRTH_DATE, latestBirthDate, validBirthDate } from './birth-date';
+import { rejectedFields } from './server-errors';
 import { notBlank, passwordRules, sameAs, withoutEmail } from './signup-validators';
+
+const GENERIC_ERROR = 'Une erreur est survenue. Réessaie dans un instant.';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -281,21 +284,26 @@ export class Signup {
 
   protected readonly firstNameError = fieldError(this.form.controls.firstName, {
     required: 'Indique ton prénom.',
+    server: 'Indique ton prénom.',
   });
   protected readonly lastNameError = fieldError(this.form.controls.lastName, {
     required: 'Indique ton nom.',
+    server: 'Indique ton nom.',
   });
   protected readonly birthDateError = fieldError(this.form.controls.birthDate, {
     birthDate: 'Indique une date de naissance valide.',
+    server: 'Indique une date de naissance valide.',
   });
   protected readonly genderError = fieldError(this.form.controls.gender, {
     required: 'Choisis une option.',
+    server: 'Choisis une option.',
   });
   protected readonly passwordError = fieldError(this.passwordControl, {
     required: 'Choisis un mot de passe.',
     rules: 'Ton mot de passe ne respecte pas encore toutes les règles.',
     maxlength: 'Ton mot de passe ne doit pas dépasser 64 caractères.',
     containsEmail: 'Ton mot de passe ne doit pas contenir ton email.',
+    server: 'Ton mot de passe ne respecte pas encore toutes les règles.',
   });
   protected readonly confirmationError = fieldError(this.confirmation, {
     required: 'Retape ton mot de passe.',
@@ -305,6 +313,7 @@ export class Signup {
     required: 'Indique ton email.',
     pattern: "Cet email n'a pas l'air valide.",
     conflict: 'Un compte existe déjà avec cet email.',
+    server: "Cet email n'a pas l'air valide.",
   });
 
   constructor() {
@@ -347,6 +356,15 @@ export class Signup {
     if (error.status === 409) {
       this.email.setErrors({ conflict: true });
       focusFirstInvalid(this.form, this.root);
+      return;
     }
+    const rejected = rejectedFields(error.error).flatMap((name) => this.form.get(name) ?? []);
+    if (rejected.length === 0) {
+      this.alert.set(GENERIC_ERROR);
+      return;
+    }
+    rejected.forEach((control) => control.setErrors({ server: true }));
+    this.alert.set(invalidSummary(this.form));
+    focusFirstInvalid(this.form, this.root);
   }
 }
