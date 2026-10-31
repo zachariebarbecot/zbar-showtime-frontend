@@ -146,8 +146,11 @@ const GENERIC_ERROR = 'Une erreur est survenue. Réessaie dans un instant.';
       overflow: hidden;
     }
     .su-wall {
-      flex: 1;
+      display: block;
+      flex: 1 1 0;
       min-height: 0;
+      contain: size;
+      overflow: hidden;
       --poster-wall-height: 100%;
     }
     .su-slogan {
