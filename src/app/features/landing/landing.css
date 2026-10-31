@@ -56,6 +56,70 @@
   gap: var(--space-3);
 }
 
+.lp-section {
+  padding: 64px 0;
+}
+.lp-h2 {
+  margin: 0;
+  font: 700 40px/42px var(--font-display);
+  letter-spacing: 0.01em;
+}
+.lp-lead {
+  margin: var(--space-2) 0 0;
+  color: var(--ink-muted);
+  font: 400 15px/23px var(--font-sans);
+}
+.lp-features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+  margin-top: var(--space-8);
+}
+.lp-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+.lp-card h3 {
+  margin: 0;
+  font: 600 18px/24px var(--font-sans);
+}
+.lp-card p {
+  margin: 0;
+  font: 400 15px/23px var(--font-sans);
+  color: var(--ink-muted);
+}
+.lp-demo {
+  margin-top: auto;
+  min-height: 168px;
+  padding: var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  background: var(--bg);
+  border-radius: var(--radius-md);
+}
+.lp-demo-eps {
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0;
+  overflow: hidden;
+}
+.lp-demo ::ng-deep .zb-cast {
+  width: 88px;
+}
+.lp-demo ::ng-deep .zb-cast-photo {
+  width: 64px;
+  height: 64px;
+  font-size: 22px;
+}
+
 /* Tablette : hero empilé */
 @media (max-width: 1023px) {
   .lp-hero {
