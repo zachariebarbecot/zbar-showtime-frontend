@@ -49,6 +49,14 @@ describe('NotFound', () => {
     },
   );
 
+  it('removes the noindex tag when the page is left', async () => {
+    await setup(false);
+
+    TestBed.resetTestingModule();
+
+    expect(document.head.querySelector('meta[name="robots"]')).toBeNull();
+  });
+
   it('asks search engines not to index the page', async () => {
     await setup(false);
 
