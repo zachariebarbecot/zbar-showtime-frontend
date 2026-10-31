@@ -256,4 +256,22 @@ describe('Search', () => {
       expect(rendered.root.querySelector('.zb-empty')).toBeNull();
     });
   });
+
+  describe('no result', () => {
+    it('should name the trimmed input in a no result message, without grid', async () => {
+      const rendered = await open();
+      vi.useFakeTimers();
+      await type(rendered, '  zzzz ');
+      await settle(rendered);
+
+      rendered.http.expectOne((req) => req.url === '/search').flush(EMPTY_RESPONSE);
+      rendered.harness.detectChanges();
+
+      expect(rendered.root.querySelector('.zb-empty')?.textContent).toContain(
+        'Aucun résultat pour "zzzz"',
+      );
+      expect(rendered.root.querySelector('.zb-empty')?.textContent).not.toContain('2 caractères');
+      expect(rendered.root.querySelector('.zb-poster')).toBeNull();
+    });
+  });
 });
