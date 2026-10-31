@@ -12,6 +12,8 @@ export const TOKEN_STORAGE = new InjectionToken<TokenStorage>('TOKEN_STORAGE', {
 
 const STORAGE_KEY = 'token';
 
+export const authUrl = (): string => `${environment.apiUrl}/auth/`;
+
 interface LoginResponse {
   readonly token: string;
 }
@@ -50,15 +52,13 @@ export class AuthService {
   }
 
   login(email: string, password: string): Observable<void> {
-    return this.http
-      .post<LoginResponse>(`${environment.apiUrl}/auth/login`, { email, password })
-      .pipe(
-        tap(({ token }) => {
-          this.storage.setItem(STORAGE_KEY, token);
-          this._token.set(token);
-        }),
-        map(() => undefined),
-      );
+    return this.http.post<LoginResponse>(`${authUrl()}login`, { email, password }).pipe(
+      tap(({ token }) => {
+        this.storage.setItem(STORAGE_KEY, token);
+        this._token.set(token);
+      }),
+      map(() => undefined),
+    );
   }
 
   logout(): void {
