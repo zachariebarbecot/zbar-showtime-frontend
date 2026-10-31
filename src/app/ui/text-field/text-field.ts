@@ -1,9 +1,34 @@
-import { Component, forwardRef, input } from '@angular/core';
+import { Component, forwardRef, input, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Icon } from '../icon/icon';
 
 @Component({
   selector: 'app-text-field',
-  template: '',
+  imports: [Icon],
+  template: `
+    <div class="zb-field" [class.zb-field-invalid]="error()">
+      <label class="zb-field-label" [for]="id()">{{ label() }}</label>
+      <div class="zb-field-control">
+        <input
+          [id]="id()"
+          [name]="name()"
+          [type]="type()"
+          [value]="value()"
+          [attr.aria-invalid]="!!error()"
+          [attr.aria-describedby]="error() ? messageId() : null"
+          (input)="onInput($event)"
+          (blur)="onTouched()"
+        />
+      </div>
+      @if (error()) {
+        <div class="zb-field-msg zb-field-error" [id]="messageId()" aria-live="polite">
+          <svg appIcon name="alert"></svg>
+          {{ error() }}
+        </div>
+      }
+    </div>
+  `,
+  host: { style: 'display: contents' },
   providers: [
     { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => TextField), multi: true },
   ],
@@ -14,7 +39,33 @@ export class TextField implements ControlValueAccessor {
   readonly type = input<'text' | 'email' | 'password' | 'date'>('text');
   readonly error = input<string>();
 
-  writeValue(): void {}
-  registerOnChange(): void {}
-  registerOnTouched(): void {}
+  protected readonly value = signal('');
+  private propagateChange: (value: string) => void = () => {};
+  protected onTouched: () => void = () => {};
+
+  protected id(): string {
+    return `zb-f-${this.name()}`;
+  }
+
+  protected messageId(): string {
+    return `${this.id()}-msg`;
+  }
+
+  protected onInput(event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    this.value.set(value);
+    this.propagateChange(value);
+  }
+
+  writeValue(value: string): void {
+    this.value.set(value);
+  }
+
+  registerOnChange(fn: (value: string) => void): void {
+    this.propagateChange = fn;
+  }
+
+  registerOnTouched(fn: () => void): void {
+    this.onTouched = fn;
+  }
 }
