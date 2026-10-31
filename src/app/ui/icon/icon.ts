@@ -1,11 +1,31 @@
-import { Component, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 
-export type IconName = 'eye';
+const PATHS = {
+  seen: 'M5 12.5l4.5 4.5L19 7.5',
+  close: 'M6 6l12 12M18 6L6 18',
+  eye: 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 0 6a3 3 0 0 0 0-6z',
+  eyeOff:
+    'M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.2M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7a10 10 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2',
+  alert: 'M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0-18zM12 8v5M12 16.5v.01',
+  dot: 'M12 10.5a1.5 1.5 0 1 0 0 3a1.5 1.5 0 0 0 0-3z',
+} as const;
+
+export type IconName = keyof typeof PATHS;
 
 @Component({
   selector: 'svg[appIcon]',
-  template: '',
+  template: '<svg:path [attr.d]="path()" />',
+  host: {
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    'stroke-width': '1.5',
+    'stroke-linecap': 'round',
+    'stroke-linejoin': 'round',
+    'aria-hidden': 'true',
+  },
 })
 export class Icon {
   readonly name = input.required<IconName>();
+  protected readonly path = computed(() => PATHS[this.name()]);
 }

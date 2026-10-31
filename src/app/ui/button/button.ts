@@ -1,8 +1,27 @@
-import { booleanAttribute, Component, input } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { booleanAttribute, Component, computed, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-button',
-  template: '',
+  imports: [NgTemplateOutlet, RouterLink],
+  template: `
+    <ng-template #label><ng-content /></ng-template>
+    @if (routerLink(); as route) {
+      <a [class]="classes()" [routerLink]="route">
+        <ng-container *ngTemplateOutlet="label" />
+      </a>
+    } @else if (href(); as href) {
+      <a [class]="classes()" [href]="href">
+        <ng-container *ngTemplateOutlet="label" />
+      </a>
+    } @else {
+      <button [class]="classes()" [type]="type()" [disabled]="disabled()">
+        <ng-container *ngTemplateOutlet="label" />
+      </button>
+    }
+  `,
+  host: { style: 'display: contents' },
 })
 export class Button {
   readonly variant = input<'primary' | 'secondary' | 'ghost'>('primary');
@@ -12,4 +31,9 @@ export class Button {
   readonly disabled = input(false, { transform: booleanAttribute });
   readonly href = input<string>();
   readonly routerLink = input<string>();
+
+  protected readonly classes = computed(
+    () =>
+      `zb-button zb-button-${this.variant()} zb-button-${this.size()}${this.block() ? ' zb-button-block' : ''}`,
+  );
 }
