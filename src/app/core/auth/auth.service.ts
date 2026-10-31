@@ -30,6 +30,12 @@ export interface RegisterRequest {
   readonly password: string;
 }
 
+export interface User {
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly email: string;
+}
+
 interface LoginResponse {
   readonly token: string;
 }
@@ -79,6 +85,10 @@ export class AuthService {
 
   register(request: RegisterRequest): Observable<void> {
     return this.http.post<void>(`${authUrl()}register`, request);
+  }
+
+  me(): Observable<User> {
+    return this.http.get<User>(`${environment.apiUrl}/users/me`);
   }
 
   logout(): void {
