@@ -51,20 +51,14 @@ export class TextField implements ControlValueAccessor {
   readonly error = input<string>();
 
   protected readonly value = signal('');
+  protected readonly id = computed(() => `zb-f-${this.name()}`);
+  protected readonly messageId = computed(() => `${this.id()}-msg`);
   protected readonly revealed = signal(false);
   protected readonly inputType = computed(() =>
     this.type() === 'password' && this.revealed() ? 'text' : this.type(),
   );
   private propagateChange: (value: string) => void = () => {};
   protected onTouched: () => void = () => {};
-
-  protected id(): string {
-    return `zb-f-${this.name()}`;
-  }
-
-  protected messageId(): string {
-    return `${this.id()}-msg`;
-  }
 
   protected onInput(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
