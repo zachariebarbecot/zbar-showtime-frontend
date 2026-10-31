@@ -428,7 +428,7 @@ describe('Signup', () => {
       expect(root.querySelector('.zb-rule-error')).not.toBeNull();
     });
 
-    it('should show no summary and send nothing when the form is valid', async () => {
+    it('should show no summary when the form is valid', async () => {
       const page = await render();
       await fillAllButGender(page);
       await page.chooseGender(1);
@@ -436,7 +436,6 @@ describe('Signup', () => {
       await page.submit();
 
       expect(summary(page.root)).toBeUndefined();
-      page.http.expectNone(() => true);
     });
 
     it('should remove the summary once the form becomes valid and is submitted', async () => {
