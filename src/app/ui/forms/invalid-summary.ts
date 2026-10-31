@@ -6,7 +6,16 @@ export function invalidSummary(form: FormGroup): string {
 }
 
 export function focusFirstInvalid(form: FormGroup, root: HTMLElement): void {
-  Array.from(root.querySelectorAll<HTMLElement>('input[name], select[name], textarea[name]'))
-    .find((field) => form.get(field.getAttribute('name') ?? '')?.invalid)
-    ?.focus();
+  const fields = root.querySelectorAll<HTMLElement>(
+    'input[name], select[name], textarea[name], [role="radiogroup"][data-name]',
+  );
+  const invalid = Array.from(fields).find((field) => form.get(fieldName(field))?.invalid);
+  const target = invalid?.matches('[role="radiogroup"]')
+    ? invalid.querySelector<HTMLElement>('[role="radio"][tabindex="0"]')
+    : invalid;
+  target?.focus();
+}
+
+function fieldName(field: HTMLElement): string {
+  return field.getAttribute('name') ?? field.dataset['name'] ?? '';
 }
