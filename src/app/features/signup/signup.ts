@@ -1,13 +1,15 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { EMAIL_PATTERN, fieldError } from '../../ui/forms/field-error';
 import { Button } from '../../ui/button/button';
 import { Logo } from '../../ui/logo/logo';
 import { PasswordRules } from '../../ui/password-rules/password-rules';
 import { RadioChips, RadioOption } from '../../ui/radio-chips/radio-chips';
 import { TextField } from '../../ui/text-field/text-field';
 import { EARLIEST_BIRTH_DATE, latestBirthDate } from './birth-date';
+import { notBlank } from './signup-validators';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,12 +33,14 @@ import { EARLIEST_BIRTH_DATE, latestBirthDate } from './birth-date';
               name="firstName"
               label="Prénom"
               autocomplete="given-name"
+              [error]="firstNameError()"
               formControlName="firstName"
             />
             <app-text-field
               name="lastName"
               label="Nom"
               autocomplete="family-name"
+              [error]="lastNameError()"
               formControlName="lastName"
             />
           </div>
@@ -60,6 +64,7 @@ import { EARLIEST_BIRTH_DATE, latestBirthDate } from './birth-date';
             label="Email"
             type="email"
             autocomplete="email"
+            [error]="emailError()"
             formControlName="email"
           />
           <app-text-field
@@ -188,16 +193,30 @@ export class Signup {
   ];
 
   protected readonly form = new FormGroup({
-    firstName: new FormControl('', { nonNullable: true }),
-    lastName: new FormControl('', { nonNullable: true }),
+    firstName: new FormControl('', { nonNullable: true, validators: [notBlank] }),
+    lastName: new FormControl('', { nonNullable: true, validators: [notBlank] }),
     birthDate: new FormControl('', { nonNullable: true }),
     gender: new FormControl('', { nonNullable: true }),
-    email: new FormControl('', { nonNullable: true }),
+    email: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.pattern(EMAIL_PATTERN)],
+    }),
     password: new FormControl('', { nonNullable: true }),
     confirmation: new FormControl('', { nonNullable: true }),
   });
 
   protected readonly password = toSignal(this.form.controls.password.valueChanges, {
     initialValue: '',
+  });
+
+  protected readonly firstNameError = fieldError(this.form.controls.firstName, {
+    required: 'Indique ton prénom.',
+  });
+  protected readonly lastNameError = fieldError(this.form.controls.lastName, {
+    required: 'Indique ton nom.',
+  });
+  protected readonly emailError = fieldError(this.form.controls.email, {
+    required: 'Indique ton email.',
+    pattern: "Cet email n'a pas l'air valide.",
   });
 }
