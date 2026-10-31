@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { episodeCode } from '../../shared/episode-code';
 import { Icon } from '../icon/icon';
 
 export type PosterStatus = 'watchlist' | 'seen';
@@ -14,8 +15,6 @@ export interface PosterProgress {
 }
 
 const STATUS_LABELS: Record<PosterStatus, string> = { watchlist: 'Watchlist', seen: 'Vu' };
-
-const pad = (n: number): string => String(n).padStart(2, '0');
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -68,6 +67,6 @@ export class Poster {
   protected readonly statusLabels = STATUS_LABELS;
   protected readonly code = computed(() => {
     const next = this.next();
-    return next && `S${pad(next.season)}E${pad(next.episode)}`;
+    return next && episodeCode(next.season, next.episode);
   });
 }

@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, model } from '@angular/core';
+import { episodeCode } from '../../shared/episode-code';
 import { Icon } from '../icon/icon';
-
-const pad = (n: number): string => String(n).padStart(2, '0');
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -35,5 +34,5 @@ export class EpisodeRow {
   readonly runtime = input.required<number>();
   readonly seen = model(false);
 
-  protected readonly code = computed(() => `S${pad(this.season())}E${pad(this.episode())}`);
+  protected readonly code = computed(() => episodeCode(this.season(), this.episode()));
 }
