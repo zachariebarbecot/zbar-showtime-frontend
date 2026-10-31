@@ -1,3 +1,5 @@
+import { ApplicationRef } from '@angular/core';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Landing } from './landing';
@@ -54,5 +56,89 @@ describe('Landing', () => {
     const page = await render();
 
     expect(page.querySelector('header.lp-hero app-poster-wall')).not.toBeNull();
+  });
+
+  describe('modules', () => {
+    const cards = (page: HTMLElement) =>
+      Array.from(page.querySelectorAll<HTMLElement>('section.lp-section article.lp-card'));
+
+    it('should present three modules, each with a title and a demo', async () => {
+      const page = await render();
+
+      expect(cards(page)).toHaveLength(3);
+      cards(page).forEach((card) => {
+        expect(card.querySelector('h3')?.textContent?.trim()).toBeTruthy();
+        expect(card.querySelector('.lp-demo')).not.toBeNull();
+      });
+    });
+
+    it('should toggle the watchlist and seen buttons of the first demo', async () => {
+      const page = await render();
+      const [watchlist, seen] = Array.from(
+        cards(page)[0].querySelectorAll<HTMLButtonElement>('button[aria-pressed]'),
+      );
+
+      expect([watchlist.textContent?.trim(), seen.textContent?.trim()]).toEqual([
+        'Watchlist',
+        'Marquer vu',
+      ]);
+      expect([watchlist, seen].map((b) => b.getAttribute('aria-pressed'))).toEqual([
+        'true',
+        'false',
+      ]);
+
+      watchlist.click();
+      seen.click();
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      expect([watchlist, seen].map((b) => b.getAttribute('aria-pressed'))).toEqual([
+        'false',
+        'true',
+      ]);
+    });
+
+    it('should toggle the check of an episode of the second demo', async () => {
+      const page = await render();
+      const checks = Array.from(
+        cards(page)[1].querySelectorAll<HTMLButtonElement>('button[role="checkbox"]'),
+      );
+
+      expect(checks.map((c) => c.getAttribute('aria-checked'))).toEqual(['true', 'false', 'false']);
+
+      checks[1].click();
+      checks[0].click();
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      expect(checks.map((c) => c.getAttribute('aria-checked'))).toEqual(['false', 'true', 'false']);
+    });
+
+    it('should show the name, character and initials of three cast members', async () => {
+      const page = await render();
+
+      const cast = Array.from(cards(page)[2].querySelectorAll('.zb-cast'));
+
+      expect(cast.map((c) => c.querySelector('.zb-cast-name')?.textContent)).toEqual([
+        'Adam Scott',
+        'Britt Lower',
+        'Zach Cherry',
+      ]);
+      expect(cast.map((c) => c.querySelector('.zb-cast-role')?.textContent)).toEqual([
+        'Mark S.',
+        'Helly R.',
+        'Dylan G.',
+      ]);
+      expect(cast.map((c) => c.querySelector('.zb-cast-photo')?.textContent?.trim())).toEqual([
+        'AS',
+        'BL',
+        'ZC',
+      ]);
+    });
+
+    it('should send no request', async () => {
+      TestBed.configureTestingModule({ providers: [provideHttpClientTesting()] });
+      await render();
+
+      TestBed.inject(HttpTestingController).verify();
+    });
   });
 });
