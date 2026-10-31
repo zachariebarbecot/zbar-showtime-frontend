@@ -608,6 +608,28 @@ describe('Signup', () => {
       });
     });
 
+    describe('server failure', () => {
+      it.each([
+        ['a 5xx', { status: 503, statusText: 'Unavailable' }],
+        ['a network error', { status: 0, statusText: 'Unknown Error' }],
+      ])('should keep the values and allow another try after %s', async (_, response) => {
+        const page = await render();
+        await fillValid(page);
+        await page.submit();
+
+        page.http.expectOne('/auth/register').flush(null, response);
+        await page.harness.fixture.whenStable();
+
+        expect(page.root.querySelector('[role="alert"]')?.textContent).toContain(generic);
+        expect(page.input('lastName').value).toBe('Martin');
+        expect(page.root.querySelector('button[type="submit"]')?.hasAttribute('disabled')).toBe(
+          false,
+        );
+        await page.submit();
+        page.http.expectOne('/auth/register');
+      });
+    });
+
     describe('login failure after registration', () => {
       it('should still welcome the user and lead to the login page', async () => {
         const page = await render();
