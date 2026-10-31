@@ -12,7 +12,7 @@ describe('authInterceptor', () => {
   let auth: AuthService;
   let router: Router;
 
-  beforeEach(() => {
+  const setup = (storedToken: string | null): void => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
@@ -21,7 +21,11 @@ describe('authInterceptor', () => {
         provideHttpClientTesting(),
         {
           provide: TOKEN_STORAGE,
-          useValue: { getItem: () => null, setItem: () => undefined, removeItem: () => undefined },
+          useValue: {
+            getItem: () => storedToken,
+            setItem: () => undefined,
+            removeItem: () => undefined,
+          },
         },
       ],
     });
@@ -29,10 +33,10 @@ describe('authInterceptor', () => {
     backend = TestBed.inject(HttpTestingController);
     auth = TestBed.inject(AuthService);
     router = TestBed.inject(Router);
-    auth.token.set('the-token');
-  });
+  };
 
   it('adds the bearer token outside /auth/**', () => {
+    setup('the-token');
     http.get('/users/me').subscribe();
 
     expect(backend.expectOne('/users/me').request.headers.get('Authorization')).toBe(
@@ -41,19 +45,21 @@ describe('authInterceptor', () => {
   });
 
   it('does not add the token on /auth/**', () => {
+    setup('the-token');
     http.post('/auth/login', {}).subscribe();
 
     expect(backend.expectOne('/auth/login').request.headers.has('Authorization')).toBe(false);
   });
 
   it('does not add a header without token', () => {
-    auth.token.set(null);
+    setup(null);
     http.get('/users/me').subscribe();
 
     expect(backend.expectOne('/users/me').request.headers.has('Authorization')).toBe(false);
   });
 
   it('drops the token and goes to /connexion on a 401 outside /auth/**', () => {
+    setup('the-token');
     const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
     const errors: unknown[] = [];
 
@@ -66,6 +72,7 @@ describe('authInterceptor', () => {
   });
 
   it('keeps token and route on a 401 on /auth/**', () => {
+    setup('the-token');
     const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
     http.post('/auth/login', {}).subscribe({ error: () => undefined });

@@ -19,8 +19,11 @@ interface LoginResponse {
 function isExpired(token: string): boolean {
   try {
     const payload = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-    const { exp } = JSON.parse(atob(payload));
-    return typeof exp !== 'number' || exp * 1000 <= Date.now();
+    const claims: unknown = JSON.parse(atob(payload));
+    if (typeof claims !== 'object' || claims === null || !('exp' in claims)) {
+      return true;
+    }
+    return typeof claims.exp !== 'number' || claims.exp * 1000 <= Date.now();
   } catch {
     return true;
   }
@@ -31,7 +34,8 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly storage = inject(TOKEN_STORAGE);
 
-  readonly token = signal<string | null>(this.storage.getItem(STORAGE_KEY));
+  private readonly _token = signal<string | null>(this.storage.getItem(STORAGE_KEY));
+  readonly token = this._token.asReadonly();
 
   isAuthenticated(): boolean {
     const token = this.token();
@@ -51,7 +55,7 @@ export class AuthService {
       .pipe(
         tap(({ token }) => {
           this.storage.setItem(STORAGE_KEY, token);
-          this.token.set(token);
+          this._token.set(token);
         }),
         map(() => undefined),
       );
@@ -59,6 +63,6 @@ export class AuthService {
 
   logout(): void {
     this.storage.removeItem(STORAGE_KEY);
-    this.token.set(null);
+    this._token.set(null);
   }
 }
