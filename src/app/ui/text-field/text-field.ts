@@ -20,6 +20,7 @@ import { Icon } from '../icon/icon';
         <input
           [id]="id()"
           [name]="name()"
+          [attr.autocomplete]="autocomplete()"
           [type]="inputType()"
           #field
           [value]="value()"
@@ -68,6 +69,7 @@ export class TextField implements ControlValueAccessor {
   readonly label = input.required<string>();
   readonly type = input<'text' | 'email' | 'password' | 'date'>('text');
   readonly error = input<string>();
+  readonly autocomplete = input<string>();
 
   protected readonly value = signal('');
   protected readonly id = computed(() => `zb-f-${this.name()}`);

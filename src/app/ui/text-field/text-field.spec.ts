@@ -11,6 +11,7 @@ import { TextField } from './text-field';
       label="Email"
       [type]="type()"
       [error]="error()"
+      [autocomplete]="autocomplete()"
       [formControl]="control"
     />
   `,
@@ -19,6 +20,7 @@ class Host {
   readonly control = new FormControl('', { nonNullable: true });
   readonly type = signal<'text' | 'email' | 'password' | 'date'>('email');
   readonly error = signal<string | undefined>(undefined);
+  readonly autocomplete = signal<string | undefined>(undefined);
 }
 
 describe('TextField', () => {
@@ -81,6 +83,14 @@ describe('TextField', () => {
     input().dispatchEvent(new Event('blur'));
 
     expect(host.control.touched).toBe(true);
+  });
+
+  it('should expose the autocomplete hint on the input', async () => {
+    const { host, input, fixture } = await render();
+    expect(input().hasAttribute('autocomplete')).toBe(false);
+    host.autocomplete.set('current-password');
+    await fixture.whenStable();
+    expect(input().autocomplete).toBe('current-password');
   });
 
   it('should support the date type', async () => {
