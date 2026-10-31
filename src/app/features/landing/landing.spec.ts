@@ -49,4 +49,10 @@ describe('Landing', () => {
       expect(page.textContent?.split('Se connecter')).toHaveLength(2);
     });
   });
+
+  it('should show the poster wall next to the hero copy', async () => {
+    const page = await render();
+
+    expect(page.querySelector('header.lp-hero app-poster-wall')).not.toBeNull();
+  });
 });
