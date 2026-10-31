@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject } from '@angular/core';
 import { Meta } from '@angular/platform-browser';
 import { AuthService } from '../../core/auth/auth.service';
 import { Button } from '../../ui/button/button';
@@ -18,6 +18,8 @@ export class NotFound {
   protected readonly bulbs = Array.from({ length: 9 }, (_, index) => index);
 
   constructor() {
-    inject(Meta).updateTag({ name: 'robots', content: 'noindex' });
+    const meta = inject(Meta);
+    meta.updateTag({ name: 'robots', content: 'noindex' });
+    inject(DestroyRef).onDestroy(() => meta.removeTag('name="robots"'));
   }
 }
