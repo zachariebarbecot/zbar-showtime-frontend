@@ -129,10 +129,12 @@ describe('RadioChips', () => {
   it('should describe the invalid group with the error message', async () => {
     const { host, group, root, fixture } = await render();
     expect(group().hasAttribute('aria-describedby')).toBe(false);
+    expect(group().getAttribute('aria-invalid')).toBe('false');
 
     host.error.set('Choisis une option.');
     await fixture.whenStable();
 
+    expect(group().getAttribute('aria-invalid')).toBe('true');
     const describedBy = group().getAttribute('aria-describedby') as string;
     expect(root.querySelector(`#${describedBy}`)?.textContent).toContain('Choisis une option.');
     expect(root.querySelector('.zb-field-invalid')).not.toBeNull();
