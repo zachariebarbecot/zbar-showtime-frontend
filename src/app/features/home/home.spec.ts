@@ -62,7 +62,7 @@ describe('Home', () => {
       expect(root.querySelector('h1')?.textContent).toBe('Salut, Camille.');
     });
 
-    it('should show the logo linking to /accueil, a single current Accueil link and the user name', async () => {
+    it('should show the logo linking to /accueil, Accueil as the current link, Recherche and the user name', async () => {
       const { harness, root, http } = await render();
 
       http.expectOne('/users/me').flush(USER);
@@ -71,14 +71,17 @@ describe('Home', () => {
       const logo = root.querySelector<HTMLAnchorElement>('header a[aria-label="Zbar Showtime"]');
       const nav = Array.from(root.querySelectorAll<HTMLAnchorElement>('header nav a'));
       expect(logo?.getAttribute('href')).toBe('/accueil');
-      expect(nav.map((link) => link.textContent?.trim())).toEqual(['Accueil']);
+      expect(nav.map((link) => link.textContent?.trim())).toEqual(['Accueil', 'Recherche']);
       expect(nav[0].getAttribute('aria-current')).toBe('page');
+      expect(nav[1].getAttribute('href')).toBe('/recherche');
+      expect(nav[1].hasAttribute('aria-current')).toBe(false);
+      expect(nav[1].querySelector('svg path')?.getAttribute('d')).toBeTruthy();
       expect(root.querySelector('header button[aria-haspopup]')?.textContent).toContain(
         'Camille Durand',
       );
     });
 
-    it('should not show Watchlist, Recherche nor Profil links', async () => {
+    it('should not show Watchlist nor Profil links', async () => {
       const { harness, root, http } = await render();
 
       http.expectOne('/users/me').flush(USER);
@@ -86,7 +89,6 @@ describe('Home', () => {
 
       const text = root.textContent ?? '';
       expect(text).not.toContain('Watchlist');
-      expect(text).not.toContain('Recherche');
       expect(text).not.toContain('Profil');
     });
   });
