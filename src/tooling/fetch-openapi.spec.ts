@@ -21,9 +21,10 @@ describe('scripts/fetch-openapi.mjs', () => {
     });
 
   const serve = async (body: string): Promise<string> => {
-    server = createServer((_, res) => res.end(body));
-    await new Promise<void>((resolve) => server?.listen(0, '127.0.0.1', resolve));
-    return `http://127.0.0.1:${(server?.address() as AddressInfo).port}/v3/api-docs`;
+    const started = createServer((_, res) => res.end(body));
+    server = started;
+    await new Promise<void>((resolve) => started.listen(0, '127.0.0.1', resolve));
+    return `http://127.0.0.1:${(started.address() as AddressInfo).port}/v3/api-docs`;
   };
 
   beforeEach(() => {
