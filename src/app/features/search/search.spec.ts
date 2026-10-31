@@ -8,6 +8,7 @@ import { provideApiConfiguration } from '../../api/api-configuration';
 import { routes } from '../../app.routes';
 import { authInterceptor } from '../../core/auth/auth.interceptor';
 import { TOKEN_STORAGE } from '../../core/auth/auth.service';
+import { query } from '../../testing/query';
 import { Search } from './search';
 
 const USER = { firstName: 'Camille', lastName: 'Durand', email: 'camille.durand@exemple.fr' };
@@ -24,6 +25,10 @@ describe('Search', () => {
 
   beforeEach(() => {
     store.clear();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   async function render(signedIn = true) {
@@ -50,6 +55,21 @@ describe('Search', () => {
     await rendered.harness.fixture.whenStable();
     return { ...rendered, page, root: rendered.harness.routeNativeElement as HTMLElement };
   }
+
+  const EMPTY_RESPONSE = { page: 1, results: [], totalPages: 1, totalResults: 0 };
+
+  async function type(rendered: Awaited<ReturnType<typeof open>>, value: string) {
+    const input = query<HTMLInputElement>(rendered.root, 'main input');
+    input.value = value;
+    input.dispatchEvent(new Event('input'));
+  }
+
+  async function settle(rendered: Awaited<ReturnType<typeof open>>, ms = 300) {
+    await vi.advanceTimersByTimeAsync(ms);
+    rendered.harness.detectChanges();
+  }
+
+  const searchCalls = (http: HttpTestingController) => http.match((req) => req.url === '/search');
 
   describe('opening the page', () => {
     it('should invite to type, without calling search', async () => {
@@ -82,6 +102,68 @@ describe('Search', () => {
       await harness.navigateByUrl('/recherche');
 
       expect(router.url).toBe('/connexion?returnUrl=%2Frecherche');
+    });
+  });
+
+  describe('searching', () => {
+    it('should call search once with the trimmed input, page 1 and no type, 300 ms after the last key', async () => {
+      const rendered = await open();
+      vi.useFakeTimers();
+
+      for (const value of ['d', 'du', 'dun', '  dune ']) {
+        await type(rendered, value);
+        await settle(rendered, 100);
+      }
+      expect(searchCalls(rendered.http)).toHaveLength(0);
+      await settle(rendered, 200);
+
+      const request = rendered.http.expectOne((req) => req.url === '/search');
+      expect(request.request.params.get('query')).toBe('dune');
+      expect(request.request.params.get('page')).toBe('1');
+      expect(request.request.params.has('type')).toBe(false);
+    });
+
+    it('should show a loading indicator during the call, then remove it', async () => {
+      const rendered = await open();
+      vi.useFakeTimers();
+      expect(rendered.root.querySelector('[role="status"]')).toBeNull();
+
+      await type(rendered, 'dune');
+      await settle(rendered);
+
+      expect(rendered.root.querySelector('[role="status"]')).not.toBeNull();
+      rendered.http.expectOne((req) => req.url === '/search').flush(EMPTY_RESPONSE);
+      rendered.harness.detectChanges();
+      expect(rendered.root.querySelector('[role="status"]')).toBeNull();
+    });
+
+    it.each(['d', '  d  ', '   '])(
+      'should not call search for "%s" and keep the prompt',
+      async (value) => {
+        const rendered = await open();
+        vi.useFakeTimers();
+
+        await type(rendered, value);
+        await settle(rendered);
+
+        expect(searchCalls(rendered.http)).toHaveLength(0);
+        expect(rendered.root.querySelector('.zb-empty')?.textContent).toContain('2 caractères');
+      },
+    );
+
+    it('should bring the prompt back when the input shrinks below 2 characters', async () => {
+      const rendered = await open();
+      vi.useFakeTimers();
+      await type(rendered, 'dune');
+      await settle(rendered);
+      rendered.http.expectOne((req) => req.url === '/search').flush(EMPTY_RESPONSE);
+
+      await type(rendered, 'd');
+      await settle(rendered);
+
+      expect(searchCalls(rendered.http)).toHaveLength(0);
+      expect(rendered.root.querySelector('[role="status"]')).toBeNull();
+      expect(rendered.root.querySelector('.zb-empty')?.textContent).toContain('2 caractères');
     });
   });
 });
