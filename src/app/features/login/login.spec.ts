@@ -1,5 +1,5 @@
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component, provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
@@ -41,7 +41,12 @@ describe('Login', () => {
       field(name).dispatchEvent(new Event('blur'));
       await harness.fixture.whenStable();
     };
-    return { harness, root, field, type, blur };
+    const submit = async () => {
+      root.querySelector<HTMLButtonElement>('button[type="submit"]')?.click();
+      await harness.fixture.whenStable();
+    };
+    const http = TestBed.inject(HttpTestingController);
+    return { harness, root, field, type, blur, submit, http };
   }
 
   describe('page content', () => {
@@ -118,6 +123,35 @@ describe('Login', () => {
       await type('email', 'zoe@example.org');
 
       expect(root.querySelector('.zb-field-error')).toBeNull();
+    });
+  });
+
+  describe('invalid submission', () => {
+    it('should show the summary, focus the first invalid field and send nothing', async () => {
+      const { root, field, submit, http } = await render();
+
+      await submit();
+
+      expect(root.querySelector('[role="alert"]')?.textContent).toContain(
+        '2 champs sont à corriger.',
+      );
+      expect(root.textContent).toContain('Indique ton email.');
+      expect(root.textContent).toContain('Indique ton mot de passe.');
+      expect(document.activeElement).toBe(field('email'));
+      http.expectNone(() => true);
+    });
+
+    it('should use the singular and focus the password when only it is invalid', async () => {
+      const { root, field, type, submit, http } = await render();
+      await type('email', 'zoe@example.org');
+
+      await submit();
+
+      expect(root.querySelector('[role="alert"]')?.textContent).toContain(
+        '1 champ est à corriger.',
+      );
+      expect(document.activeElement).toBe(field('password'));
+      http.expectNone(() => true);
     });
   });
 });
