@@ -1,9 +1,12 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, computed } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Button } from '../../ui/button/button';
 import { Logo } from '../../ui/logo/logo';
 import { TextField } from '../../ui/text-field/text-field';
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -22,6 +25,7 @@ import { TextField } from '../../ui/text-field/text-field';
           label="Email"
           type="email"
           autocomplete="email"
+          [error]="emailError()"
           formControlName="email"
         />
         <app-text-field
@@ -29,6 +33,7 @@ import { TextField } from '../../ui/text-field/text-field';
           label="Mot de passe"
           type="password"
           autocomplete="current-password"
+          [error]="passwordError()"
           formControlName="password"
         />
         <app-button type="submit" size="lg" block>Se connecter</app-button>
@@ -97,7 +102,28 @@ import { TextField } from '../../ui/text-field/text-field';
 })
 export class Login {
   protected readonly form = new FormGroup({
-    email: new FormControl('', { nonNullable: true }),
-    password: new FormControl('', { nonNullable: true }),
+    email: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.pattern(EMAIL_PATTERN)],
+    }),
+    password: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
   });
+
+  private readonly formEvents = toSignal(this.form.events);
+
+  protected readonly emailError = computed(() =>
+    this.errorOf(this.form.controls.email, {
+      required: 'Indique ton email.',
+      pattern: "Cet email n'a pas l'air valide.",
+    }),
+  );
+  protected readonly passwordError = computed(() =>
+    this.errorOf(this.form.controls.password, { required: 'Indique ton mot de passe.' }),
+  );
+
+  private errorOf(control: FormControl, messages: Record<string, string>): string | undefined {
+    this.formEvents();
+    const failed = Object.keys(control.errors ?? {})[0];
+    return control.touched && failed ? messages[failed] : undefined;
+  }
 }
