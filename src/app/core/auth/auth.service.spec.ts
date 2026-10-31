@@ -2,6 +2,9 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { AuthControllerService } from '../../api/services/auth-controller.service';
+import { UserControllerService } from '../../api/services/user-controller.service';
+import { provideApiConfiguration } from '../../api/api-configuration';
 import { AuthService, RegisterRequest, TOKEN_STORAGE } from './auth.service';
 
 const STORAGE_KEY = 'token';
@@ -26,6 +29,7 @@ describe('AuthService', () => {
         provideZonelessChangeDetection(),
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideApiConfiguration(''),
         { provide: TOKEN_STORAGE, useValue: storage },
       ],
     });
@@ -120,5 +124,78 @@ describe('AuthService', () => {
     request.flush(user);
 
     expect(received).toEqual(user);
+  });
+
+  describe('through the generated client', () => {
+    afterEach(() => vi.restoreAllMocks());
+
+    it('login calls the generated auth service', () => {
+      const login = vi.spyOn(AuthControllerService.prototype, 'login');
+
+      create().login('a@b.fr', 'secret').subscribe();
+
+      expect(login).toHaveBeenCalledWith({ body: { email: 'a@b.fr', password: 'secret' } });
+    });
+
+    it('register calls the generated auth service', () => {
+      const register = vi.spyOn(AuthControllerService.prototype, 'register');
+      const body: RegisterRequest = {
+        firstName: 'Zoé',
+        lastName: 'Martin',
+        birthDate: '2000-02-29',
+        gender: 'FEMALE',
+        email: 'zoe@example.org',
+        password: 'Abcdefghij1!',
+      };
+
+      create().register(body).subscribe();
+
+      expect(register).toHaveBeenCalledWith({ body });
+    });
+
+    it('me calls the generated user service', () => {
+      const me = vi.spyOn(UserControllerService.prototype, 'me');
+
+      create().me().subscribe();
+
+      expect(me).toHaveBeenCalled();
+    });
+
+    it('me keeps only the displayed identity of the user', () => {
+      let received: unknown;
+      create()
+        .me()
+        .subscribe((value) => (received = value));
+      TestBed.inject(HttpTestingController).expectOne('/users/me').flush({
+        id: 'u1',
+        firstName: 'Zoé',
+        lastName: 'Martin',
+        email: 'zoe@example.org',
+        gender: 'FEMALE',
+      });
+
+      expect(received).toEqual({ firstName: 'Zoé', lastName: 'Martin', email: 'zoe@example.org' });
+    });
+
+    it('me fails on an incomplete user payload', () => {
+      let failure: unknown;
+      create()
+        .me()
+        .subscribe({ error: (error: unknown) => (failure = error) });
+      TestBed.inject(HttpTestingController).expectOne('/users/me').flush({ firstName: 'Zoé' });
+
+      expect(failure).toBeInstanceOf(Error);
+    });
+
+    it('login fails and stores nothing when the response has no token', () => {
+      let failure: unknown;
+      create()
+        .login('a@b.fr', 'secret')
+        .subscribe({ error: (error: unknown) => (failure = error) });
+      TestBed.inject(HttpTestingController).expectOne('/auth/login').flush({});
+
+      expect(failure).toBeInstanceOf(Error);
+      expect(storage.getItem(STORAGE_KEY)).toBeNull();
+    });
   });
 });

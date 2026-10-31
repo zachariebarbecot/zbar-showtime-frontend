@@ -1,7 +1,11 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, InjectionToken, inject, signal } from '@angular/core';
-import { Observable, map, tap } from 'rxjs';
+import { Observable, catchError, map, tap, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { RegisterRequest as ApiRegisterRequest } from '../../api/models/register-request';
+import { UserResponse } from '../../api/models/user-response';
+import { AuthControllerService } from '../../api/services/auth-controller.service';
+import { UserControllerService } from '../../api/services/user-controller.service';
 
 export type TokenStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 
@@ -19,26 +23,48 @@ export const isApiRequest = (url: string): boolean =>
     ? url.startsWith('/') && !url.startsWith('//')
     : url.startsWith(`${environment.apiUrl}/`);
 
+// The spec types `gender` as a plain string: the allowed values stay named here.
 export type Gender = 'MALE' | 'FEMALE';
 
-export interface RegisterRequest {
-  readonly firstName: string;
-  readonly lastName: string;
-  readonly birthDate: string;
+export type RegisterRequest = Required<Omit<ApiRegisterRequest, 'gender'>> & {
   readonly gender: Gender;
-  readonly email: string;
-  readonly password: string;
+};
+
+export type User = Pick<Required<UserResponse>, 'firstName' | 'lastName' | 'email'>;
+
+function present<T>(value: T | undefined, field: string): T {
+  if (value === undefined) {
+    throw new Error(`Incomplete API response: missing ${field}`);
+  }
+  return value;
 }
 
-export interface User {
-  readonly firstName: string;
-  readonly lastName: string;
-  readonly email: string;
+// The generated `register` reads the body as text (empty 201), so an error body arrives as raw JSON text.
+function withParsedBody(error: unknown): Observable<never> {
+  if (!(error instanceof HttpErrorResponse) || typeof error.error !== 'string') {
+    return throwError(() => error);
+  }
+  try {
+    return throwError(
+      () =>
+        new HttpErrorResponse({
+          error: JSON.parse(error.error),
+          headers: error.headers,
+          status: error.status,
+          statusText: error.statusText,
+          url: error.url ?? undefined,
+        }),
+    );
+  } catch {
+    return throwError(() => error);
+  }
 }
 
-interface LoginResponse {
-  readonly token: string;
-}
+const toUser = (dto: UserResponse): User => ({
+  firstName: present(dto.firstName, 'firstName'),
+  lastName: present(dto.lastName, 'lastName'),
+  email: present(dto.email, 'email'),
+});
 
 function isExpired(token: string): boolean {
   try {
@@ -55,7 +81,8 @@ function isExpired(token: string): boolean {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly http = inject(HttpClient);
+  private readonly authApi = inject(AuthControllerService);
+  private readonly userApi = inject(UserControllerService);
   private readonly storage = inject(TOKEN_STORAGE);
 
   private readonly _token = signal<string | null>(this.storage.getItem(STORAGE_KEY));
@@ -74,8 +101,9 @@ export class AuthService {
   }
 
   login(email: string, password: string): Observable<void> {
-    return this.http.post<LoginResponse>(`${authUrl()}login`, { email, password }).pipe(
-      tap(({ token }) => {
+    return this.authApi.login({ body: { email, password } }).pipe(
+      tap((response) => {
+        const token = present(response.token, 'token');
         this.storage.setItem(STORAGE_KEY, token);
         this._token.set(token);
       }),
@@ -84,11 +112,11 @@ export class AuthService {
   }
 
   register(request: RegisterRequest): Observable<void> {
-    return this.http.post<void>(`${authUrl()}register`, request);
+    return this.authApi.register({ body: request }).pipe(catchError(withParsedBody));
   }
 
   me(): Observable<User> {
-    return this.http.get<User>(`${environment.apiUrl}/users/me`);
+    return this.userApi.me().pipe(map(toUser));
   }
 
   logout(): void {
