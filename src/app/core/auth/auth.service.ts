@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, InjectionToken, inject, signal } from '@angular/core';
-import { EMPTY, Observable, map, tap } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export type TokenStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
@@ -76,7 +76,7 @@ export class AuthService {
   }
 
   register(request: RegisterRequest): Observable<void> {
-    return EMPTY;
+    return this.http.post<void>(`${authUrl()}register`, request);
   }
 
   logout(): void {
