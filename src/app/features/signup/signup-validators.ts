@@ -8,14 +8,12 @@ export const notBlank: ValidatorFn = (control): ValidationErrors | null =>
 export const passwordRules: ValidatorFn = (control): ValidationErrors | null =>
   passwordChecks(String(control.value)).every((check) => check.ok) ? null : { rules: true };
 
-/** Refuses a value holding the email of `email`, ignoring the case. Empty email: nothing to hold. */
+/** Refuses a value holding the email of `email`, ignoring the case. Invalid email: nothing to hold. */
 export function withoutEmail(email: AbstractControl): ValidatorFn {
-  return (control) => {
-    const address = String(email.value).toLowerCase();
-    return address !== '' && String(control.value).toLowerCase().includes(address)
+  return (control) =>
+    email.valid && String(control.value).toLowerCase().includes(String(email.value).toLowerCase())
       ? { containsEmail: true }
       : null;
-  };
 }
 
 export function sameAs(other: AbstractControl): ValidatorFn {
