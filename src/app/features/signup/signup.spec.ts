@@ -202,4 +202,60 @@ describe('Signup', () => {
       expect(root.querySelector('.zb-field-error')).toBeNull();
     });
   });
+
+  describe('birth date and gender validation', () => {
+    const invalidDate = 'Indique une date de naissance valide.';
+
+    it.each([
+      ['empty', ''],
+      ['before 1900-01-01', '1899-12-31'],
+      ['today (local)', '2026-10-31'],
+      ['in the future', '2026-11-01'],
+    ])('should refuse a birth date %s on blur', async (_, value) => {
+      const { root, type, blur } = await render();
+
+      await type('birthDate', value);
+      await blur('birthDate');
+
+      expect(root.textContent).toContain(invalidDate);
+    });
+
+    it.each(['1900-01-01', '2000-02-29', '2026-10-30'])(
+      'should accept the birth date %s',
+      async (value) => {
+        const { root, type, blur } = await render();
+
+        await type('birthDate', value);
+        await blur('birthDate');
+
+        expect(root.textContent).not.toContain(invalidDate);
+      },
+    );
+
+    it('should show nothing while the date is first typed', async () => {
+      const { root, type } = await render();
+
+      await type('birthDate', '2026-11-01');
+
+      expect(root.textContent).not.toContain(invalidDate);
+    });
+
+    it('should ask for a gender when the group is left without a choice', async () => {
+      const { root, leaveGender } = await render();
+
+      await leaveGender();
+
+      expect(root.textContent).toContain('Choisis une option.');
+    });
+
+    it('should ask for a gender on submit and clear the error once chosen', async () => {
+      const { root, submit, chooseGender } = await render();
+
+      await submit();
+      expect(root.textContent).toContain('Choisis une option.');
+
+      await chooseGender(1);
+      expect(root.textContent).not.toContain('Choisis une option.');
+    });
+  });
 });
