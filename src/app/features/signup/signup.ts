@@ -1,8 +1,203 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { Button } from '../../ui/button/button';
+import { Logo } from '../../ui/logo/logo';
+import { PasswordRules } from '../../ui/password-rules/password-rules';
+import { RadioChips, RadioOption } from '../../ui/radio-chips/radio-chips';
+import { TextField } from '../../ui/text-field/text-field';
+import { EARLIEST_BIRTH_DATE, latestBirthDate } from './birth-date';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-signup',
-  template: ``,
+  imports: [ReactiveFormsModule, RouterLink, Button, Logo, PasswordRules, RadioChips, TextField],
+  template: `
+    <div class="su">
+      <aside class="su-side" aria-hidden="true">
+        <app-logo />
+        <p class="su-slogan">Ce que tu veux voir,<span>ce que tu as vu.</span></p>
+      </aside>
+      <main class="su-main">
+        <form class="su-form" novalidate [formGroup]="form">
+          <div class="su-mobile-logo"><app-logo /></div>
+          <div>
+            <h1 class="su-h1">Créer un compte</h1>
+            <p class="su-lead">Tous les champs sont obligatoires.</p>
+          </div>
+          <div class="su-row">
+            <app-text-field
+              name="firstName"
+              label="Prénom"
+              autocomplete="given-name"
+              formControlName="firstName"
+            />
+            <app-text-field
+              name="lastName"
+              label="Nom"
+              autocomplete="family-name"
+              formControlName="lastName"
+            />
+          </div>
+          <app-text-field
+            name="birthDate"
+            label="Date de naissance"
+            type="date"
+            autocomplete="bday"
+            [min]="earliestBirthDate"
+            [max]="latestBirthDate"
+            formControlName="birthDate"
+          />
+          <app-radio-chips
+            name="gender"
+            label="Genre"
+            [options]="genders"
+            formControlName="gender"
+          />
+          <app-text-field
+            name="email"
+            label="Email"
+            type="email"
+            autocomplete="email"
+            formControlName="email"
+          />
+          <app-text-field
+            name="password"
+            label="Mot de passe"
+            type="password"
+            autocomplete="new-password"
+            [describedBy]="rulesId"
+            formControlName="password"
+          />
+          <app-password-rules [id]="rulesId" [value]="password()" />
+          <app-text-field
+            name="confirmation"
+            label="Confirme le mot de passe"
+            type="password"
+            autocomplete="new-password"
+            formControlName="confirmation"
+          />
+          <app-button type="submit" size="lg" block>Créer un compte</app-button>
+          <p class="su-alt">
+            Déjà un compte ? <a class="zb-link" routerLink="/connexion">Se connecter</a>
+          </p>
+        </form>
+      </main>
+    </div>
+  `,
+  styles: `
+    .su {
+      display: grid;
+      grid-template-columns: 1fr 600px;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    .su-side {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: var(--space-8);
+      padding: var(--space-8);
+      overflow: hidden;
+    }
+    .su-slogan {
+      margin: 0;
+      font: 800 56px/0.95 var(--font-display);
+    }
+    .su-slogan span {
+      display: block;
+      color: var(--marquee-ink);
+    }
+    .su-main {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px var(--space-8);
+      background: var(--surface);
+      border-left: 1px solid var(--line);
+    }
+    .su-form {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .su-mobile-logo {
+      display: none;
+    }
+    .su-h1 {
+      margin: 0;
+      font: 700 40px/42px var(--font-display);
+      letter-spacing: 0.01em;
+    }
+    .su-lead {
+      margin: var(--space-2) 0 0;
+      color: var(--ink-muted);
+      font: 400 15px/23px var(--font-sans);
+    }
+    .su-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-4);
+    }
+    .su-alt {
+      margin: 0;
+      text-align: center;
+      color: var(--ink-muted);
+      font: 400 14px/20px var(--font-sans);
+    }
+    @media (max-width: 1023px) {
+      .su {
+        grid-template-columns: 1fr;
+      }
+      .su-side {
+        display: none;
+      }
+      .su-main {
+        align-items: flex-start;
+        border-left: 0;
+      }
+      .su-mobile-logo {
+        display: block;
+      }
+    }
+    @media (max-width: 599px) {
+      .su-main {
+        padding: var(--space-6) var(--space-4);
+      }
+      .su-row {
+        grid-template-columns: 1fr;
+      }
+      .su-h1 {
+        font-size: 32px;
+        line-height: 34px;
+      }
+    }
+  `,
 })
-export class Signup {}
+export class Signup {
+  protected readonly earliestBirthDate = EARLIEST_BIRTH_DATE;
+  protected readonly latestBirthDate = latestBirthDate();
+  protected readonly rulesId = 'su-rules';
+  protected readonly genders: readonly RadioOption[] = [
+    { value: 'MALE', label: 'Homme' },
+    { value: 'FEMALE', label: 'Femme' },
+  ];
+
+  protected readonly form = new FormGroup({
+    firstName: new FormControl('', { nonNullable: true }),
+    lastName: new FormControl('', { nonNullable: true }),
+    birthDate: new FormControl('', { nonNullable: true }),
+    gender: new FormControl('', { nonNullable: true }),
+    email: new FormControl('', { nonNullable: true }),
+    password: new FormControl('', { nonNullable: true }),
+    confirmation: new FormControl('', { nonNullable: true }),
+  });
+
+  protected readonly password = toSignal(this.form.controls.password.valueChanges, {
+    initialValue: '',
+  });
+}

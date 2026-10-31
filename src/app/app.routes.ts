@@ -3,6 +3,7 @@ import { authGuard } from './core/auth/auth.guard';
 import { guestGuard } from './core/auth/guest.guard';
 
 const login = () => import('./features/login/login').then((m) => m.Login);
+const signup = () => import('./features/signup/signup').then((m) => m.Signup);
 const placeholder = () => import('./features/placeholder/placeholder').then((m) => m.Placeholder);
 
 export const routes: Routes = [
@@ -13,7 +14,7 @@ export const routes: Routes = [
     canActivate: [guestGuard],
   },
   { path: 'connexion', loadComponent: login, canActivate: [guestGuard] },
-  { path: 'inscription', loadComponent: placeholder, canActivate: [guestGuard] },
+  { path: 'inscription', loadComponent: signup, canActivate: [guestGuard] },
   { path: 'accueil', loadComponent: placeholder, canActivate: [authGuard] },
   {
     path: '**',
