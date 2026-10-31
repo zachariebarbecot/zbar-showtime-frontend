@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component, provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { TOKEN_STORAGE } from '../../core/auth/auth.service';
 import { Login } from './login';
@@ -11,6 +11,8 @@ import { Login } from './login';
 class Page {}
 
 describe('Login', () => {
+  const storage = { getItem: vi.fn(() => null), setItem: vi.fn(), removeItem: vi.fn() };
+
   async function render(url = '/connexion') {
     TestBed.configureTestingModule({
       providers: [
@@ -21,11 +23,9 @@ describe('Login', () => {
           { path: 'connexion', component: Login },
           { path: 'inscription', component: Page },
           { path: 'accueil', component: Page },
+          { path: 'serie', component: Page },
         ]),
-        {
-          provide: TOKEN_STORAGE,
-          useValue: { getItem: () => null, setItem: () => undefined, removeItem: () => undefined },
-        },
+        { provide: TOKEN_STORAGE, useValue: storage },
       ],
     });
     const harness = await RouterTestingHarness.create();
@@ -46,7 +46,11 @@ describe('Login', () => {
       await harness.fixture.whenStable();
     };
     const http = TestBed.inject(HttpTestingController);
-    return { harness, root, field, type, blur, submit, http };
+    const fillValid = async () => {
+      await type('email', 'zoe@example.org');
+      await type('password', 'secret');
+    };
+    return { harness, root, field, type, blur, submit, http, fillValid };
   }
 
   describe('page content', () => {
@@ -152,6 +156,57 @@ describe('Login', () => {
       );
       expect(document.activeElement).toBe(field('password'));
       http.expectNone(() => true);
+    });
+  });
+
+  describe('successful login', () => {
+    it('should post the credentials, store the token and go to /accueil', async () => {
+      const { harness, submit, http, fillValid } = await render();
+      await fillValid();
+
+      await submit();
+      const request = http.expectOne('/auth/login');
+      expect(request.request.method).toBe('POST');
+      expect(request.request.body).toEqual({ email: 'zoe@example.org', password: 'secret' });
+      request.flush({ token: 'jwt-token' });
+      await harness.fixture.whenStable();
+
+      expect(storage.setItem).toHaveBeenCalledWith('token', 'jwt-token');
+      expect(TestBed.inject(Router).url).toBe('/accueil');
+    });
+
+    it('should go to the safe returnUrl', async () => {
+      const { harness, submit, http, fillValid } = await render('/connexion?returnUrl=%2Fserie');
+      await fillValid();
+
+      await submit();
+      http.expectOne('/auth/login').flush({ token: 'jwt-token' });
+      await harness.fixture.whenStable();
+
+      expect(TestBed.inject(Router).url).toBe('/serie');
+    });
+
+    it('should ignore an unsafe returnUrl', async () => {
+      const { harness, submit, http, fillValid } = await render(
+        '/connexion?returnUrl=%2F%2Fevil.example',
+      );
+      await fillValid();
+
+      await submit();
+      http.expectOne('/auth/login').flush({ token: 'jwt-token' });
+      await harness.fixture.whenStable();
+
+      expect(TestBed.inject(Router).url).toBe('/accueil');
+    });
+
+    it('should send a single request on a second click while pending', async () => {
+      const { submit, http, fillValid } = await render();
+      await fillValid();
+
+      await submit();
+      await submit();
+
+      http.expectOne('/auth/login');
     });
   });
 });
