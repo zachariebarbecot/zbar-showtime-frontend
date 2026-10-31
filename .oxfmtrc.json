@@ -9,5 +9,5 @@
       "language": "angular-html"
     }
   ],
-  "ignorePatterns": [".projectmem/**"]
+  "ignorePatterns": [".projectmem/**", "openapi/**", "src/app/api/**"]
 }
