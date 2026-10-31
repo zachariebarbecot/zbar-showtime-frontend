@@ -81,4 +81,20 @@ describe('authInterceptor', () => {
     expect(auth.token()).toBe('the-token');
     expect(navigate).not.toHaveBeenCalled();
   });
+
+  it.each(['https://autre-domaine.test/x', '//autre-domaine.test/x'])(
+    'ignores requests to another host (%s): no token, no logout on 401',
+    (url) => {
+      setup('the-token');
+      const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+      http.get(url).subscribe({ error: () => undefined });
+      const request = backend.expectOne(url);
+      request.flush(null, { status: 401, statusText: 'Unauthorized' });
+
+      expect(request.request.headers.has('Authorization')).toBe(false);
+      expect(auth.token()).toBe('the-token');
+      expect(navigate).not.toHaveBeenCalled();
+    },
+  );
 });

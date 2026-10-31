@@ -76,4 +76,15 @@ describe('authInterceptor with an absolute apiUrl', () => {
 
     expect(navigate).toHaveBeenCalledWith(['/connexion']);
   });
+
+  it('ignores requests to another host: no token, no redirect on 401', () => {
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    http.get('https://autre-domaine.test/x').subscribe({ error: () => undefined });
+    const request = backend.expectOne('https://autre-domaine.test/x');
+    request.flush(null, { status: 401, statusText: 'Unauthorized' });
+
+    expect(request.request.headers.has('Authorization')).toBe(false);
+    expect(navigate).not.toHaveBeenCalled();
+  });
 });
