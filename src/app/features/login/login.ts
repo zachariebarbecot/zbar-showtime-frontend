@@ -1,25 +1,16 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  ElementRef,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, ElementRef, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { safeReturnUrl } from '../../core/auth/safe-return-url';
 import { FormAlert } from '../../ui/form-alert/form-alert';
+import { EMAIL_PATTERN, fieldError } from '../../ui/forms/field-error';
 import { focusFirstInvalid, invalidSummary } from '../../ui/forms/invalid-summary';
 import { Button } from '../../ui/button/button';
 import { Logo } from '../../ui/logo/logo';
 import { TextField } from '../../ui/text-field/text-field';
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -134,32 +125,23 @@ export class Login {
   );
   private pending = false;
   private readonly root = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
-  private readonly formEvents = toSignal(this.form.events);
 
-  protected readonly emailError = computed(() =>
-    this.errorOf(this.form.controls.email, {
-      required: 'Indique ton email.',
-      pattern: "Cet email n'a pas l'air valide.",
-    }),
-  );
-  protected readonly passwordError = computed(() =>
-    this.errorOf(this.form.controls.password, { required: 'Indique ton mot de passe.' }),
-  );
-
-  private errorOf(control: FormControl, messages: Record<string, string>): string | undefined {
-    this.formEvents();
-    const failed = Object.keys(control.errors ?? {})[0];
-    return control.touched && failed ? messages[failed] : undefined;
-  }
+  protected readonly emailError = fieldError(this.form.controls.email, {
+    required: 'Indique ton email.',
+    pattern: "Cet email n'a pas l'air valide.",
+  });
+  protected readonly passwordError = fieldError(this.form.controls.password, {
+    required: 'Indique ton mot de passe.',
+  });
 
   protected submit(): void {
+    if (this.pending) {
+      return;
+    }
     this.form.markAllAsTouched();
     if (this.form.invalid) {
       this.alert.set(invalidSummary(this.form));
       focusFirstInvalid(this.form, this.root);
-      return;
-    }
-    if (this.pending) {
       return;
     }
     this.alert.set(undefined);
