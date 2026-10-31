@@ -50,3 +50,26 @@ describe('tokens.css', () => {
     expect(tokens.match(/:root/g)).toHaveLength(1);
   });
 });
+
+describe('ui.css', () => {
+  const ui = read('src/styles/ui.css');
+
+  it.each(['zb-button', 'zb-field', 'zb-rules', 'zb-logo', 'zb-chip', 'zb-poster', 'zb-sr'])(
+    'defines .%s',
+    (name) => {
+      expect(ui).toContain(`.${name}`);
+    },
+  );
+
+  it('has no Google Fonts import', () => {
+    expect(ui).not.toMatch(/@import|googleapis/);
+  });
+
+  it('uses only the 599px and 1023px max-width breakpoints', () => {
+    const queries = [...ui.matchAll(/@media\s*([^{]+){/g)].map((m) => m[1].trim());
+    expect(queries.length).toBeGreaterThan(0);
+    for (const query of queries) {
+      expect(query).toMatch(/^\(max-width: (599|1023)px\)$/);
+    }
+  });
+});
