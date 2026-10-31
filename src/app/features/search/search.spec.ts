@@ -274,4 +274,74 @@ describe('Search', () => {
       expect(rendered.root.querySelector('.zb-poster')).toBeNull();
     });
   });
+
+  describe('changing the input and failures', () => {
+    it('should cancel the call in flight and show only the results of the new input', async () => {
+      const rendered = await open();
+      vi.useFakeTimers();
+      await type(rendered, 'du');
+      await settle(rendered);
+      const first = rendered.http.expectOne((req) => req.url === '/search');
+
+      await type(rendered, 'dune');
+      await settle(rendered);
+      const second = rendered.http.expectOne((req) => req.url === '/search');
+      second.flush({
+        page: 1,
+        totalPages: 1,
+        totalResults: 1,
+        results: [{ id: 1, title: 'Dune', type: 'MOVIE' }],
+      });
+      rendered.harness.detectChanges();
+
+      expect(first.cancelled).toBe(true);
+      expect(second.request.params.get('query')).toBe('dune');
+      const titles = Array.from(rendered.root.querySelectorAll('.zb-poster-title'));
+      expect(titles.map((title) => title.textContent)).toEqual(['Dune']);
+    });
+
+    it.each([
+      ['a network error', { status: 0, statusText: 'Unknown Error' }],
+      ['a 400', { status: 400, statusText: 'Bad Request' }],
+      ['a 500', { status: 500, statusText: 'Server Error' }],
+    ])('should show a generic message on %s, without detail nor trace id', async (_label, init) => {
+      const rendered = await open();
+      vi.useFakeTimers();
+      await type(rendered, 'dune');
+      await settle(rendered);
+
+      rendered.http
+        .expectOne((req) => req.url === '/search')
+        .flush({ detail: 'secret detail', traceId: 'trace-123' }, init);
+      rendered.harness.detectChanges();
+
+      const alert = query(rendered.root, '[role="alert"]');
+      expect(alert.textContent).toContain('La recherche a échoué');
+      expect(rendered.root.textContent).not.toContain('secret detail');
+      expect(rendered.root.textContent).not.toContain('trace-123');
+      expect(rendered.root.textContent).not.toContain('Aucun résultat');
+      expect(rendered.root.querySelector('[role="status"]')).toBeNull();
+      expect(rendered.root.querySelector('.zb-poster')).toBeNull();
+    });
+
+    it('should keep searching after a failure', async () => {
+      const rendered = await open();
+      vi.useFakeTimers();
+      await type(rendered, 'dune');
+      await settle(rendered);
+      rendered.http
+        .expectOne((req) => req.url === '/search')
+        .flush(null, { status: 500, statusText: 'Server Error' });
+
+      await type(rendered, 'arrakis');
+      await settle(rendered);
+      rendered.http.expectOne((req) => req.url === '/search').flush(EMPTY_RESPONSE);
+      rendered.harness.detectChanges();
+
+      expect(rendered.root.querySelector('[role="alert"]')).toBeNull();
+      expect(rendered.root.querySelector('.zb-empty')?.textContent).toContain(
+        'Aucun résultat pour "arrakis"',
+      );
+    });
+  });
 });
