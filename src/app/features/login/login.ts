@@ -1,7 +1,10 @@
 import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
+import { AuthService } from '../../core/auth/auth.service';
+import { safeReturnUrl } from '../../core/auth/safe-return-url';
 import { FormAlert } from '../../ui/form-alert/form-alert';
 import { focusFirstInvalid, invalidSummary } from '../../ui/forms/invalid-summary';
 import { Button } from '../../ui/button/button';
@@ -116,6 +119,12 @@ export class Login {
 
   protected readonly summary = signal<string | undefined>(undefined);
 
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly returnUrl = safeReturnUrl(
+    inject(ActivatedRoute).snapshot.queryParamMap.get('returnUrl'),
+  );
+  private pending = false;
   private readonly root = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
   private readonly formEvents = toSignal(this.form.events);
 
@@ -140,6 +149,16 @@ export class Login {
     if (this.form.invalid) {
       this.summary.set(invalidSummary(this.form));
       focusFirstInvalid(this.form, this.root);
+      return;
     }
+    if (this.pending) {
+      return;
+    }
+    this.pending = true;
+    const { email, password } = this.form.getRawValue();
+    this.auth
+      .login(email, password)
+      .pipe(finalize(() => (this.pending = false)))
+      .subscribe(() => this.router.navigateByUrl(this.returnUrl));
   }
 }
