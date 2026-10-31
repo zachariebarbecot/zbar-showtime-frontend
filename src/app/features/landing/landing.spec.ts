@@ -141,4 +141,18 @@ describe('Landing', () => {
       TestBed.inject(HttpTestingController).verify();
     });
   });
+
+  describe('footer', () => {
+    it('should contain the logo and exactly the TMDB attribution', async () => {
+      const page = await render();
+
+      const footer = page.querySelector('footer') as HTMLElement;
+
+      expect(footer.querySelectorAll('app-logo')).toHaveLength(1);
+      expect(footer.querySelectorAll('p')).toHaveLength(1);
+      expect(footer.querySelector('p')?.textContent).toBe(
+        'This product uses the TMDB API but is not endorsed or certified by TMDB.',
+      );
+    });
+  });
 });
