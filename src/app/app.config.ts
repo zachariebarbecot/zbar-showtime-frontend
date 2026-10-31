@@ -6,6 +6,8 @@ import {
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
 
+import { provideApiConfiguration } from './api/api-configuration';
+import { environment } from '../environments/environment';
 import { authInterceptor } from './core/auth/auth.interceptor';
 import { routes } from './app.routes';
 
@@ -15,5 +17,6 @@ export const appConfig: ApplicationConfig = {
     provideZonelessChangeDetection(),
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor])),
+    provideApiConfiguration(environment.apiUrl),
   ],
 };
