@@ -43,6 +43,13 @@ describe('App', () => {
     expect(TestBed.inject(Router).url).toBe(url);
   });
 
+  it('renders the landing page at / for a guest', async () => {
+    const harness = await setup(null);
+    await harness.navigateByUrl('/');
+
+    expect(harness.routeNativeElement?.querySelector('h1')?.textContent).toBe('Zbar Showtime');
+  });
+
   it('sends a guest from /accueil to /connexion', async () => {
     const harness = await setup(null);
     await harness.navigateByUrl('/accueil');

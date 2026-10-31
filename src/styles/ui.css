@@ -78,7 +78,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f
 .zb-button:disabled { opacity: .45; cursor: not-allowed; }
 
 /* Poster */
-.zb-poster { display: block; width: 160px; color: inherit; text-decoration: none; border-radius: var(--radius-md); }
+.zb-poster { display: block; width: var(--poster-width, 160px); color: inherit; text-decoration: none; border-radius: var(--radius-md); }
 .zb-poster-frame { position: relative; aspect-ratio: 2 / 3; border-radius: var(--radius-md); overflow: hidden; background: var(--surface-raised); transition: box-shadow .15s, transform .15s; }
 .zb-poster:hover .zb-poster-frame { box-shadow: var(--shadow-poster); transform: translateY(-2px); }
 .zb-poster-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -128,8 +128,8 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f
 .zb-btn svg { width: 16px; height: 16px; flex: none; }
 
 /* CastCard */
-.zb-cast { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); width: 112px; text-align: center; }
-.zb-cast-photo { width: 88px; height: 88px; border-radius: var(--radius-pill); overflow: hidden; background: var(--surface-raised); display: flex; align-items: center; justify-content: center; color: var(--ink-muted); font: 700 28px/1 var(--font-display); }
+.zb-cast { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); width: var(--cast-width, 112px); text-align: center; }
+.zb-cast-photo { width: var(--cast-photo-size, 88px); height: var(--cast-photo-size, 88px); border-radius: var(--radius-pill); overflow: hidden; background: var(--surface-raised); display: flex; align-items: center; justify-content: center; color: var(--ink-muted); font: 700 var(--cast-photo-font, 28px)/1 var(--font-display); }
 .zb-cast-photo img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; }
 .zb-cast-name { font-size: 14px; line-height: 18px; font-weight: 600; }
 .zb-cast-role { font-size: 13px; line-height: 18px; color: var(--ink-muted); }

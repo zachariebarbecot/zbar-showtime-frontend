@@ -1,0 +1,73 @@
+<div class="lp">
+  <div class="lp-wrap">
+    <nav class="lp-nav"><app-logo /></nav>
+
+    <header class="lp-hero">
+      <div class="lp-copy">
+        <span class="lp-eyebrow">Films et séries</span>
+        <h1 class="lp-title">Zbar <span>Showtime</span></h1>
+        <p class="lp-slogan">Ce que tu veux voir, ce que tu as vu.</p>
+        <p class="lp-sub">
+          Garde ta watchlist, coche chaque épisode et retrouve où tu en es dans toutes tes séries.
+          Gratuit.
+        </p>
+        <div class="lp-ctas">
+          <app-button size="lg" routerLink="/inscription">Créer un compte</app-button>
+          <app-button size="lg" variant="secondary" routerLink="/connexion"
+            >Se connecter</app-button
+          >
+        </div>
+      </div>
+      <app-poster-wall />
+    </header>
+
+    <section class="lp-section">
+      <h2 class="lp-h2">Tout ton cinéma au même endroit</h2>
+      <p class="lp-lead">Trois gestes suffisent. Essaie-les ici.</p>
+      <div class="lp-features">
+        <article class="lp-card">
+          <h3>Garde une liste</h3>
+          <p>
+            Un clic pour ajouter un film ou une série à ta watchlist. Tu sais toujours quoi regarder
+            ce soir.
+          </p>
+          <div class="lp-demo">
+            <app-status-button kind="watchlist" [(active)]="inWatchlist" />
+            <app-status-button kind="seen" [(active)]="isSeen" />
+          </div>
+        </article>
+        <article class="lp-card">
+          <h3>Suis chaque épisode</h3>
+          <p>
+            Coche les épisodes au fil de l’eau. Zbar te montre où tu en es et le prochain à voir.
+          </p>
+          <div class="lp-demo lp-demo-eps">
+            @for (ep of episodes; track ep.number) {
+              <app-episode-row
+                [season]="2"
+                [episode]="ep.number"
+                [title]="ep.title"
+                [runtime]="ep.runtime"
+                [(seen)]="ep.seen"
+              />
+            }
+          </div>
+        </article>
+        <article class="lp-card">
+          <h3>Tout sur chaque titre</h3>
+          <p>Synopsis, casting, saisons : des fiches complètes en français, grâce à TMDB.</p>
+          <div class="lp-demo">
+            @for (member of cast; track member.name) {
+              <app-cast-card [name]="member.name" [character]="member.character" />
+            }
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <footer class="lp-foot">
+      <app-logo />
+      <p>This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
+    </footer>
+  </div>
+</div>
