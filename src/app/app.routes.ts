@@ -5,7 +5,6 @@ import { guestGuard } from './core/auth/guest.guard';
 const login = () => import('./features/login/login').then((m) => m.Login);
 const signup = () => import('./features/signup/signup').then((m) => m.Signup);
 const home = () => import('./features/home/home').then((m) => m.Home);
-const placeholder = () => import('./features/placeholder/placeholder').then((m) => m.Placeholder);
 
 export const routes: Routes = [
   {
