@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { EpisodeRow } from './episode-row';
+import { query } from '../../testing/query';
 
 describe('EpisodeRow', () => {
   async function render(seen = false) {
@@ -10,8 +11,8 @@ describe('EpisodeRow', () => {
     fixture.componentRef.setInput('runtime', 51);
     fixture.componentRef.setInput('seen', seen);
     await fixture.whenStable();
-    const root = fixture.nativeElement as HTMLElement;
-    return { fixture, root, check: root.querySelector('button') as HTMLButtonElement };
+    const root: HTMLElement = fixture.nativeElement;
+    return { fixture, root, check: query<HTMLButtonElement>(root, 'button') };
   }
 
   it('should show the code, the title and the runtime', async () => {

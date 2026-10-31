@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Poster, PosterEpisode, PosterProgress, PosterStatus } from './poster';
+import { query } from '../../testing/query';
 
 describe('Poster', () => {
   async function render(inputs: {
@@ -31,7 +32,7 @@ describe('Poster', () => {
   ] as const)('should show the %s badge with its icon and word', async (status, word) => {
     const poster = await render({ title: 'Past Lives', status });
 
-    const badge = poster.querySelector('.zb-poster-badge .zb-badge') as HTMLElement;
+    const badge = query(poster, '.zb-poster-badge .zb-badge');
 
     expect(badge.classList).toContain(`zb-badge-${status}`);
     expect(badge.textContent?.trim()).toBe(word);
@@ -49,10 +50,10 @@ describe('Poster', () => {
     expect(poster.querySelector('.zb-poster-code')?.getAttribute('aria-label')).toBe(
       'Prochain épisode S02E04',
     );
-    const bar = poster.querySelector('.zb-poster-progress') as HTMLElement;
+    const bar = query(poster, '.zb-poster-progress');
     expect(bar.getAttribute('aria-valuenow')).toBe('12');
     expect(bar.getAttribute('aria-valuemax')).toBe('24');
-    expect((bar.firstElementChild as HTMLElement).style.width).toBe('50%');
+    expect(query<HTMLElement>(bar, 'span').style.width).toBe('50%');
   });
 
   it('should show the in-progress badge when there is progress but no status', async () => {

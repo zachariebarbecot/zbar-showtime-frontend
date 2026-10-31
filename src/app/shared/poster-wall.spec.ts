@@ -2,6 +2,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { POSTER_WALL } from './fixtures/posters';
 import { PosterWall } from './poster-wall';
+import { query } from '../testing/query';
 
 describe('PosterWall', () => {
   async function render(): Promise<HTMLElement> {
@@ -42,7 +43,7 @@ describe('PosterWall', () => {
   it('should be hidden from assistive technologies and not focusable', async () => {
     const wall = await render();
 
-    const root = wall.querySelector('.pw') as HTMLElement;
+    const root = query(wall, '.pw');
 
     expect(root.getAttribute('aria-hidden')).toBe('true');
     expect(root.querySelectorAll('a, button, input, [tabindex]')).toHaveLength(0);

@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { StatusButton } from './status-button';
+import { query } from '../../testing/query';
 
 describe('StatusButton', () => {
   async function render(kind: 'watchlist' | 'seen', active = false, size?: 'sm') {
@@ -8,7 +9,7 @@ describe('StatusButton', () => {
     fixture.componentRef.setInput('active', active);
     if (size) fixture.componentRef.setInput('size', size);
     await fixture.whenStable();
-    const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+    const button = query<HTMLButtonElement>(fixture.nativeElement, 'button');
     return { fixture, button, label: () => button.textContent?.trim() };
   }
 

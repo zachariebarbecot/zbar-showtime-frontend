@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Landing } from './landing';
+import { query } from '../../testing/query';
 
 describe('Landing', () => {
   async function render(): Promise<HTMLElement> {
@@ -16,7 +17,7 @@ describe('Landing', () => {
     it('should show only the logo in the header', async () => {
       const page = await render();
 
-      const nav = page.querySelector('nav') as HTMLElement;
+      const nav = query(page, 'nav');
 
       expect(nav.querySelectorAll('app-logo')).toHaveLength(1);
       expect(nav.querySelectorAll('a, button')).toHaveLength(0);
@@ -25,7 +26,7 @@ describe('Landing', () => {
     it('should show the name, the slogan and a tagline', async () => {
       const page = await render();
 
-      const hero = page.querySelector('header.lp-hero') as HTMLElement;
+      const hero = query(page, 'header.lp-hero');
 
       expect(hero.querySelector('h1')?.textContent).toBe('Zbar Showtime');
       expect(hero.textContent).toContain('Ce que tu veux voir, ce que tu as vu.');
@@ -152,7 +153,7 @@ describe('Landing', () => {
     it('should contain the logo and exactly the TMDB attribution', async () => {
       const page = await render();
 
-      const footer = page.querySelector('footer') as HTMLElement;
+      const footer = query(page, 'footer');
 
       expect(footer.querySelectorAll('app-logo')).toHaveLength(1);
       expect(footer.querySelectorAll('p')).toHaveLength(1);
