@@ -55,6 +55,21 @@ describe('NotFound', () => {
     expect(TestBed.inject(Meta).getTag('name="robots"')?.content).toBe('noindex');
   });
 
+  it('links a visitor back to /', async () => {
+    const root = await setup(false);
+
+    expect(root.querySelector('main a.zb-button-primary')?.getAttribute('href')).toBe('/');
+  });
+
+  it('links a signed-in user back to /accueil', async () => {
+    const root = await setup(true);
+
+    expect(root.querySelector('main a.zb-button-primary')?.textContent).toContain(
+      'Retour à l’accueil',
+    );
+    expect(root.querySelector('main a.zb-button-primary')?.getAttribute('href')).toBe('/accueil');
+  });
+
   it('offers neither the search link nor the removed-title message', async () => {
     const root = await setup(true);
 
