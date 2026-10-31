@@ -19,17 +19,19 @@ import { UserMenu } from '../user-menu/user-menu';
             <span>Accueil</span>
           </a>
         </nav>
-        <app-user-menu
-          [firstName]="user().firstName"
-          [lastName]="user().lastName"
-          [email]="user().email"
-          (logout)="logout.emit()"
-        />
+        @if (user(); as user) {
+          <app-user-menu
+            [firstName]="user.firstName"
+            [lastName]="user.lastName"
+            [email]="user.email"
+            (logout)="logout.emit()"
+          />
+        }
       </div>
     </header>
   `,
 })
 export class AppHeader {
-  readonly user = input.required<User>();
+  readonly user = input<User>();
   readonly logout = output<void>();
 }

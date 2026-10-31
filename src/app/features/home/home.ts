@@ -1,20 +1,28 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { AuthService, User } from '../../core/auth/auth.service';
+import { FormAlert } from '../../ui/form-alert/form-alert';
 import { AppHeader } from '../../ui/app-header/app-header';
+
+const isUnauthorized = (error: unknown): boolean =>
+  error instanceof HttpErrorResponse && error.status === 401;
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-home',
-  imports: [AppHeader],
+  imports: [AppHeader, FormAlert],
   template: `
-    @if (user(); as user) {
-      <app-header [user]="user" (logout)="logout()" />
-      <main class="hm-wrap">
-        <h1 class="hm-hello">Salut, <span>{{ user.firstName }}.</span></h1>
-      </main>
-    }
+    <app-header [user]="user()" (logout)="logout()" />
+    <main class="hm-wrap">
+      @if (user(); as me) {
+        <!-- prettier-ignore -->
+        <h1 class="hm-hello">Salut, <span>{{ me.firstName }}.</span></h1>
+      } @else if (failed()) {
+        <app-form-alert message="Une erreur est survenue. Réessaie dans un instant." />
+      }
+    </main>
   `,
   styles: `
     .hm-wrap {
@@ -51,13 +59,17 @@ export class Home {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
-  protected readonly user = signal<User | null>(null);
+  protected readonly user = signal<User | undefined>(undefined);
+  protected readonly failed = signal(false);
 
   constructor() {
     this.auth
       .me()
       .pipe(takeUntilDestroyed())
-      .subscribe({ next: (user) => this.user.set(user), error: () => undefined });
+      .subscribe({
+        next: (user) => this.user.set(user),
+        error: (error: unknown) => this.failed.set(!isUnauthorized(error)),
+      });
   }
 
   protected logout(): void {
