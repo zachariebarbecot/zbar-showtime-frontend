@@ -76,11 +76,6 @@ const STEP_BY_KEY: Readonly<Record<string, number>> = {
       position: absolute;
       inset: -6px 0;
     }
-    .zb-chip[aria-checked='true'] {
-      background: var(--ink);
-      border-color: var(--ink);
-      color: var(--bg);
-    }
   `,
   host: { style: 'display: contents' },
   providers: [

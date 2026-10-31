@@ -19,6 +19,17 @@ export const isApiRequest = (url: string): boolean =>
     ? url.startsWith('/') && !url.startsWith('//')
     : url.startsWith(`${environment.apiUrl}/`);
 
+export type Gender = 'MALE' | 'FEMALE';
+
+export interface RegisterRequest {
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly birthDate: string;
+  readonly gender: Gender;
+  readonly email: string;
+  readonly password: string;
+}
+
 interface LoginResponse {
   readonly token: string;
 }
@@ -64,6 +75,10 @@ export class AuthService {
       }),
       map(() => undefined),
     );
+  }
+
+  register(request: RegisterRequest): Observable<void> {
+    return this.http.post<void>(`${authUrl()}register`, request);
   }
 
   logout(): void {

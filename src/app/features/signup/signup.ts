@@ -1,7 +1,10 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, ElementRef, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { catchError, finalize, map, of, switchMap } from 'rxjs';
+import { AuthService, Gender } from '../../core/auth/auth.service';
 import { Button } from '../../ui/button/button';
 import { FormAlert } from '../../ui/form-alert/form-alert';
 import { EMAIL_PATTERN, fieldError } from '../../ui/forms/field-error';
@@ -11,7 +14,10 @@ import { PasswordRules } from '../../ui/password-rules/password-rules';
 import { RadioChips, RadioOption } from '../../ui/radio-chips/radio-chips';
 import { TextField } from '../../ui/text-field/text-field';
 import { EARLIEST_BIRTH_DATE, latestBirthDate, validBirthDate } from './birth-date';
+import { rejectedFields } from './server-errors';
 import { notBlank, passwordRules, sameAs, withoutEmail } from './signup-validators';
+
+const GENERIC_ERROR = 'Une erreur est survenue. Réessaie dans un instant.';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -33,79 +39,90 @@ import { notBlank, passwordRules, sameAs, withoutEmail } from './signup-validato
         <p class="su-slogan">Ce que tu veux voir,<span>ce que tu as vu.</span></p>
       </aside>
       <main class="su-main">
-        <form class="su-form" novalidate [formGroup]="form" (ngSubmit)="submit()">
-          <div class="su-mobile-logo"><app-logo /></div>
-          <div>
-            <h1 class="su-h1">Créer un compte</h1>
-            <p class="su-lead">Tous les champs sont obligatoires.</p>
-          </div>
-          @if (alert(); as message) {
-            <app-form-alert [message]="message" />
-          }
-          <div class="su-row">
+        @if (welcome(); as done) {
+          <section class="su-done" role="status">
+            <span class="su-done-badge">Compte créé</span>
+            <h1 class="su-h1">Bienvenue, {{ done.firstName }}.</h1>
+            <p class="su-lead">
+              Ton compte est prêt. Commence par ajouter quelques films ou séries à ta watchlist.
+            </p>
+            <app-button size="lg" [routerLink]="done.next">Commencer</app-button>
+          </section>
+        } @else {
+          <form class="su-form" novalidate [formGroup]="form" (ngSubmit)="submit()">
+            <div class="su-mobile-logo"><app-logo /></div>
+            <div>
+              <h1 class="su-h1">Créer un compte</h1>
+              <p class="su-lead">Tous les champs sont obligatoires.</p>
+            </div>
+            @if (alert(); as message) {
+              <app-form-alert [message]="message" />
+            }
+            <div class="su-row">
+              <app-text-field
+                name="firstName"
+                label="Prénom"
+                autocomplete="given-name"
+                [error]="firstNameError()"
+                formControlName="firstName"
+              />
+              <app-text-field
+                name="lastName"
+                label="Nom"
+                autocomplete="family-name"
+                [error]="lastNameError()"
+                formControlName="lastName"
+              />
+            </div>
             <app-text-field
-              name="firstName"
-              label="Prénom"
-              autocomplete="given-name"
-              [error]="firstNameError()"
-              formControlName="firstName"
+              name="birthDate"
+              label="Date de naissance"
+              type="date"
+              autocomplete="bday"
+              [error]="birthDateError()"
+              [min]="earliestBirthDate"
+              [max]="latestBirthDate"
+              formControlName="birthDate"
+            />
+            <app-radio-chips
+              name="gender"
+              label="Genre"
+              [options]="genders"
+              [error]="genderError()"
+              formControlName="gender"
             />
             <app-text-field
-              name="lastName"
-              label="Nom"
-              autocomplete="family-name"
-              [error]="lastNameError()"
-              formControlName="lastName"
+              name="email"
+              label="Email"
+              type="email"
+              autocomplete="email"
+              [error]="emailError()"
+              formControlName="email"
             />
-          </div>
-          <app-text-field
-            name="birthDate"
-            label="Date de naissance"
-            type="date"
-            autocomplete="bday"
-            [error]="birthDateError()"
-            [min]="earliestBirthDate"
-            [max]="latestBirthDate"
-            formControlName="birthDate"
-          />
-          <app-radio-chips
-            name="gender"
-            label="Genre"
-            [options]="genders"
-            [error]="genderError()"
-            formControlName="gender"
-          />
-          <app-text-field
-            name="email"
-            label="Email"
-            type="email"
-            autocomplete="email"
-            [error]="emailError()"
-            formControlName="email"
-          />
-          <app-text-field
-            name="password"
-            label="Mot de passe"
-            type="password"
-            autocomplete="new-password"
-            [error]="passwordError()"
-            [describedBy]="rulesId"
-            formControlName="password"
-          />
-          <app-password-rules [id]="rulesId" [value]="password()" [showErrors]="submitted()" />
-          <app-text-field
-            name="confirmation"
-            label="Confirme le mot de passe"
-            type="password"
-            autocomplete="new-password"
-            [error]="confirmationError()"
-            formControlName="confirmation"
-          />
-          <app-button type="submit" size="lg" block>Créer un compte</app-button>
-          <p class="su-alt">
-            Déjà un compte ? <a class="zb-link" routerLink="/connexion">Se connecter</a>
-          </p>
-        </form>
+            <app-text-field
+              name="password"
+              label="Mot de passe"
+              type="password"
+              autocomplete="new-password"
+              [error]="passwordError()"
+              [describedBy]="rulesId"
+              formControlName="password"
+            />
+            <app-password-rules [id]="rulesId" [value]="password()" [showErrors]="submitted()" />
+            <app-text-field
+              name="confirmation"
+              label="Confirme le mot de passe"
+              type="password"
+              autocomplete="new-password"
+              [error]="confirmationError()"
+              formControlName="confirmation"
+            />
+            <app-button type="submit" size="lg" block>Créer un compte</app-button>
+            <p class="su-alt">
+              Déjà un compte ? <a class="zb-link" routerLink="/connexion">Se connecter</a>
+            </p>
+          </form>
+        }
       </main>
     </div>
   `,
@@ -165,6 +182,24 @@ import { notBlank, passwordRules, sameAs, withoutEmail } from './signup-validato
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: var(--space-4);
+    }
+    .su-done {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      align-items: flex-start;
+    }
+    .su-done-badge {
+      display: inline-flex;
+      padding: 2px var(--space-2);
+      border-radius: var(--radius-sm);
+      background: var(--seen);
+      color: var(--on-seen);
+      font: 600 12px/16px var(--font-sans);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
     }
     .su-alt {
       margin: 0;
@@ -232,7 +267,10 @@ export class Signup {
     firstName: new FormControl('', { nonNullable: true, validators: [notBlank] }),
     lastName: new FormControl('', { nonNullable: true, validators: [notBlank] }),
     birthDate: new FormControl('', { nonNullable: true, validators: [validBirthDate] }),
-    gender: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    gender: new FormControl<Gender | ''>('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
     email: this.email,
     password: this.passwordControl,
     confirmation: this.confirmation,
@@ -240,27 +278,35 @@ export class Signup {
 
   protected readonly alert = signal<string | undefined>(undefined);
   protected readonly submitted = signal(false);
+  protected readonly welcome = signal<{ firstName: string; next: string } | undefined>(undefined);
+  private readonly auth = inject(AuthService);
+  private pending = false;
   private readonly root = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
 
   protected readonly password = toSignal(this.passwordControl.valueChanges, { initialValue: '' });
 
   protected readonly firstNameError = fieldError(this.form.controls.firstName, {
     required: 'Indique ton prénom.',
+    server: 'Indique ton prénom.',
   });
   protected readonly lastNameError = fieldError(this.form.controls.lastName, {
     required: 'Indique ton nom.',
+    server: 'Indique ton nom.',
   });
   protected readonly birthDateError = fieldError(this.form.controls.birthDate, {
     birthDate: 'Indique une date de naissance valide.',
+    server: 'Indique une date de naissance valide.',
   });
   protected readonly genderError = fieldError(this.form.controls.gender, {
     required: 'Choisis une option.',
+    server: 'Choisis une option.',
   });
   protected readonly passwordError = fieldError(this.passwordControl, {
     required: 'Choisis un mot de passe.',
     rules: 'Ton mot de passe ne respecte pas encore toutes les règles.',
     maxlength: 'Ton mot de passe ne doit pas dépasser 64 caractères.',
     containsEmail: 'Ton mot de passe ne doit pas contenir ton email.',
+    server: 'Ton mot de passe ne respecte pas encore toutes les règles.',
   });
   protected readonly confirmationError = fieldError(this.confirmation, {
     required: 'Retape ton mot de passe.',
@@ -269,21 +315,71 @@ export class Signup {
   protected readonly emailError = fieldError(this.email, {
     required: 'Indique ton email.',
     pattern: "Cet email n'a pas l'air valide.",
+    conflict: 'Un compte existe déjà avec cet email.',
+    server: "Cet email n'a pas l'air valide.",
   });
 
   constructor() {
-    this.email.valueChanges.subscribe(() => this.passwordControl.updateValueAndValidity());
-    this.passwordControl.valueChanges.subscribe(() => this.confirmation.updateValueAndValidity());
+    this.email.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.passwordControl.updateValueAndValidity());
+    this.passwordControl.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.confirmation.updateValueAndValidity());
   }
 
   protected submit(): void {
+    if (this.pending) {
+      return;
+    }
     this.form.markAllAsTouched();
     this.submitted.set(true);
-    if (this.form.invalid) {
+    const { confirmation: _, gender, ...fields } = this.form.getRawValue();
+    if (this.form.invalid || gender === '') {
       this.alert.set(invalidSummary(this.form));
       focusFirstInvalid(this.form, this.root);
       return;
     }
     this.alert.set(undefined);
+    this.pending = true;
+    const account = { ...fields, gender };
+    this.auth
+      .register(account)
+      .pipe(
+        switchMap(() =>
+          this.auth.login(account.email, account.password).pipe(
+            map(() => '/accueil'),
+            catchError(() => of('/connexion')),
+          ),
+        ),
+        finalize(() => (this.pending = false)),
+      )
+      .subscribe({
+        next: (next) => {
+          this.form.reset();
+          this.welcome.set({ firstName: account.firstName.trim(), next });
+        },
+        error: (error: unknown) => this.fail(error),
+      });
+  }
+
+  private fail(error: unknown): void {
+    if (!(error instanceof HttpErrorResponse)) {
+      this.alert.set(GENERIC_ERROR);
+      return;
+    }
+    if (error.status === 409) {
+      this.email.setErrors({ conflict: true });
+      focusFirstInvalid(this.form, this.root);
+      return;
+    }
+    const rejected = rejectedFields(error.error).flatMap((name) => this.form.get(name) ?? []);
+    if (rejected.length === 0) {
+      this.alert.set(GENERIC_ERROR);
+      return;
+    }
+    rejected.forEach((control) => control.setErrors({ server: true }));
+    this.alert.set(invalidSummary(this.form));
+    focusFirstInvalid(this.form, this.root);
   }
 }

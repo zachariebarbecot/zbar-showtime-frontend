@@ -3,8 +3,9 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { Component, provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { throwError } from 'rxjs';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { TOKEN_STORAGE } from '../../core/auth/auth.service';
+import { AuthService, TOKEN_STORAGE } from '../../core/auth/auth.service';
 import { Signup } from './signup';
 
 @Component({ template: '' })
@@ -31,12 +32,13 @@ describe('Signup', () => {
         provideRouter([
           { path: 'inscription', component: Signup },
           { path: 'connexion', component: Page },
+          { path: 'accueil', component: Page },
         ]),
         { provide: TOKEN_STORAGE, useValue: storage },
       ],
     });
     const harness = await RouterTestingHarness.create();
-    await harness.navigateByUrl('/inscription', Signup);
+    const page = await harness.navigateByUrl('/inscription', Signup);
     const root = harness.routeNativeElement as HTMLElement;
     document.body.append(root);
     const input = (name: string) =>
@@ -64,7 +66,19 @@ describe('Signup', () => {
       await harness.fixture.whenStable();
     };
     const http = TestBed.inject(HttpTestingController);
-    return { harness, root, input, chips, type, blur, chooseGender, leaveGender, submit, http };
+    return {
+      harness,
+      page,
+      root,
+      input,
+      chips,
+      type,
+      blur,
+      chooseGender,
+      leaveGender,
+      submit,
+      http,
+    };
   }
 
   describe('page content', () => {
@@ -310,6 +324,16 @@ describe('Signup', () => {
       expect(root.textContent).toContain(withEmail);
     });
 
+    it('should not compare the password with an invalid email', async () => {
+      const { root, type, blur } = await render();
+      await type('email', 'zoe');
+
+      await type('password', 'My-zoe-Abcdef1!');
+      await blur('password');
+
+      expect(root.textContent).not.toContain(withEmail);
+    });
+
     it('should check the password again when the email changes', async () => {
       const { root, type, blur } = await render();
       await type('email', 'other@example.org');
@@ -427,7 +451,7 @@ describe('Signup', () => {
       expect(root.querySelector('.zb-rule-error')).not.toBeNull();
     });
 
-    it('should show no summary and send nothing when the form is valid', async () => {
+    it('should show no summary when the form is valid', async () => {
       const page = await render();
       await fillAllButGender(page);
       await page.chooseGender(1);
@@ -435,7 +459,6 @@ describe('Signup', () => {
       await page.submit();
 
       expect(summary(page.root)).toBeUndefined();
-      page.http.expectNone(() => true);
     });
 
     it('should remove the summary once the form becomes valid and is submitted', async () => {
@@ -448,6 +471,223 @@ describe('Signup', () => {
       await page.submit();
 
       expect(summary(page.root)).toBeUndefined();
+    });
+  });
+  describe('submission', () => {
+    const generic = 'Une erreur est survenue. Réessaie dans un instant.';
+
+    async function fillValid(page: Awaited<ReturnType<typeof render>>, firstName = ' Zoé ') {
+      await page.type('firstName', firstName);
+      await page.type('lastName', 'Martin');
+      await page.type('birthDate', '2000-02-29');
+      await page.chooseGender(1);
+      await page.type('email', 'zoe@example.org');
+      await page.type('password', 'Abcdefghij1!');
+      await page.type('confirmation', 'Abcdefghij1!');
+    }
+
+    const registered = {
+      firstName: ' Zoé ',
+      lastName: 'Martin',
+      birthDate: '2000-02-29',
+      gender: 'FEMALE',
+      email: 'zoe@example.org',
+      password: 'Abcdefghij1!',
+    };
+
+    async function register(page: Awaited<ReturnType<typeof render>>, loginOk = true) {
+      await fillValid(page);
+      await page.submit();
+      page.http.expectOne('/auth/register').flush(null, { status: 201, statusText: 'Created' });
+      const login = page.http.expectOne('/auth/login');
+      if (loginOk) {
+        login.flush({ token: 'jwt' });
+      } else {
+        login.flush(null, { status: 500, statusText: 'Server Error' });
+      }
+      await page.harness.fixture.whenStable();
+    }
+
+    const start = (root: HTMLElement) =>
+      Array.from(root.querySelectorAll('a')).find((a) => a.textContent?.includes('Commencer'));
+
+    describe('success', () => {
+      it('should send the account once, without confirmation, then log in', async () => {
+        const page = await render();
+        await fillValid(page);
+
+        await page.submit();
+        await page.submit();
+
+        const request = page.http.expectOne('/auth/register');
+        expect(request.request.method).toBe('POST');
+        expect(request.request.body).toEqual(registered);
+        request.flush(null, { status: 201, statusText: 'Created' });
+        const login = page.http.expectOne('/auth/login');
+        expect(login.request.body).toEqual({
+          email: 'zoe@example.org',
+          password: 'Abcdefghij1!',
+        });
+        login.flush({ token: 'jwt' });
+        expect(storage.setItem).toHaveBeenCalledWith('token', 'jwt');
+      });
+
+      it('should welcome the user by trimmed first name, as text, with a link to the home', async () => {
+        const page = await render();
+        await fillValid(page, ' <b>Zoé</b> ');
+        await page.submit();
+        page.http.expectOne('/auth/register').flush(null, { status: 201, statusText: 'Created' });
+        page.http.expectOne('/auth/login').flush({ token: 'jwt' });
+        await page.harness.fixture.whenStable();
+
+        const title = page.root.querySelector('h1');
+        expect(title?.textContent).toBe('Bienvenue, <b>Zoé</b>.');
+        expect(title?.querySelector('b')).toBeNull();
+        expect(start(page.root)?.getAttribute('href')).toBe('/accueil');
+        expect(page.root.querySelector('form')).toBeNull();
+      });
+    });
+
+    describe('email already used', () => {
+      it('should explain it on the email field only and focus it', async () => {
+        const page = await render();
+        await fillValid(page);
+        await page.submit();
+
+        page.http
+          .expectOne('/auth/register')
+          .flush({ detail: 'Email already used' }, { status: 409, statusText: 'Conflict' });
+        await page.harness.fixture.whenStable();
+
+        const messages = Array.from(page.root.querySelectorAll('.zb-field-error')).map((m) =>
+          m.textContent?.trim(),
+        );
+        expect(messages).toEqual(['Un compte existe déjà avec cet email.']);
+        expect(page.root.querySelector('[role="alert"]')).toBeNull();
+        expect(document.activeElement).toBe(page.input('email'));
+        page.http.expectNone('/auth/login');
+      });
+    });
+
+    describe('rejected fields', () => {
+      const reject = async (
+        page: Awaited<ReturnType<typeof render>>,
+        errors: { field: string; message: string }[],
+      ) => {
+        await fillValid(page);
+        await page.submit();
+        page.http
+          .expectOne('/auth/register')
+          .flush({ errors }, { status: 400, statusText: 'Bad Request' });
+        await page.harness.fixture.whenStable();
+      };
+      const messages = (root: HTMLElement) =>
+        Array.from(root.querySelectorAll('.zb-field-error')).map((m) => m.textContent?.trim());
+
+      it('should show a French message on each rejected field and the summary', async () => {
+        const page = await render();
+
+        await reject(page, [
+          { field: 'password', message: 'Password must contain a digit' },
+          { field: 'lastName', message: 'Last name cannot be blank' },
+          { field: 'birthDate', message: 'Birth date must be in the past' },
+        ]);
+
+        expect(messages(page.root)).toEqual([
+          'Indique ton nom.',
+          'Indique une date de naissance valide.',
+          'Ton mot de passe ne respecte pas encore toutes les règles.',
+        ]);
+        expect(page.root.querySelector('[role="alert"]')?.textContent).toContain(
+          '3 champs sont à corriger.',
+        );
+        expect(document.activeElement).toBe(page.input('lastName'));
+      });
+
+      it('should cover first name, gender and email', async () => {
+        const page = await render();
+
+        await reject(page, [
+          { field: 'gender', message: 'Gender must be MALE or FEMALE' },
+          { field: 'email', message: 'Email must be valid' },
+          { field: 'firstName', message: 'First name cannot be blank' },
+        ]);
+
+        expect(messages(page.root)).toEqual([
+          'Indique ton prénom.',
+          'Choisis une option.',
+          "Cet email n'a pas l'air valide.",
+        ]);
+        expect(document.activeElement).toBe(page.input('firstName'));
+      });
+
+      it('should show the generic message in an alert for an unknown field', async () => {
+        const page = await render();
+
+        await reject(page, [{ field: 'nickname', message: 'Nickname is taken' }]);
+
+        expect(page.root.querySelector('[role="alert"]')?.textContent).toContain(generic);
+        expect(messages(page.root)).toEqual([]);
+      });
+    });
+
+    describe('after success', () => {
+      it('should not keep the passwords in memory', async () => {
+        const page = await render();
+
+        await register(page);
+
+        const { password, confirmation } = page.page['form'].getRawValue();
+        expect(password).toBe('');
+        expect(confirmation).toBe('');
+      });
+    });
+
+    describe('unexpected error', () => {
+      it('should show the generic message for an error that is not an HTTP one', async () => {
+        const page = await render();
+        vi.spyOn(TestBed.inject(AuthService), 'register').mockReturnValue(
+          throwError(() => new Error('boom')),
+        );
+        await fillValid(page);
+
+        await page.submit();
+
+        expect(page.root.querySelector('[role="alert"]')?.textContent).toContain(generic);
+      });
+    });
+
+    describe('server failure', () => {
+      it.each([
+        ['a 5xx', { status: 503, statusText: 'Unavailable' }],
+        ['a network error', { status: 0, statusText: 'Unknown Error' }],
+      ])('should keep the values and allow another try after %s', async (_, response) => {
+        const page = await render();
+        await fillValid(page);
+        await page.submit();
+
+        page.http.expectOne('/auth/register').flush(null, response);
+        await page.harness.fixture.whenStable();
+
+        expect(page.root.querySelector('[role="alert"]')?.textContent).toContain(generic);
+        expect(page.input('lastName').value).toBe('Martin');
+        expect(page.root.querySelector('button[type="submit"]')?.hasAttribute('disabled')).toBe(
+          false,
+        );
+        await page.submit();
+        page.http.expectOne('/auth/register');
+      });
+    });
+
+    describe('login failure after registration', () => {
+      it('should still welcome the user and lead to the login page', async () => {
+        const page = await render();
+
+        await register(page, false);
+
+        expect(page.root.querySelector('h1')?.textContent).toBe('Bienvenue, Zoé.');
+        expect(start(page.root)?.getAttribute('href')).toBe('/connexion');
+      });
     });
   });
 });

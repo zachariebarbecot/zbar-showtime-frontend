@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { AuthService, TOKEN_STORAGE } from './auth.service';
+import { AuthService, RegisterRequest, TOKEN_STORAGE } from './auth.service';
 
 const STORAGE_KEY = 'token';
 
@@ -73,6 +73,28 @@ describe('AuthService', () => {
     expect(storage.getItem(STORAGE_KEY)).toBe(token);
     expect(service.token()).toBe(token);
     expect(service.isAuthenticated()).toBe(true);
+  });
+
+  it('register posts the account fields', () => {
+    const body: RegisterRequest = {
+      firstName: 'Zoé',
+      lastName: 'Martin',
+      birthDate: '2000-02-29',
+      gender: 'FEMALE',
+      email: 'zoe@example.org',
+      password: 'Abcdefghij1!',
+    };
+    let done = false;
+
+    create()
+      .register(body)
+      .subscribe(() => (done = true));
+    const request = TestBed.inject(HttpTestingController).expectOne('/auth/register');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual(body);
+    request.flush(null, { status: 201, statusText: 'Created' });
+
+    expect(done).toBe(true);
   });
 
   it('logout removes the token', () => {
