@@ -9,7 +9,7 @@ import { PasswordRules } from '../../ui/password-rules/password-rules';
 import { RadioChips, RadioOption } from '../../ui/radio-chips/radio-chips';
 import { TextField } from '../../ui/text-field/text-field';
 import { EARLIEST_BIRTH_DATE, latestBirthDate, validBirthDate } from './birth-date';
-import { notBlank } from './signup-validators';
+import { notBlank, passwordRules, sameAs, withoutEmail } from './signup-validators';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -74,6 +74,7 @@ import { notBlank } from './signup-validators';
             label="Mot de passe"
             type="password"
             autocomplete="new-password"
+            [error]="passwordError()"
             [describedBy]="rulesId"
             formControlName="password"
           />
@@ -83,6 +84,7 @@ import { notBlank } from './signup-validators';
             label="Confirme le mot de passe"
             type="password"
             autocomplete="new-password"
+            [error]="confirmationError()"
             formControlName="confirmation"
           />
           <app-button type="submit" size="lg" block>Créer un compte</app-button>
@@ -194,22 +196,35 @@ export class Signup {
     { value: 'FEMALE', label: 'Femme' },
   ];
 
+  private readonly email = new FormControl('', {
+    nonNullable: true,
+    validators: [Validators.required, Validators.pattern(EMAIL_PATTERN)],
+  });
+  private readonly passwordControl = new FormControl('', {
+    nonNullable: true,
+    validators: [
+      Validators.required,
+      passwordRules,
+      Validators.maxLength(64),
+      withoutEmail(this.email),
+    ],
+  });
+  private readonly confirmation = new FormControl('', {
+    nonNullable: true,
+    validators: [Validators.required, sameAs(this.passwordControl)],
+  });
+
   protected readonly form = new FormGroup({
     firstName: new FormControl('', { nonNullable: true, validators: [notBlank] }),
     lastName: new FormControl('', { nonNullable: true, validators: [notBlank] }),
     birthDate: new FormControl('', { nonNullable: true, validators: [validBirthDate] }),
     gender: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    email: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.pattern(EMAIL_PATTERN)],
-    }),
-    password: new FormControl('', { nonNullable: true }),
-    confirmation: new FormControl('', { nonNullable: true }),
+    email: this.email,
+    password: this.passwordControl,
+    confirmation: this.confirmation,
   });
 
-  protected readonly password = toSignal(this.form.controls.password.valueChanges, {
-    initialValue: '',
-  });
+  protected readonly password = toSignal(this.passwordControl.valueChanges, { initialValue: '' });
 
   protected readonly firstNameError = fieldError(this.form.controls.firstName, {
     required: 'Indique ton prénom.',
@@ -223,10 +238,25 @@ export class Signup {
   protected readonly genderError = fieldError(this.form.controls.gender, {
     required: 'Choisis une option.',
   });
+  protected readonly passwordError = fieldError(this.passwordControl, {
+    required: 'Choisis un mot de passe.',
+    rules: 'Ton mot de passe ne respecte pas encore toutes les règles.',
+    maxlength: 'Ton mot de passe ne doit pas dépasser 64 caractères.',
+    containsEmail: 'Ton mot de passe ne doit pas contenir ton email.',
+  });
+  protected readonly confirmationError = fieldError(this.confirmation, {
+    required: 'Retape ton mot de passe.',
+    mismatch: 'Les deux mots de passe ne correspondent pas.',
+  });
   protected readonly emailError = fieldError(this.form.controls.email, {
     required: 'Indique ton email.',
     pattern: "Cet email n'a pas l'air valide.",
   });
+
+  constructor() {
+    this.email.valueChanges.subscribe(() => this.passwordControl.updateValueAndValidity());
+    this.passwordControl.valueChanges.subscribe(() => this.confirmation.updateValueAndValidity());
+  }
 
   protected submit(): void {
     this.form.markAllAsTouched();
