@@ -27,12 +27,6 @@ const isUnauthorized = (error: unknown): boolean =>
     </main>
   `,
   styles: `
-    .hm-wrap {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: var(--space-8);
-      box-sizing: border-box;
-    }
     .hm-hello {
       margin: 0;
       font: 700 40px/42px var(--font-display);
@@ -41,15 +35,7 @@ const isUnauthorized = (error: unknown): boolean =>
     .hm-hello span {
       color: var(--marquee-ink);
     }
-    @media (max-width: 1023px) {
-      .hm-wrap {
-        padding: var(--space-6);
-      }
-    }
     @media (max-width: 599px) {
-      .hm-wrap {
-        padding: var(--space-4);
-      }
       .hm-hello {
         font-size: 32px;
         line-height: 34px;

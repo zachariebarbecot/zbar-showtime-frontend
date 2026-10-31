@@ -67,12 +67,6 @@ const FAILED: SearchState = { kind: 'error' };
     </main>
   `,
   styles: `
-    .hm-wrap {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: var(--space-8);
-      box-sizing: border-box;
-    }
     .sr-count {
       margin: var(--space-6) 0 var(--space-4);
       color: var(--ink-muted);
@@ -83,16 +77,6 @@ const FAILED: SearchState = { kind: 'error' };
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
       gap: var(--space-4);
-    }
-    @media (max-width: 1023px) {
-      .hm-wrap {
-        padding: var(--space-6);
-      }
-    }
-    @media (max-width: 599px) {
-      .hm-wrap {
-        padding: var(--space-4);
-      }
     }
   `,
 })

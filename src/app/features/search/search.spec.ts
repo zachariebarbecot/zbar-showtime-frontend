@@ -58,7 +58,7 @@ describe('Search', () => {
 
   const EMPTY_RESPONSE = { page: 1, results: [], totalPages: 1, totalResults: 0 };
 
-  async function type(rendered: Awaited<ReturnType<typeof open>>, value: string) {
+  function type(rendered: Awaited<ReturnType<typeof open>>, value: string) {
     const input = query<HTMLInputElement>(rendered.root, 'main input');
     input.value = value;
     input.dispatchEvent(new Event('input'));
@@ -111,7 +111,7 @@ describe('Search', () => {
       vi.useFakeTimers();
 
       for (const value of ['d', 'du', 'dun', '  dune ']) {
-        await type(rendered, value);
+        type(rendered, value);
         await settle(rendered, 100);
       }
       expect(searchCalls(rendered.http)).toHaveLength(0);
@@ -128,7 +128,7 @@ describe('Search', () => {
       vi.useFakeTimers();
       expect(rendered.root.querySelector('[role="status"]')).toBeNull();
 
-      await type(rendered, 'dune');
+      type(rendered, 'dune');
       await settle(rendered);
 
       expect(rendered.root.querySelector('[role="status"]')).not.toBeNull();
@@ -143,7 +143,7 @@ describe('Search', () => {
         const rendered = await open();
         vi.useFakeTimers();
 
-        await type(rendered, value);
+        type(rendered, value);
         await settle(rendered);
 
         expect(searchCalls(rendered.http)).toHaveLength(0);
@@ -154,11 +154,11 @@ describe('Search', () => {
     it('should bring the prompt back when the input shrinks below 2 characters', async () => {
       const rendered = await open();
       vi.useFakeTimers();
-      await type(rendered, 'dune');
+      type(rendered, 'dune');
       await settle(rendered);
       rendered.http.expectOne((req) => req.url === '/search').flush(EMPTY_RESPONSE);
 
-      await type(rendered, 'd');
+      type(rendered, 'd');
       await settle(rendered);
 
       expect(searchCalls(rendered.http)).toHaveLength(0);
@@ -193,7 +193,7 @@ describe('Search', () => {
       response: object,
     ) {
       vi.useFakeTimers();
-      await type(rendered, value);
+      type(rendered, value);
       await settle(rendered);
       rendered.http.expectOne((req) => req.url === '/search').flush(response);
       rendered.harness.detectChanges();
@@ -261,7 +261,7 @@ describe('Search', () => {
     it('should name the trimmed input in a no result message, without grid', async () => {
       const rendered = await open();
       vi.useFakeTimers();
-      await type(rendered, '  zzzz ');
+      type(rendered, '  zzzz ');
       await settle(rendered);
 
       rendered.http.expectOne((req) => req.url === '/search').flush(EMPTY_RESPONSE);
@@ -279,11 +279,11 @@ describe('Search', () => {
     it('should cancel the call in flight and show only the results of the new input', async () => {
       const rendered = await open();
       vi.useFakeTimers();
-      await type(rendered, 'du');
+      type(rendered, 'du');
       await settle(rendered);
       const first = rendered.http.expectOne((req) => req.url === '/search');
 
-      await type(rendered, 'dune');
+      type(rendered, 'dune');
       await settle(rendered);
       const second = rendered.http.expectOne((req) => req.url === '/search');
       second.flush({
@@ -307,7 +307,7 @@ describe('Search', () => {
     ])('should show a generic message on %s, without detail nor trace id', async (_label, init) => {
       const rendered = await open();
       vi.useFakeTimers();
-      await type(rendered, 'dune');
+      type(rendered, 'dune');
       await settle(rendered);
 
       rendered.http
@@ -327,13 +327,13 @@ describe('Search', () => {
     it('should keep searching after a failure', async () => {
       const rendered = await open();
       vi.useFakeTimers();
-      await type(rendered, 'dune');
+      type(rendered, 'dune');
       await settle(rendered);
       rendered.http
         .expectOne((req) => req.url === '/search')
         .flush(null, { status: 500, statusText: 'Server Error' });
 
-      await type(rendered, 'arrakis');
+      type(rendered, 'arrakis');
       await settle(rendered);
       rendered.http.expectOne((req) => req.url === '/search').flush(EMPTY_RESPONSE);
       rendered.harness.detectChanges();
