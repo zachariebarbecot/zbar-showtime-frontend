@@ -50,7 +50,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f
 .zb-search-scopes { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .zb-chip { height: 32px; padding: 0 var(--space-4); border-radius: var(--radius-pill); border: 1px solid var(--line-strong); background: transparent; color: var(--ink); font: 600 13px/18px var(--font-sans); cursor: pointer; }
 .zb-chip:hover { background: var(--surface-raised); }
-.zb-chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.zb-chip:is([aria-pressed="true"], [aria-checked="true"]) { background: var(--ink); border-color: var(--ink); color: var(--bg); }
 
 /* Logo */
 .zb-logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; border-radius: var(--radius-sm); }
