@@ -30,7 +30,18 @@ describe('Login', () => {
     });
     const harness = await RouterTestingHarness.create();
     await harness.navigateByUrl(url, Login);
-    return { harness, root: harness.routeNativeElement as HTMLElement };
+    const root = harness.routeNativeElement as HTMLElement;
+    const field = (name: string) => root.querySelector<HTMLInputElement>(`input[name="${name}"]`) as HTMLInputElement;
+    const type = async (name: string, value: string) => {
+      field(name).value = value;
+      field(name).dispatchEvent(new Event('input'));
+      await harness.fixture.whenStable();
+    };
+    const blur = async (name: string) => {
+      field(name).dispatchEvent(new Event('blur'));
+      await harness.fixture.whenStable();
+    };
+    return { harness, root, field, type, blur };
   }
 
   describe('page content', () => {
@@ -61,6 +72,52 @@ describe('Login', () => {
       const { root } = await render();
 
       expect(root.textContent).not.toContain('Mot de passe oublié');
+    });
+  });
+
+  describe('field validation', () => {
+    it.each([
+      ['email', '', 'Indique ton email.'],
+      ['email', 'zoe@', "Cet email n'a pas l'air valide."],
+      ['email', 'zoe@example', "Cet email n'a pas l'air valide."],
+      ['password', '', 'Indique ton mot de passe.'],
+    ])('should show the %s error for "%s" on blur', async (name, value, message) => {
+      const { root, type, blur } = await render();
+
+      await type(name, value);
+      await blur(name);
+
+      expect(root.textContent).toContain(message);
+    });
+
+    it('should show nothing while the first typing is in progress', async () => {
+      const { root, type } = await render();
+
+      await type('email', 'zoe@');
+      await type('password', 'x');
+      await type('password', '');
+
+      expect(root.querySelector('.zb-field-error')).toBeNull();
+    });
+
+    it('should accept a valid email and a password on blur', async () => {
+      const { root, type, blur } = await render();
+
+      await type('email', 'zoe@example.org');
+      await blur('email');
+      await type('password', 'secret');
+      await blur('password');
+
+      expect(root.querySelector('.zb-field-error')).toBeNull();
+    });
+
+    it('should clear the error once the value becomes valid', async () => {
+      const { root, type, blur } = await render();
+      await blur('email');
+
+      await type('email', 'zoe@example.org');
+
+      expect(root.querySelector('.zb-field-error')).toBeNull();
     });
   });
 });
