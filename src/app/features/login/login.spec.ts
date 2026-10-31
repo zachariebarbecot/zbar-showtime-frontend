@@ -4,6 +4,7 @@ import { Component, provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { provideApiConfiguration } from '../../api/api-configuration';
 import { TOKEN_STORAGE } from '../../core/auth/auth.service';
 import { Login } from './login';
 
@@ -21,6 +22,7 @@ describe('Login', () => {
         provideZonelessChangeDetection(),
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideApiConfiguration(''),
         provideRouter([
           { path: 'connexion', component: Login },
           { path: 'inscription', component: Page },

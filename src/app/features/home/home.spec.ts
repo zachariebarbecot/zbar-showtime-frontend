@@ -6,6 +6,7 @@ import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { authGuard } from '../../core/auth/auth.guard';
 import { authInterceptor } from '../../core/auth/auth.interceptor';
+import { provideApiConfiguration } from '../../api/api-configuration';
 import { TOKEN_STORAGE } from '../../core/auth/auth.service';
 import { Home } from './home';
 
@@ -35,6 +36,7 @@ describe('Home', () => {
         provideZonelessChangeDetection(),
         provideHttpClient(withInterceptors([authInterceptor])),
         provideHttpClientTesting(),
+        provideApiConfiguration(''),
         provideRouter([
           { path: 'accueil', component: Home, canActivate: [authGuard] },
           { path: 'connexion', component: Page },

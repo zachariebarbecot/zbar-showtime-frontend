@@ -5,6 +5,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { throwError } from 'rxjs';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { provideApiConfiguration } from '../../api/api-configuration';
 import { AuthService, TOKEN_STORAGE } from '../../core/auth/auth.service';
 import { Signup } from './signup';
 
@@ -29,6 +30,7 @@ describe('Signup', () => {
         provideZonelessChangeDetection(),
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideApiConfiguration(''),
         provideRouter([
           { path: 'inscription', component: Signup },
           { path: 'connexion', component: Page },
