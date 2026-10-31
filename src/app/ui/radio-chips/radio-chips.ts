@@ -35,6 +35,7 @@ const STEP_BY_KEY: Readonly<Record<string, number>> = {
         role="radiogroup"
         [attr.data-name]="name()"
         [attr.aria-labelledby]="labelId()"
+        [attr.aria-invalid]="!!error()"
         [attr.aria-describedby]="error() ? messageId() : null"
         (focusout)="onFocusOut($event)"
       >
@@ -66,6 +67,14 @@ const STEP_BY_KEY: Readonly<Record<string, number>> = {
       display: flex;
       flex-wrap: wrap;
       gap: var(--space-2);
+    }
+    .zb-chip {
+      position: relative;
+    }
+    .zb-chip::after {
+      content: '';
+      position: absolute;
+      inset: -6px 0;
     }
     .zb-chip[aria-checked='true'] {
       background: var(--ink);
