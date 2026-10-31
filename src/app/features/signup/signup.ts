@@ -304,6 +304,7 @@ export class Signup {
   protected readonly emailError = fieldError(this.email, {
     required: 'Indique ton email.',
     pattern: "Cet email n'a pas l'air valide.",
+    conflict: 'Un compte existe déjà avec cet email.',
   });
 
   constructor() {
@@ -336,6 +337,16 @@ export class Signup {
         ),
         finalize(() => (this.pending = false)),
       )
-      .subscribe((next) => this.welcome.set({ firstName: account.firstName.trim(), next }));
+      .subscribe({
+        next: (next) => this.welcome.set({ firstName: account.firstName.trim(), next }),
+        error: (error: HttpErrorResponse) => this.fail(error),
+      });
+  }
+
+  private fail(error: HttpErrorResponse): void {
+    if (error.status === 409) {
+      this.email.setErrors({ conflict: true });
+      focusFirstInvalid(this.form, this.root);
+    }
   }
 }
