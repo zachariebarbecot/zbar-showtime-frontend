@@ -8,7 +8,7 @@ import { Icon } from '../icon/icon';
   template: `
     <ul [id]="id()" class="zb-rules" aria-label="Règles du mot de passe">
       @for (rule of rules(); track rule.id) {
-        <li class="zb-rule" [class]="'zb-rule zb-rule-' + rule.state">
+        <li [class]="'zb-rule zb-rule-' + rule.state">
           <svg appIcon [name]="rule.icon"></svg>
           <span>
             {{ rule.label }}
@@ -27,8 +27,14 @@ export class PasswordRules {
   protected readonly rules = computed(() =>
     passwordChecks(this.value()).map((check) => ({
       ...check,
-      state: check.ok ? 'ok' : this.showErrors() ? 'error' : 'todo',
-      icon: check.ok ? 'seen' : this.showErrors() ? 'close' : 'dot',
-    } as const)),
+      ...this.presentation(check.ok),
+    })),
   );
+
+  private presentation(ok: boolean) {
+    if (ok) return { state: 'ok', icon: 'seen' } as const;
+    return this.showErrors()
+      ? ({ state: 'error', icon: 'close' } as const)
+      : ({ state: 'todo', icon: 'dot' } as const);
+  }
 }
