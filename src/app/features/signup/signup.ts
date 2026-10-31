@@ -5,6 +5,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { RouterLink } from '@angular/router';
 import { catchError, finalize, map, of, switchMap } from 'rxjs';
 import { AuthService, Gender } from '../../core/auth/auth.service';
+import { PosterWall } from '../../shared/poster-wall';
 import { Button } from '../../ui/button/button';
 import { FormAlert } from '../../ui/form-alert/form-alert';
 import { EMAIL_PATTERN, fieldError } from '../../ui/forms/field-error';
@@ -29,6 +30,7 @@ const GENERIC_ERROR = 'Une erreur est survenue. Réessaie dans un instant.';
     FormAlert,
     Logo,
     PasswordRules,
+    PosterWall,
     RadioChips,
     TextField,
   ],
@@ -36,6 +38,7 @@ const GENERIC_ERROR = 'Une erreur est survenue. Réessaie dans un instant.';
     <div class="su">
       <aside class="su-side" aria-hidden="true">
         <app-logo />
+        <app-poster-wall class="su-wall" />
         <p class="su-slogan">Ce que tu veux voir,<span>ce que tu as vu.</span></p>
       </aside>
       <main class="su-main">
@@ -141,6 +144,11 @@ const GENERIC_ERROR = 'Une erreur est survenue. Réessaie dans un instant.';
       gap: var(--space-8);
       padding: var(--space-8);
       overflow: hidden;
+    }
+    .su-wall {
+      flex: 1;
+      min-height: 0;
+      --poster-wall-height: 100%;
     }
     .su-slogan {
       margin: 0;

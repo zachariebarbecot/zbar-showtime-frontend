@@ -25,7 +25,7 @@ import { POSTER_WALL } from './fixtures/posters';
   `,
   styles: `
     .pw {
-      height: 620px;
+      height: var(--poster-wall-height, 620px);
       overflow: hidden;
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
