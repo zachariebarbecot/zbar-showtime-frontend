@@ -12,6 +12,9 @@ import { Logo } from '../../ui/logo/logo';
   styleUrl: './not-found.css',
 })
 export class NotFound {
+  private readonly auth = inject(AuthService);
+
+  protected readonly home = computed(() => (this.auth.isAuthenticated() ? '/accueil' : '/'));
   protected readonly bulbs = Array.from({ length: 9 }, (_, index) => index);
 
   constructor() {

@@ -1,5 +1,5 @@
 <div class="nf">
-  <header class="nf-top"><app-logo href="/" /></header>
+  <header class="nf-top"><app-logo [href]="home()" /></header>
   <main class="nf-main">
     <div class="nf-bulbs" aria-hidden="true">
       @for (bulb of bulbs; track bulb) {
@@ -12,5 +12,8 @@
       Le lien est cassé ou la page a changé d’adresse. Rien de grave : le reste de la programmation
       t’attend.
     </p>
+    <div class="nf-ctas">
+      <app-button size="lg" [routerLink]="home()">Retour à l’accueil</app-button>
+    </div>
   </main>
 </div>
