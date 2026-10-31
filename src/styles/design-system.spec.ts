@@ -83,11 +83,11 @@ describe('global styles and index.html', () => {
   });
 
   it.each([
-    '@fontsource/big-shoulders-display/700.css',
-    '@fontsource/big-shoulders-display/800.css',
-    '@fontsource/instrument-sans/400.css',
-    '@fontsource/instrument-sans/600.css',
-    '@fontsource/ibm-plex-mono/500.css',
+    '@fontsource/big-shoulders-display/700',
+    '@fontsource/big-shoulders-display/800',
+    '@fontsource/instrument-sans/400',
+    '@fontsource/instrument-sans/600',
+    '@fontsource/ibm-plex-mono/500',
   ])('imports %s', (font) => {
     expect(global).toContain(`@import '${font}'`);
   });
