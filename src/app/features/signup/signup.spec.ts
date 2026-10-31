@@ -592,8 +592,8 @@ describe('Signup', () => {
 
         expect(messages(page.root)).toEqual([
           'Indique ton prénom.',
-          "Cet email n'a pas l'air valide.",
           'Choisis une option.',
+          "Cet email n'a pas l'air valide.",
         ]);
         expect(document.activeElement).toBe(page.input('firstName'));
       });
