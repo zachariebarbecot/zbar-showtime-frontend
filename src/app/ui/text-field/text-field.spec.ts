@@ -92,4 +92,37 @@ describe('TextField', () => {
     expect(input().getAttribute('aria-invalid')).toBe('true');
     expect(root.querySelector(`#${describedBy}`)?.textContent).toContain('Indique ton email.');
   });
+  describe('password type', () => {
+    it('should toggle the input type, the accessible name and aria-pressed with the eye', async () => {
+      const { host, input, fixture, root } = await render();
+      host.type.set('password');
+      await fixture.whenStable();
+      const eye = () => root.querySelector('button') as HTMLButtonElement;
+      expect(input().type).toBe('password');
+      expect(eye().getAttribute('aria-label')).toBe('Afficher le mot de passe');
+      expect(eye().getAttribute('aria-pressed')).toBe('false');
+
+      eye().click();
+      await fixture.whenStable();
+
+      expect(input().type).toBe('text');
+      expect(eye().getAttribute('aria-label')).toBe('Masquer le mot de passe');
+      expect(eye().getAttribute('aria-pressed')).toBe('true');
+
+      eye().click();
+      await fixture.whenStable();
+
+      expect(input().type).toBe('password');
+      expect(eye().getAttribute('aria-pressed')).toBe('false');
+    });
+
+    it.each(['email', 'date'] as const)('should have no eye for type %s', async (type) => {
+      const { host, fixture, root } = await render();
+
+      host.type.set(type);
+      await fixture.whenStable();
+
+      expect(root.querySelector('button')).toBeNull();
+    });
+  });
 });
