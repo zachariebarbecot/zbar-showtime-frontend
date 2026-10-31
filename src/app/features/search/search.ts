@@ -17,6 +17,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { SearchResults, toSearchResults } from './search-results';
 import { AppHeader } from '../../ui/app-header/app-header';
 import { EmptyState } from '../../ui/empty-state/empty-state';
+import { FormAlert } from '../../ui/form-alert/form-alert';
 import { Poster } from '../../ui/poster/poster';
 import { TextField } from '../../ui/text-field/text-field';
 
@@ -26,15 +27,17 @@ const DEBOUNCE_MS = 300;
 type SearchState =
   | { readonly kind: 'idle' }
   | { readonly kind: 'loading' }
+  | { readonly kind: 'error' }
   | ({ readonly kind: 'done'; readonly query: string } & SearchResults);
 
 const IDLE: SearchState = { kind: 'idle' };
 const LOADING: SearchState = { kind: 'loading' };
+const FAILED: SearchState = { kind: 'error' };
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-search',
-  imports: [AppHeader, EmptyState, Poster, ReactiveFormsModule, TextField],
+  imports: [AppHeader, EmptyState, FormAlert, Poster, ReactiveFormsModule, TextField],
   template: `
     <app-header active="search" [user]="user()" (logout)="logout()" />
     <main class="hm-wrap">
@@ -47,6 +50,8 @@ const LOADING: SearchState = { kind: 'loading' };
         />
       } @else if (current.kind === 'loading') {
         <p role="status">Recherche en cours…</p>
+      } @else if (current.kind === 'error') {
+        <app-form-alert message="La recherche a échoué. Réessaie dans un instant." />
       } @else if (current.items.length === 0) {
         <app-empty-state title="Aucun résultat pour &quot;{{ current.query }}&quot;" />
       } @else {
@@ -111,6 +116,7 @@ export class Search {
                 query,
                 ...toSearchResults(response),
               })),
+              catchError(() => of(FAILED)),
               startWith(LOADING),
             ),
       ),
