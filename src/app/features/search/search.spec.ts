@@ -464,7 +464,9 @@ describe('Search', () => {
 
       await searchFor(rendered, 'dune', RESULTS);
 
-      expect(rendered.root.querySelectorAll('.sr-grid a, .sr-grid button')).toHaveLength(0);
+      expect(
+        rendered.root.querySelectorAll('.sr-grid a, .sr-grid button:not(.zb-poster-action button)'),
+      ).toHaveLength(0);
       expect(rendered.root.querySelector('.zb-empty')).toBeNull();
     });
   });

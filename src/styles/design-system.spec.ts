@@ -132,8 +132,10 @@ describe('ui.css', () => {
     expect(ui).not.toMatch(/@import|googleapis/);
   });
 
-  it('uses only the 599px and 1023px max-width breakpoints', () => {
-    const queries = [...ui.matchAll(/@media\s*([^{]+){/g)].map((m) => m[1].trim());
+  it('uses only the 599px and 1023px max-width breakpoints, plus the touch query', () => {
+    const queries = [...ui.matchAll(/@media\s*([^{]+){/g)]
+      .map((m) => m[1].trim())
+      .filter((query) => query !== '(hover: none)');
     expect(queries.length).toBeGreaterThan(0);
     for (const query of queries) {
       expect(query).toMatch(/^\(max-width: (599|1023)px\)$/);
