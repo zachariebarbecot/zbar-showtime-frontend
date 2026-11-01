@@ -375,6 +375,8 @@ describe('Search', () => {
       ['null', null],
       ['absent', undefined],
       ['unknown', 'ARCHIVED'],
+      ['an inherited property name', 'constructor'],
+      ['another inherited property name', 'toString'],
     ])('should show no badge when the status is %s', async (_label, watchlistStatus) => {
       const rendered = await open();
 

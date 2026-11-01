@@ -66,6 +66,9 @@ describe('Poster', () => {
     expect(poster.querySelector('.zb-poster-badge .zb-badge-progress')?.textContent?.trim()).toBe(
       'En cours',
     );
+    expect(
+      poster.querySelector('.zb-poster-badge .zb-badge svg path')?.getAttribute('d'),
+    ).toBeTruthy();
   });
 
   it('should prefer the status badge over the in-progress badge', async () => {
