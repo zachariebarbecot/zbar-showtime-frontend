@@ -843,6 +843,22 @@ describe('Search', () => {
       );
     });
 
+    it.each(['TO_WATCH', 'WATCHED', 'WATCHING', 'DROPPED', 'SOMETHING_NEW'])(
+      'should show a pressed, locked button on a result with status %s and call nothing',
+      async (watchlistStatus) => {
+        const { root, http, harness } = await searchFor([{ ...DUNE, watchlistStatus }]);
+
+        const button = buttonOf(root, 'Dune');
+        button.click();
+        harness.detectChanges();
+
+        expect(button.getAttribute('aria-pressed')).toBe('true');
+        expect(button.getAttribute('aria-disabled')).toBe('true');
+        expect(button.textContent?.trim()).toBe('Watchlist');
+        http.expectNone((req) => req.url.startsWith('/watchlist'));
+      },
+    );
+
     describe('activating the button', () => {
       it('should lock the button while the call is in flight and send no second call', async () => {
         const { root, http, harness } = await searchFor([DUNE]);
