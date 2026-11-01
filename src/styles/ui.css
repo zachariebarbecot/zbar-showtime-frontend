@@ -424,7 +424,8 @@ body {
   color: var(--ink);
 }
 .zb-poster-caption-scrim {
-  background: var(--scrim);
+  padding-top: var(--space-8);
+  background: var(--scrim-fade);
   color: #f4efe8;
 }
 .zb-poster-code {
@@ -712,10 +713,10 @@ body {
   font-size: 12px;
   line-height: 16px;
   font-weight: 500;
-  color: var(--ink-muted);
+  color: var(--marquee-ink);
 }
 .zb-poster-caption-scrim .zb-poster-meta {
-  color: #cfc7bc;
+  color: var(--marquee);
 }
 .zb-poster-caption .zb-tag {
   align-self: flex-start;
