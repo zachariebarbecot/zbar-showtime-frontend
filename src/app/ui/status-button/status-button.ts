@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, model } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, model, output } from '@angular/core';
 import { Icon } from '../icon/icon';
 
 @Component({
@@ -10,9 +10,16 @@ import { Icon } from '../icon/icon';
       type="button"
       [class]="classes()"
       [attr.aria-pressed]="active()"
-      (click)="active.set(!active())"
+      [attr.aria-label]="ariaLabel()"
+      [attr.aria-disabled]="locked() || null"
+      (click)="press()"
     >
-      <svg appIcon [name]="icon()"></svg>{{ label() }}
+      <svg appIcon [name]="icon()"></svg>
+      @if (iconOnly()) {
+        <span class="zb-sr">{{ label() }}</span>
+      } @else {
+        {{ label() }}
+      }
     </button>
   `,
   host: { style: 'display: contents' },
@@ -21,6 +28,11 @@ export class StatusButton {
   readonly kind = input.required<'watchlist' | 'seen'>();
   readonly size = input<'md' | 'sm'>('md');
   readonly active = model(false);
+  readonly ariaLabel = input<string>();
+  readonly iconOnly = input(false);
+  readonly controlled = input(false);
+  readonly locked = input(false);
+  readonly add = output<void>();
 
   protected readonly classes = computed(
     () => `zb-btn zb-btn-${this.kind()}${this.size() === 'sm' ? ' zb-btn-sm' : ''}`,
@@ -32,4 +44,10 @@ export class StatusButton {
     if (this.kind() === 'watchlist') return 'Watchlist';
     return this.active() ? 'Vu' : 'Marquer vu';
   });
+
+  protected press(): void {
+    if (this.locked()) return;
+    if (this.controlled()) this.add.emit();
+    else this.active.set(!this.active());
+  }
 }

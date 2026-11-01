@@ -1,6 +1,13 @@
+import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Poster, PosterEpisode, PosterProgress, PosterStatus } from './poster';
 import { query } from '../../testing/query';
+
+@Component({
+  imports: [Poster],
+  template: `<app-poster title="Dune"><button type="button">Ajouter</button></app-poster>`,
+})
+class WithAction {}
 
 describe('Poster', () => {
   async function render(inputs: {
@@ -109,5 +116,16 @@ describe('Poster', () => {
     const poster = await render({ title: 'Dune' });
 
     expect(poster.querySelector('.zb-poster-meta')).toBeNull();
+  });
+
+  it('should project the action in the frame, without any action by default', async () => {
+    const fixture = TestBed.createComponent(WithAction);
+    await fixture.whenStable();
+    const bare = await render({ title: 'Dune' });
+
+    expect(
+      fixture.nativeElement.querySelector('.zb-poster-frame .zb-poster-action button'),
+    ).not.toBeNull();
+    expect(bare.querySelector('.zb-poster-action')?.children).toHaveLength(0);
   });
 });

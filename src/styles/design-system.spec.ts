@@ -72,6 +72,66 @@ describe('ui.css', () => {
     expect(rule('.zb-poster-caption-scrim .zb-poster-meta')).toContain('color: var(--marquee)');
   });
 
+  describe('poster action', () => {
+    const action = [...ui.matchAll(/(?:^|\n)(\.zb-poster-action[^{]*)\{([^}]*)\}/g)]
+      .map((m) => m[2])
+      .join('\n');
+
+    it('sits at the top right, hidden at rest', () => {
+      expect(action).toContain('position: absolute');
+      expect(action).toContain('top: var(--space-2)');
+      expect(action).toContain('right: var(--space-2)');
+      expect(action).toContain('opacity: 0');
+    });
+
+    it('shows on hover and keyboard focus, always on touch screens', () => {
+      expect(ui).toMatch(
+        /\.zb-poster:hover \.zb-poster-action,\s*\.zb-poster:focus-within \.zb-poster-action\s*\{[^}]*opacity: 1/,
+      );
+      expect(ui).toMatch(/@media \(hover: none\)\s*\{\s*\.zb-poster-action\s*\{[^}]*opacity: 1/);
+    });
+  });
+
+  describe('touch targets', () => {
+    it('grows the poster action button to 44px on touch screens', () => {
+      expect(ui).toMatch(
+        /@media \(hover: none\)\s*\{[^@]*\.zb-poster-action \.zb-btn\s*\{[^}]*height: 44px/,
+      );
+    });
+  });
+
+  describe('status button on a poster', () => {
+    it('is a 28px icon square, 44px on touch screens', () => {
+      expect(ui).toMatch(
+        /\n\.zb-poster-action \.zb-btn\s*\{[^}]*width: 28px;[^}]*height: 28px;[^}]*padding: 0/,
+      );
+      expect(ui).toMatch(
+        /@media \(hover: none\)\s*\{\s*\.zb-poster-action \.zb-btn\s*\{[^}]*width: 44px;[^}]*height: 44px/,
+      );
+    });
+
+    it('lets the touch size win the cascade over the base size', () => {
+      const base = ui.indexOf('\n.zb-poster-action .zb-btn {');
+      const touch = ui.search(/@media \(hover: none\)\s*\{\s*\.zb-poster-action \.zb-btn\s*\{/);
+      expect(base).toBeGreaterThan(-1);
+      expect(touch).toBeGreaterThan(base);
+    });
+
+    it('sits on the scrim with poster title ink when unpressed', () => {
+      expect(ui).toMatch(
+        /\.zb-poster-action \.zb-btn\[aria-pressed='false'\][^{]*\{[^}]*background: var\(--scrim\)[^}]*color: #f4efe8/,
+      );
+    });
+  });
+
+  describe('locked status button', () => {
+    it('looks inert: default cursor and no hover background', () => {
+      expect(ui).toMatch(/\.zb-btn\[aria-disabled='true'\]\s*\{[^}]*cursor: default/);
+      expect(ui).toMatch(/\.zb-btn:hover:not\(\[aria-disabled='true'\]\)\s*\{[^}]*background/);
+      expect(ui).not.toMatch(/\.zb-btn:hover\s*\{/);
+    });
+  });
+
   describe('toast', () => {
     const tokens = read('src/styles/tokens.css');
     const toastCss = [...ui.matchAll(/(?:^|\n)(\.zb-toast[^{]*)\{([^}]*)\}/g)]
@@ -112,8 +172,10 @@ describe('ui.css', () => {
     expect(ui).not.toMatch(/@import|googleapis/);
   });
 
-  it('uses only the 599px and 1023px max-width breakpoints', () => {
-    const queries = [...ui.matchAll(/@media\s*([^{]+){/g)].map((m) => m[1].trim());
+  it('uses only the 599px and 1023px max-width breakpoints, plus the touch query', () => {
+    const queries = [...ui.matchAll(/@media\s*([^{]+){/g)]
+      .map((m) => m[1].trim())
+      .filter((query) => query !== '(hover: none)');
     expect(queries.length).toBeGreaterThan(0);
     for (const query of queries) {
       expect(query).toMatch(/^\(max-width: (599|1023)px\)$/);

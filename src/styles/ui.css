@@ -443,6 +443,22 @@ body {
   top: var(--space-2);
   left: var(--space-2);
 }
+.zb-poster-action {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.zb-poster:hover .zb-poster-action,
+.zb-poster:focus-within .zb-poster-action {
+  opacity: 1;
+}
+@media (hover: none) {
+  .zb-poster-action {
+    opacity: 1;
+  }
+}
 .zb-poster-progress {
   position: absolute;
   left: 0;
@@ -609,8 +625,28 @@ body {
   text-transform: uppercase;
   cursor: pointer;
 }
-.zb-btn:hover {
+.zb-btn:hover:not([aria-disabled='true']) {
   background: var(--surface-raised);
+}
+.zb-poster-action .zb-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  justify-content: center;
+}
+@media (hover: none) {
+  .zb-poster-action .zb-btn {
+    width: 44px;
+    height: 44px;
+  }
+}
+.zb-poster-action .zb-btn[aria-pressed='false'],
+.zb-poster-action .zb-btn[aria-pressed='false']:hover {
+  background: var(--scrim);
+  color: #f4efe8;
+}
+.zb-btn[aria-disabled='true'] {
+  cursor: default;
 }
 .zb-btn[aria-pressed='true'].zb-btn-watchlist {
   background: var(--marquee);

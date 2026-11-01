@@ -65,6 +65,68 @@ describe('StatusButton', () => {
     expect(button.getAttribute('aria-pressed')).toBe('false');
   });
 
+  it('should name the button with the accessible name given', async () => {
+    const { fixture, button } = await render('watchlist');
+    expect(button.hasAttribute('aria-label')).toBe(false);
+
+    fixture.componentRef.setInput('ariaLabel', 'Ajouter Dune à la watchlist');
+    await fixture.whenStable();
+
+    expect(button.getAttribute('aria-label')).toBe('Ajouter Dune à la watchlist');
+  });
+
+  describe('when controlled by its consumer', () => {
+    async function renderControlled(inputs: { active?: boolean; locked?: boolean }) {
+      const rendered = await render('watchlist', inputs.active);
+      rendered.fixture.componentRef.setInput('controlled', true);
+      rendered.fixture.componentRef.setInput('locked', inputs.locked ?? false);
+      await rendered.fixture.whenStable();
+      const added = vi.fn();
+      rendered.fixture.componentInstance.add.subscribe(added);
+      return { ...rendered, added };
+    }
+
+    it('should emit add on click without toggling by itself', async () => {
+      const { fixture, button, added } = await renderControlled({});
+
+      button.click();
+      await fixture.whenStable();
+
+      expect(added).toHaveBeenCalledTimes(1);
+      expect(button.getAttribute('aria-pressed')).toBe('false');
+      expect(button.getAttribute('aria-disabled')).toBeNull();
+    });
+
+    it('should neither emit nor toggle once locked, and say it is not actionable', async () => {
+      const { fixture, button, added } = await renderControlled({ active: true, locked: true });
+
+      button.click();
+      await fixture.whenStable();
+
+      expect(added).not.toHaveBeenCalled();
+      expect(button.getAttribute('aria-pressed')).toBe('true');
+      expect(button.getAttribute('aria-disabled')).toBe('true');
+    });
+  });
+
+  it('should keep the label as visible text by default', async () => {
+    const { button } = await render('watchlist');
+
+    expect(button.querySelector('.zb-sr')).toBeNull();
+  });
+
+  it('should hide the label visually when icon only, keeping the name, the icon and the state', async () => {
+    const { fixture, button } = await render('watchlist');
+    fixture.componentRef.setInput('iconOnly', true);
+    fixture.componentRef.setInput('ariaLabel', 'Ajouter Dune à la watchlist');
+    await fixture.whenStable();
+
+    expect(query(button, '.zb-sr').textContent).toBe('Watchlist');
+    expect(button.getAttribute('aria-label')).toBe('Ajouter Dune à la watchlist');
+    expect(button.getAttribute('aria-pressed')).toBe('false');
+    expect(button.querySelector('svg path')?.getAttribute('d')).toBe('M12 5v14M5 12h14');
+  });
+
   it('should apply the small size', async () => {
     const { button } = await render('seen', false, 'sm');
 

@@ -4,7 +4,9 @@ import {
   DestroyRef,
   inject,
   linkedSignal,
+  signal,
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -13,11 +15,14 @@ import {
   combineLatest,
   debounceTime,
   distinctUntilChanged,
+  finalize,
   map,
   of,
+  throwError,
   startWith,
   switchMap,
 } from 'rxjs';
+import { WatchlistControllerService } from '../../api/services/watchlist-controller.service';
 import { SearchControllerService } from '../../api/services/search-controller.service';
 import { injectSession } from '../../core/auth/session';
 import { SearchItem, SearchResults, appendItems, toSearchResults } from './search-results';
@@ -26,11 +31,16 @@ import { EmptyState } from '../../ui/empty-state/empty-state';
 import { FormAlert } from '../../ui/form-alert/form-alert';
 import { Button } from '../../ui/button/button';
 import { Poster } from '../../ui/poster/poster';
+import { StatusButton } from '../../ui/status-button/status-button';
 import { Icon } from '../../ui/icon/icon';
+import { ToastService } from '../../ui/toast/toast.service';
 import { RadioChips, RadioOption } from '../../ui/radio-chips/radio-chips';
 
 const MIN_LENGTH = 2;
 const DEBOUNCE_MS = 300;
+
+const CONFLICT = 409;
+const ADD_FAILED = "L'ajout a échoué. Réessaie dans un instant.";
 
 const ALL_TYPES = 'ALL';
 
@@ -74,6 +84,7 @@ const FAILED: SearchState = { kind: 'error' };
     Poster,
     RadioChips,
     ReactiveFormsModule,
+    StatusButton,
   ],
   template: `
     @if (session.answered()) {
@@ -131,8 +142,18 @@ const FAILED: SearchState = { kind: 'error' };
               [title]="item.title"
               [src]="item.posterUrl"
               [meta]="item.meta"
-              [status]="item.status"
-            />
+              [status]="adding(item) ? 'watchlist' : item.status"
+            >
+              <app-status-button
+                kind="watchlist"
+                [iconOnly]="true"
+                [controlled]="true"
+                [active]="item.watchlisted || adding(item)"
+                [locked]="item.watchlisted || adding(item)"
+                (add)="add(item)"
+                [ariaLabel]="'Ajouter ' + item.title + ' à la watchlist'"
+              />
+            </app-poster>
           }
         </div>
         @if (shown().more === 'loading') {
@@ -178,6 +199,8 @@ const FAILED: SearchState = { kind: 'error' };
 })
 export class Search {
   protected readonly session = injectSession();
+  private readonly toast = inject(ToastService);
+  private readonly watchlistApi = inject(WatchlistControllerService);
   private readonly searchApi = inject(SearchControllerService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -219,6 +242,43 @@ export class Search {
         ? { items: state.items, page: state.page, more: 'idle' }
         : { items: [], page: 0, more: 'idle' },
   });
+
+  private readonly pending = signal<ReadonlySet<string>>(new Set());
+
+  protected adding(item: SearchItem): boolean {
+    return this.pending().has(item.key);
+  }
+
+  protected add(item: SearchItem): void {
+    this.pending.update((keys) => new Set(keys).add(item.key));
+    const body = { tmdbId: item.tmdbId };
+    (item.type === 'MOVIE'
+      ? this.watchlistApi.addMovie({ body })
+      : this.watchlistApi.addSeries({ body })
+    )
+      .pipe(
+        catchError((error: HttpErrorResponse) =>
+          error.status === CONFLICT ? of(undefined) : throwError(() => error),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.pending.update((keys) => new Set([...keys].filter((key) => key !== item.key)));
+        }),
+      )
+      .subscribe({
+        next: () => {
+          this.shown.update((shown) => ({
+            ...shown,
+            items: shown.items.map((candidate) =>
+              candidate.key === item.key
+                ? { ...candidate, watchlisted: true, status: 'watchlist' }
+                : candidate,
+            ),
+          }));
+        },
+        error: () => this.toast.show(ADD_FAILED),
+      });
+  }
 
   protected loadMore(current: DoneState): void {
     const { page } = this.shown();
