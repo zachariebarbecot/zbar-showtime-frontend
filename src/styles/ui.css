@@ -458,6 +458,9 @@ body {
   .zb-poster-action {
     opacity: 1;
   }
+  .zb-poster-action .zb-btn {
+    height: 44px;
+  }
 }
 .zb-poster-progress {
   position: absolute;
@@ -625,8 +628,11 @@ body {
   text-transform: uppercase;
   cursor: pointer;
 }
-.zb-btn:hover {
+.zb-btn:hover:not([aria-disabled='true']) {
   background: var(--surface-raised);
+}
+.zb-btn[aria-disabled='true'] {
+  cursor: default;
 }
 .zb-btn[aria-pressed='true'].zb-btn-watchlist {
   background: var(--marquee);
