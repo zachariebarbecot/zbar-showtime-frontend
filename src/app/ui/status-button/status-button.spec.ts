@@ -75,6 +75,40 @@ describe('StatusButton', () => {
     expect(button.getAttribute('aria-label')).toBe('Ajouter Dune à la watchlist');
   });
 
+  describe('when controlled by its consumer', () => {
+    async function renderControlled(inputs: { active?: boolean; locked?: boolean }) {
+      const rendered = await render('watchlist', inputs.active);
+      rendered.fixture.componentRef.setInput('controlled', true);
+      rendered.fixture.componentRef.setInput('locked', inputs.locked ?? false);
+      await rendered.fixture.whenStable();
+      const added = vi.fn();
+      rendered.fixture.componentInstance.add.subscribe(added);
+      return { ...rendered, added };
+    }
+
+    it('should emit add on click without toggling by itself', async () => {
+      const { fixture, button, added } = await renderControlled({});
+
+      button.click();
+      await fixture.whenStable();
+
+      expect(added).toHaveBeenCalledTimes(1);
+      expect(button.getAttribute('aria-pressed')).toBe('false');
+      expect(button.getAttribute('aria-disabled')).toBeNull();
+    });
+
+    it('should neither emit nor toggle once locked, and say it is not actionable', async () => {
+      const { fixture, button, added } = await renderControlled({ active: true, locked: true });
+
+      button.click();
+      await fixture.whenStable();
+
+      expect(added).not.toHaveBeenCalled();
+      expect(button.getAttribute('aria-pressed')).toBe('true');
+      expect(button.getAttribute('aria-disabled')).toBe('true');
+    });
+  });
+
   it('should apply the small size', async () => {
     const { button } = await render('seen', false, 'sm');
 

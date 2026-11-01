@@ -9,6 +9,7 @@ import { routes } from '../../app.routes';
 import { authInterceptor } from '../../core/auth/auth.interceptor';
 import { TOKEN_STORAGE } from '../../core/auth/auth.service';
 import { query } from '../../testing/query';
+import { ToastService } from '../../ui/toast/toast.service';
 import { Search } from './search';
 
 const USER = {
@@ -836,6 +837,42 @@ describe('Search', () => {
       expect(buttonOf(root, 'Dune: Prophecy').getAttribute('aria-label')).toBe(
         'Ajouter Dune: Prophecy à la watchlist',
       );
+    });
+
+    describe('activating the button', () => {
+      it.each([
+        ['Dune', '/watchlist/movies', 1],
+        ['Dune: Prophecy', '/watchlist/series', 2],
+      ])('should post the tmdbId of %s to %s', async (title, url, tmdbId) => {
+        const { root, http } = await searchFor([DUNE, PROPHECY]);
+
+        buttonOf(root, title).click();
+
+        const request = http.expectOne(url);
+        expect(request.request.method).toBe('POST');
+        expect(request.request.body).toEqual({ tmdbId });
+      });
+
+      it.each([
+        ['201', { status: 201, statusText: 'Created' }],
+        ['409', { status: 409, statusText: 'Conflict' }],
+      ])('should settle pressed, locked and badged on %s, without message', async (_, status) => {
+        const rendered = await searchFor([DUNE]);
+        const { root, http, harness } = rendered;
+
+        buttonOf(root, 'Dune').click();
+        http.expectOne('/watchlist/movies').flush(null, status);
+        await harness.fixture.whenStable();
+        harness.detectChanges();
+
+        const button = buttonOf(root, 'Dune');
+        expect(button.getAttribute('aria-pressed')).toBe('true');
+        expect(button.getAttribute('aria-disabled')).toBe('true');
+        expect(posterOf(root, 'Dune').querySelector('.zb-badge-watchlist')?.textContent).toContain(
+          'Watchlist',
+        );
+        expect(TestBed.inject(ToastService).message()).toBeNull();
+      });
     });
   });
 });
