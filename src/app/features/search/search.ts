@@ -20,7 +20,7 @@ import {
 } from 'rxjs';
 import { SearchControllerService } from '../../api/services/search-controller.service';
 import { injectSession } from '../../core/auth/session';
-import { SearchItem, SearchResults, toSearchResults } from './search-results';
+import { SearchItem, SearchResults, appendItems, toSearchResults } from './search-results';
 import { AppHeader } from '../../ui/app-header/app-header';
 import { EmptyState } from '../../ui/empty-state/empty-state';
 import { FormAlert } from '../../ui/form-alert/form-alert';
@@ -118,7 +118,7 @@ const FAILED: SearchState = { kind: 'error' };
           {{ current.total }} {{ current.total === 1 ? 'résultat' : 'résultats' }}
         </p>
         <div class="sr-grid">
-          @for (item of shown().items; track item.id) {
+          @for (item of shown().items; track item.key) {
             <app-poster [title]="item.title" [src]="item.posterUrl" [meta]="item.meta" />
           }
         </div>
@@ -212,7 +212,7 @@ export class Search {
       .subscribe((response) => {
         if (this.state() !== current) return;
         this.shown.update((shown) => ({
-          items: [...shown.items, ...toSearchResults(response).items],
+          items: appendItems(shown.items, toSearchResults(response).items),
           page: page + 1,
           loadingMore: false,
         }));

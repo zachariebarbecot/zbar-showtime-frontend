@@ -2,7 +2,7 @@ import { Result } from '../../api/models/result';
 import { SearchResponse } from '../../api/models/search-response';
 
 export interface SearchItem {
-  readonly id: number;
+  readonly key: string;
   readonly title: string;
   readonly posterUrl?: string;
   readonly meta: string;
@@ -22,7 +22,7 @@ const toItem = ({ id, title, posterUrl, releaseDate, type }: Result): SearchItem
     ? []
     : [
         {
-          id,
+          key: `${type}:${id}`,
           title,
           posterUrl,
           meta: [type && KIND_LABELS[type], releaseDate?.slice(0, 4)].filter(Boolean).join(' · '),
@@ -37,4 +37,12 @@ export const toSearchResults = (response: SearchResponse): SearchResults => {
     total: response.totalResults ?? items.length,
     items,
   };
+};
+
+export const appendItems = (
+  shown: readonly SearchItem[],
+  incoming: readonly SearchItem[],
+): readonly SearchItem[] => {
+  const keys = new Set(shown.map(({ key }) => key));
+  return [...shown, ...incoming.filter(({ key }) => !keys.has(key))];
 };
