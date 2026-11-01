@@ -23,6 +23,9 @@ const STATUS_LABELS: Record<PosterStatus, string> = { watchlist: 'Watchlist', se
   template: `
     <div class="zb-poster">
       <div class="zb-poster-frame">
+        @if (src(); as src) {
+          <img [src]="src" alt="" />
+        }
         @if (status(); as status) {
           <span class="zb-poster-badge">
             <span [class]="'zb-badge zb-badge-' + status">
@@ -34,8 +37,11 @@ const STATUS_LABELS: Record<PosterStatus, string> = { watchlist: 'Watchlist', se
             ><span class="zb-badge zb-badge-progress">En cours</span></span
           >
         }
-        <span class="zb-poster-caption">
+        <span class="zb-poster-caption" [class.zb-poster-caption-scrim]="src()">
           <span class="zb-poster-title">{{ title() }}</span>
+          @if (meta()) {
+            <span class="zb-poster-meta">{{ meta() }}</span>
+          }
           @if (code(); as code) {
             <span class="zb-poster-code" [attr.aria-label]="'Prochain épisode ' + code">{{
               code
@@ -60,6 +66,8 @@ const STATUS_LABELS: Record<PosterStatus, string> = { watchlist: 'Watchlist', se
 })
 export class Poster {
   readonly title = input.required<string>();
+  readonly src = input<string>();
+  readonly meta = input<string>();
   readonly status = input<PosterStatus>();
   readonly next = input<PosterEpisode>();
   readonly progress = input<PosterProgress>();

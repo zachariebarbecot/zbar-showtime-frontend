@@ -15,9 +15,21 @@ import { UserMenu } from '../user-menu/user-menu';
       <div class="zb-head-in">
         <app-logo href="/accueil" />
         <nav class="zb-head-nav" aria-label="Navigation principale">
-          <a class="zb-head-link" routerLink="/accueil" aria-current="page">
+          <a
+            class="zb-head-link"
+            routerLink="/accueil"
+            [attr.aria-current]="active() === 'home' ? 'page' : null"
+          >
             <svg appIcon name="home"></svg>
             <span>Accueil</span>
+          </a>
+          <a
+            class="zb-head-link"
+            routerLink="/recherche"
+            [attr.aria-current]="active() === 'search' ? 'page' : null"
+          >
+            <svg appIcon name="search"></svg>
+            <span>Recherche</span>
           </a>
         </nav>
         @if (user(); as user) {
@@ -35,6 +47,7 @@ import { UserMenu } from '../user-menu/user-menu';
   `,
 })
 export class AppHeader {
+  readonly active = input.required<'home' | 'search'>();
   readonly user = input<User>();
   readonly logout = output<void>();
 }

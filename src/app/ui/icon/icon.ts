@@ -12,6 +12,7 @@ const PATHS = {
   down: 'M6 9l6 6 6-6',
   logout: 'M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10',
   home: 'M4 11l8-7 8 7v9h-5v-6H9v6H4z',
+  search: 'M11 4a7 7 0 1 0 0 14a7 7 0 0 0 0-14zM16 16l5 5',
   dot: 'M12 10.5a1.5 1.5 0 1 0 0 3a1.5 1.5 0 0 0 0-3z',
 } as const;
 
