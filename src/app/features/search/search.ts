@@ -33,12 +33,14 @@ import { Button } from '../../ui/button/button';
 import { Poster } from '../../ui/poster/poster';
 import { StatusButton } from '../../ui/status-button/status-button';
 import { Icon } from '../../ui/icon/icon';
+import { ToastService } from '../../ui/toast/toast.service';
 import { RadioChips, RadioOption } from '../../ui/radio-chips/radio-chips';
 
 const MIN_LENGTH = 2;
 const DEBOUNCE_MS = 300;
 
 const CONFLICT = 409;
+const ADD_FAILED = "L'ajout a échoué. Réessaie dans un instant.";
 
 const ALL_TYPES = 'ALL';
 
@@ -197,6 +199,7 @@ const FAILED: SearchState = { kind: 'error' };
 })
 export class Search {
   protected readonly session = injectSession();
+  private readonly toast = inject(ToastService);
   private readonly watchlistApi = inject(WatchlistControllerService);
   private readonly searchApi = inject(SearchControllerService);
   private readonly destroyRef = inject(DestroyRef);
@@ -262,13 +265,16 @@ export class Search {
           this.pending.update((keys) => new Set([...keys].filter((key) => key !== item.key)));
         }),
       )
-      .subscribe(() => {
-        this.shown.update((shown) => ({
-          ...shown,
-          items: shown.items.map((shown) =>
-            shown.key === item.key ? { ...shown, status: 'watchlist' } : shown,
-          ),
-        }));
+      .subscribe({
+        next: () => {
+          this.shown.update((shown) => ({
+            ...shown,
+            items: shown.items.map((shown) =>
+              shown.key === item.key ? { ...shown, status: 'watchlist' } : shown,
+            ),
+          }));
+        },
+        error: () => this.toast.show(ADD_FAILED),
       });
   }
 
