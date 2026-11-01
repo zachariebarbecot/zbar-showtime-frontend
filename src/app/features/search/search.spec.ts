@@ -126,9 +126,9 @@ describe('Search', () => {
   it('should name the chips "Filtrer" for assistive technologies only', async () => {
     const { root } = await open();
 
-    const label = root.querySelector('.zb-search-scopes .zb-field-label') as HTMLElement;
-    expect(label.textContent?.trim()).toBe('Filtrer');
-    expect(label.classList).toContain('zb-sr');
+    const label = root.querySelector<HTMLElement>('.zb-search-scopes .zb-field-label');
+    expect(label?.textContent?.trim()).toBe('Filtrer');
+    expect(label?.classList).toContain('zb-sr');
   });
 
   describe('type filter', () => {
@@ -416,12 +416,13 @@ describe('Search', () => {
       rendered.http.expectOne((req) => req.url === '/search').flush(EMPTY_RESPONSE);
       rendered.harness.detectChanges();
 
-      const empty = rendered.root.querySelector('.zb-empty') as HTMLElement;
-      expect(empty.querySelector('.zb-empty-text')?.textContent).toContain('autre titre');
-      const clear = Array.from(empty.querySelectorAll('button')).find(
+      const empty = rendered.root.querySelector<HTMLElement>('.zb-empty');
+      expect(empty?.querySelector('.zb-empty-text')?.textContent).toContain('autre titre');
+      const clear = Array.from(empty?.querySelectorAll('button') ?? []).find(
         (button) => button.textContent?.trim() === 'Effacer la recherche',
-      ) as HTMLButtonElement;
-      clear.click();
+      );
+      expect(clear).toBeDefined();
+      clear?.click();
       await settle(rendered);
 
       expect(rendered.root.querySelector<HTMLInputElement>('input[type="search"]')?.value).toBe('');
