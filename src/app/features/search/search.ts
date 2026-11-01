@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
 import {
   Observable,
   catchError,
@@ -13,7 +12,7 @@ import {
   switchMap,
 } from 'rxjs';
 import { SearchControllerService } from '../../api/services/search-controller.service';
-import { AuthService } from '../../core/auth/auth.service';
+import { injectSession } from '../../core/auth/session';
 import { SearchResults, toSearchResults } from './search-results';
 import { AppHeader } from '../../ui/app-header/app-header';
 import { EmptyState } from '../../ui/empty-state/empty-state';
@@ -39,7 +38,9 @@ const FAILED: SearchState = { kind: 'error' };
   selector: 'app-search',
   imports: [AppHeader, EmptyState, FormAlert, Poster, ReactiveFormsModule, TextField],
   template: `
-    <app-header active="search" [user]="user()" (logout)="logout()" />
+    @if (session.answered()) {
+      <app-header active="search" [user]="session.user()" (logout)="session.logout()" />
+    }
     <main class="hm-wrap">
       <app-text-field name="search" label="Rechercher un film ou une série" [formControl]="query" />
       @let current = state();
@@ -81,8 +82,7 @@ const FAILED: SearchState = { kind: 'error' };
   `,
 })
 export class Search {
-  private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
+  protected readonly session = injectSession();
   private readonly searchApi = inject(SearchControllerService);
 
   protected readonly query = new FormControl('', { nonNullable: true });
@@ -107,11 +107,4 @@ export class Search {
     ),
     { initialValue: IDLE },
   );
-
-  protected readonly user = toSignal(this.auth.me().pipe(catchError(() => of(undefined))));
-
-  protected logout(): void {
-    this.auth.logout();
-    void this.router.navigateByUrl('/');
-  }
 }

@@ -1,27 +1,21 @@
-import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
-import { AuthService, User } from '../../core/auth/auth.service';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { injectSession } from '../../core/auth/session';
 import { FormAlert } from '../../ui/form-alert/form-alert';
 import { AppHeader } from '../../ui/app-header/app-header';
-
-const isUnauthorized = (error: unknown): boolean =>
-  error instanceof HttpErrorResponse && error.status === 401;
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-home',
   imports: [AppHeader, FormAlert],
   template: `
-    @if (answered()) {
-      <app-header active="home" [user]="user()" (logout)="logout()" />
+    @if (session.answered()) {
+      <app-header active="home" [user]="session.user()" (logout)="session.logout()" />
     }
     <main class="hm-wrap">
-      @if (user(); as me) {
+      @if (session.user(); as me) {
         <!-- prettier-ignore -->
         <h1 class="hm-hello">Salut, <span>{{ me.firstName }}.</span></h1>
-      } @else if (failed()) {
+      } @else if (session.failed()) {
         <app-form-alert message="Une erreur est survenue. Réessaie dans un instant." />
       }
     </main>
@@ -44,25 +38,5 @@ const isUnauthorized = (error: unknown): boolean =>
   `,
 })
 export class Home {
-  private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
-
-  protected readonly user = signal<User | undefined>(undefined);
-  protected readonly failed = signal(false);
-  protected readonly answered = computed(() => this.user() !== undefined || this.failed());
-
-  constructor() {
-    this.auth
-      .me()
-      .pipe(takeUntilDestroyed())
-      .subscribe({
-        next: (user) => this.user.set(user),
-        error: (error: unknown) => this.failed.set(!isUnauthorized(error)),
-      });
-  }
-
-  protected logout(): void {
-    this.auth.logout();
-    void this.router.navigateByUrl('/');
-  }
+  protected readonly session = injectSession();
 }
