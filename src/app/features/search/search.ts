@@ -80,7 +80,7 @@ const FAILED: SearchState = { kind: 'error' };
       <app-header active="search" [user]="session.user()" (logout)="session.logout()" />
     }
     <main class="hm-wrap">
-      <div class="zb-search">
+      <div class="zb-search" role="search">
         <div class="zb-search-field">
           <svg appIcon name="search"></svg>
           <input

@@ -117,6 +117,12 @@ describe('Search', () => {
     });
   });
 
+  it('should expose the search bar as a search landmark', async () => {
+    const { root } = await open();
+
+    expect(root.querySelector('[role="search"] input[type="search"]')).not.toBeNull();
+  });
+
   describe('type filter', () => {
     const chips = (root: HTMLElement) =>
       Array.from(root.querySelectorAll<HTMLElement>('[role="radio"]'));
