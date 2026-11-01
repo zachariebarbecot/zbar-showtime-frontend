@@ -1,5 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  inject,
+  linkedSignal,
+} from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import {
   Observable,
@@ -14,7 +20,7 @@ import {
 } from 'rxjs';
 import { SearchControllerService } from '../../api/services/search-controller.service';
 import { injectSession } from '../../core/auth/session';
-import { SearchResults, toSearchResults } from './search-results';
+import { SearchItem, SearchResults, toSearchResults } from './search-results';
 import { AppHeader } from '../../ui/app-header/app-header';
 import { EmptyState } from '../../ui/empty-state/empty-state';
 import { FormAlert } from '../../ui/form-alert/form-alert';
@@ -34,11 +40,23 @@ const TYPE_OPTIONS: readonly RadioOption[] = [
   { value: 'tv', label: 'Séries' },
 ];
 
+type DoneState = {
+  readonly kind: 'done';
+  readonly query: string;
+  readonly type?: string;
+} & SearchResults;
+
 type SearchState =
   | { readonly kind: 'idle' }
   | { readonly kind: 'loading' }
   | { readonly kind: 'error' }
-  | ({ readonly kind: 'done'; readonly query: string } & SearchResults);
+  | DoneState;
+
+interface Shown {
+  readonly items: readonly SearchItem[];
+  readonly page: number;
+  readonly loadingMore: boolean;
+}
 
 const IDLE: SearchState = { kind: 'idle' };
 const LOADING: SearchState = { kind: 'loading' };
@@ -100,13 +118,22 @@ const FAILED: SearchState = { kind: 'error' };
           {{ current.total }} {{ current.total === 1 ? 'résultat' : 'résultats' }}
         </p>
         <div class="sr-grid">
-          @for (item of current.items; track item.id) {
+          @for (item of shown().items; track item.id) {
             <app-poster [title]="item.title" [src]="item.posterUrl" [meta]="item.meta" />
           }
         </div>
-        @if (current.page < current.totalPages) {
+        @if (shown().loadingMore) {
+          <p role="status">Chargement…</p>
+        }
+        @if (shown().page < current.totalPages) {
           <div class="sr-more">
-            <app-button variant="secondary">Charger plus</app-button>
+            <app-button
+              variant="secondary"
+              [disabled]="shown().loadingMore"
+              (click)="loadMore(current)"
+            >
+              Charger plus
+            </app-button>
           </div>
         }
       }
@@ -138,6 +165,7 @@ export class Search {
   protected readonly typeOptions = TYPE_OPTIONS;
   protected readonly type = new FormControl(ALL_TYPES, { nonNullable: true });
   protected readonly query = new FormControl('', { nonNullable: true });
+  private readonly destroyRef = inject(DestroyRef);
   protected readonly state = toSignal(
     combineLatest([
       this.query.valueChanges.pipe(
@@ -148,22 +176,46 @@ export class Search {
       ),
       this.type.valueChanges.pipe(startWith(this.type.value)),
     ]).pipe(
-      switchMap(([query, type]): Observable<SearchState> =>
-        query.length < MIN_LENGTH
+      switchMap(([query, type]): Observable<SearchState> => {
+        const typeFilter = type === ALL_TYPES ? undefined : type;
+        return query.length < MIN_LENGTH
           ? of(IDLE)
-          : this.searchApi
-              .search({ query, page: 1, type: type === ALL_TYPES ? undefined : type })
-              .pipe(
-                map((response): SearchState => ({
-                  kind: 'done',
-                  query,
-                  ...toSearchResults(response),
-                })),
-                catchError(() => of(FAILED)),
-                startWith(LOADING),
-              ),
-      ),
+          : this.searchApi.search({ query, page: 1, type: typeFilter }).pipe(
+              map((response): SearchState => ({
+                kind: 'done',
+                query,
+                type: typeFilter,
+                ...toSearchResults(response),
+              })),
+              catchError(() => of(FAILED)),
+              startWith(LOADING),
+            );
+      }),
     ),
     { initialValue: IDLE },
   );
+
+  protected readonly shown = linkedSignal<SearchState, Shown>({
+    source: this.state,
+    computation: (state) =>
+      state.kind === 'done'
+        ? { items: state.items, page: state.page, loadingMore: false }
+        : { items: [], page: 0, loadingMore: false },
+  });
+
+  protected loadMore(current: DoneState): void {
+    const { page } = this.shown();
+    this.shown.update((shown) => ({ ...shown, loadingMore: true }));
+    this.searchApi
+      .search({ query: current.query, page: page + 1, type: current.type })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((response) => {
+        if (this.state() !== current) return;
+        this.shown.update((shown) => ({
+          items: [...shown.items, ...toSearchResults(response).items],
+          page: page + 1,
+          loadingMore: false,
+        }));
+      });
+  }
 }
