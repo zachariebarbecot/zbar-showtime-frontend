@@ -72,6 +72,36 @@ describe('ui.css', () => {
     expect(rule('.zb-poster-caption-scrim .zb-poster-meta')).toContain('color: var(--marquee)');
   });
 
+  describe('toast', () => {
+    const tokens = read('src/styles/tokens.css');
+    const toastCss = [...ui.matchAll(/(?:^|\n)(\.zb-toast[^{]*)\{([^}]*)\}/g)]
+      .map((m) => m[2])
+      .join('\n');
+
+    it('is raised, outlined and shadowed with existing tokens', () => {
+      expect(toastCss).toContain('background: var(--surface-raised)');
+      expect(toastCss).toContain('border: 1px solid var(--line-strong)');
+      expect(toastCss).toContain('color: var(--ink)');
+      expect(toastCss).toContain('border-radius: var(--radius-md)');
+      expect(toastCss).toContain('box-shadow: var(--shadow-poster)');
+    });
+
+    it('uses no literal color and only declared tokens', () => {
+      expect(toastCss).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(/i);
+      const used = [...toastCss.matchAll(/var\(--([\w-]+)\)/g)].map((m) => m[1]);
+      expect(used.length).toBeGreaterThan(0);
+      for (const name of used) {
+        expect(tokens).toMatch(new RegExp(String.raw`--${name}\s*:`));
+      }
+    });
+
+    it('sits bottom right, centered on phones', () => {
+      expect(toastCss).toContain('position: fixed');
+      expect(toastCss).toContain('right: var(--space-8)');
+      expect(ui).toMatch(/@media \(max-width: 599px\) \{\s*\.zb-toast \{[^}]*left: 50%/);
+    });
+  });
+
   it('has no Google Fonts import', () => {
     expect(ui).not.toMatch(/@import|googleapis/);
   });
