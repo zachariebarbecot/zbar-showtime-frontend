@@ -9,6 +9,7 @@ export interface SearchItem {
   readonly title: string;
   readonly posterUrl?: string;
   readonly meta?: string;
+  readonly watchlisted: boolean;
   readonly status?: PosterStatus;
 }
 
@@ -44,6 +45,7 @@ const toItem = ({
           title,
           posterUrl,
           meta: releaseDate?.slice(0, 4),
+          watchlisted: watchlistStatus !== undefined,
           status: STATUSES.get(watchlistStatus ?? ''),
         },
       ];

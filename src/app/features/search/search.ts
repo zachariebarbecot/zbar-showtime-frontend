@@ -148,8 +148,8 @@ const FAILED: SearchState = { kind: 'error' };
                 kind="watchlist"
                 size="sm"
                 [controlled]="true"
-                [active]="!!item.status || adding(item)"
-                [locked]="!!item.status || adding(item)"
+                [active]="item.watchlisted || adding(item)"
+                [locked]="item.watchlisted || adding(item)"
                 (add)="add(item)"
                 [ariaLabel]="'Ajouter ' + item.title + ' à la watchlist'"
               />
@@ -270,7 +270,7 @@ export class Search {
           this.shown.update((shown) => ({
             ...shown,
             items: shown.items.map((shown) =>
-              shown.key === item.key ? { ...shown, status: 'watchlist' } : shown,
+              shown.key === item.key ? { ...shown, watchlisted: true, status: 'watchlist' } : shown,
             ),
           }));
         },
