@@ -106,8 +106,15 @@ describe('ui.css', () => {
         /\n\.zb-poster-action \.zb-btn\s*\{[^}]*width: 28px;[^}]*height: 28px;[^}]*padding: 0/,
       );
       expect(ui).toMatch(
-        /@media \(hover: none\)\s*\{[^@]*\.zb-poster-action \.zb-btn\s*\{[^}]*width: 44px;[^}]*height: 44px/,
+        /@media \(hover: none\)\s*\{\s*\.zb-poster-action \.zb-btn\s*\{[^}]*width: 44px;[^}]*height: 44px/,
       );
+    });
+
+    it('lets the touch size win the cascade over the base size', () => {
+      const base = ui.indexOf('\n.zb-poster-action .zb-btn {');
+      const touch = ui.search(/@media \(hover: none\)\s*\{\s*\.zb-poster-action \.zb-btn\s*\{/);
+      expect(base).toBeGreaterThan(-1);
+      expect(touch).toBeGreaterThan(base);
     });
 
     it('sits on the scrim with poster title ink when unpressed', () => {
