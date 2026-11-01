@@ -46,6 +46,7 @@ import { Icon } from '../icon/icon';
     </div>
   `,
   host: {
+    style: 'display: contents',
     '(keydown.escape)': 'close()',
     '(document:click)': 'closeOnOutsideClick($event)',
   },
