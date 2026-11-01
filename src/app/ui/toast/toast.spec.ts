@@ -28,4 +28,36 @@ describe('Toast', () => {
 
     expect(element.querySelector('[role="status"]')?.textContent).toContain("L'ajout a échoué.");
   });
+
+  describe('dismissal', () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
+    const text = (element: HTMLElement) => element.querySelector('[role="status"]')?.textContent;
+
+    it('disappears after about 5 seconds', async () => {
+      const { fixture, toasts, element } = setup();
+      toasts.show('Échec.');
+      await vi.advanceTimersByTimeAsync(4900);
+      fixture.detectChanges();
+
+      expect(text(element)).toContain('Échec.');
+
+      await vi.advanceTimersByTimeAsync(200);
+      fixture.detectChanges();
+
+      expect(text(element)?.trim()).toBe('');
+    });
+
+    it('disappears when the user clicks the Fermer button', async () => {
+      const { fixture, toasts, element } = setup();
+      toasts.show('Échec.');
+      fixture.detectChanges();
+
+      element.querySelector<HTMLButtonElement>('button[aria-label="Fermer"]')?.click();
+      fixture.detectChanges();
+
+      expect(text(element)?.trim()).toBe('');
+    });
+  });
 });
