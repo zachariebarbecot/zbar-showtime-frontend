@@ -68,10 +68,7 @@ describe('Poster', () => {
   });
 
   it('should show the in-progress badge when there is progress but no status', async () => {
-    const poster = await render({
-      title: 'Severance',
-      progress: { seen: 1, total: 2 },
-    });
+    const poster = await render({ title: 'Severance', progress: { seen: 1, total: 2 } });
 
     expect(poster.querySelector('.zb-poster-badge .zb-badge-progress')?.textContent?.trim()).toBe(
       'En cours',
@@ -93,10 +90,7 @@ describe('Poster', () => {
   });
 
   it('should draw the image under a scrimmed caption that keeps the title', async () => {
-    const poster = await render({
-      title: 'Dune',
-      src: 'https://img.exemple.fr/dune.jpg',
-    });
+    const poster = await render({ title: 'Dune', src: 'https://img.exemple.fr/dune.jpg' });
 
     const image = query<HTMLImageElement>(poster, '.zb-poster-frame img');
     expect(image.getAttribute('src')).toBe('https://img.exemple.fr/dune.jpg');
