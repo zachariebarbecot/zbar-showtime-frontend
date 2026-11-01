@@ -333,7 +333,7 @@ describe('Search', () => {
       rendered.harness.detectChanges();
     }
 
-    it('should show one poster per usable result with image, title and kind with year', async () => {
+    it('should show one poster per usable result with image, title and year only', async () => {
       const rendered = await open();
 
       await searchFor(rendered, 'dune', RESULTS);
@@ -343,7 +343,7 @@ describe('Search', () => {
         posters.map((poster) => poster.querySelector('.zb-poster-title')?.textContent),
       ).toEqual(['Dune', 'Dune: Prophecy', 'Dune, le film']);
       expect(posters.map((poster) => poster.querySelector('.zb-poster-meta')?.textContent)).toEqual(
-        ['Film · 2021', 'Série · 2024', 'Film'],
+        ['2021', '2024', undefined],
       );
       expect(posters[0].querySelector('img')?.getAttribute('src')).toBe(
         'https://img.exemple.fr/dune.jpg',

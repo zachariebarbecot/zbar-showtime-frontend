@@ -5,7 +5,7 @@ export interface SearchItem {
   readonly key: string;
   readonly title: string;
   readonly posterUrl?: string;
-  readonly meta: string;
+  readonly meta?: string;
 }
 
 export interface SearchResults {
@@ -15,8 +15,6 @@ export interface SearchResults {
   readonly items: readonly SearchItem[];
 }
 
-const KIND_LABELS: Record<NonNullable<Result['type']>, string> = { MOVIE: 'Film', TV: 'Série' };
-
 const toItem = ({ id, title, posterUrl, releaseDate, type }: Result): SearchItem[] =>
   id === undefined || title === undefined
     ? []
@@ -25,7 +23,7 @@ const toItem = ({ id, title, posterUrl, releaseDate, type }: Result): SearchItem
           key: `${type}:${id}`,
           title,
           posterUrl,
-          meta: [type && KIND_LABELS[type], releaseDate?.slice(0, 4)].filter(Boolean).join(' · '),
+          meta: releaseDate?.slice(0, 4),
         },
       ];
 
