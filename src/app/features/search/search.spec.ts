@@ -502,5 +502,66 @@ describe('Search', () => {
 
       expect(loadMoreButton(rendered.root)).toBeUndefined();
     });
+
+    const titles = (root: HTMLElement) =>
+      Array.from(root.querySelectorAll('.zb-poster-title')).map((title) => title.textContent);
+
+    it('should call search with page 2, same input and type, and append the results', async () => {
+      const rendered = await open();
+      await searchFor(rendered, page(1, 3, [DUNE]));
+
+      loadMoreButton(rendered.root)?.click();
+
+      const request = rendered.http.expectOne((req) => req.url === '/search');
+      expect(request.request.params.get('page')).toBe('2');
+      expect(request.request.params.get('query')).toBe('dune');
+      expect(request.request.params.has('type')).toBe(false);
+      request.flush(page(2, 3, [{ id: 2, title: 'Dune 2', type: 'MOVIE' }]));
+      rendered.harness.detectChanges();
+      expect(titles(rendered.root)).toEqual(['Dune', 'Dune 2']);
+    });
+
+    it('should keep the type filter when loading more', async () => {
+      const rendered = await open();
+      await searchFor(rendered, page(1, 3, [DUNE]));
+      const chip = rendered.root.querySelectorAll<HTMLElement>('[role="radio"]')[1];
+      chip.click();
+      await settle(rendered);
+      rendered.http.expectOne((req) => req.url === '/search').flush(page(1, 3, [DUNE]));
+      rendered.harness.detectChanges();
+
+      loadMoreButton(rendered.root)?.click();
+
+      const request = rendered.http.expectOne((req) => req.url === '/search');
+      expect(request.request.params.get('type')).toBe('movie');
+      expect(request.request.params.get('page')).toBe('2');
+    });
+
+    it('should show a loading indicator and keep the grid during the call', async () => {
+      const rendered = await open();
+      await searchFor(rendered, page(1, 3, [DUNE]));
+
+      loadMoreButton(rendered.root)?.click();
+      rendered.harness.detectChanges();
+
+      expect(rendered.root.querySelector('[role="status"]')).not.toBeNull();
+      expect(titles(rendered.root)).toEqual(['Dune']);
+      rendered.http.expectOne((req) => req.url === '/search').flush(page(2, 3, []));
+      rendered.harness.detectChanges();
+      expect(rendered.root.querySelector('[role="status"]')).toBeNull();
+    });
+
+    it('should hide the button once the last page is loaded', async () => {
+      const rendered = await open();
+      await searchFor(rendered, page(1, 2, [DUNE]));
+
+      loadMoreButton(rendered.root)?.click();
+      rendered.http
+        .expectOne((req) => req.url === '/search')
+        .flush(page(2, 2, [{ id: 2, title: 'Dune 2', type: 'MOVIE' }]));
+      rendered.harness.detectChanges();
+
+      expect(loadMoreButton(rendered.root)).toBeUndefined();
+    });
   });
 });
