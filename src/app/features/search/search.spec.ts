@@ -563,5 +563,24 @@ describe('Search', () => {
 
       expect(loadMoreButton(rendered.root)).toBeUndefined();
     });
+
+    it('should not show twice a result with the same id and type, but keep the same id with another type', async () => {
+      const rendered = await open();
+      await searchFor(rendered, page(1, 3, [DUNE]));
+
+      loadMoreButton(rendered.root)?.click();
+      rendered.http
+        .expectOne((req) => req.url === '/search')
+        .flush(
+          page(2, 3, [
+            DUNE,
+            { id: 1, title: 'Dune (série)', type: 'TV' },
+            { id: 2, title: 'Dune 2', type: 'MOVIE' },
+          ]),
+        );
+      rendered.harness.detectChanges();
+
+      expect(titles(rendered.root)).toEqual(['Dune', 'Dune (série)', 'Dune 2']);
+    });
   });
 });
