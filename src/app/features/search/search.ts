@@ -163,11 +163,11 @@ const FAILED: SearchState = { kind: 'error' };
 export class Search {
   protected readonly session = injectSession();
   private readonly searchApi = inject(SearchControllerService);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly typeOptions = TYPE_OPTIONS;
   protected readonly type = new FormControl(ALL_TYPES, { nonNullable: true });
   protected readonly query = new FormControl('', { nonNullable: true });
-  private readonly destroyRef = inject(DestroyRef);
   protected readonly state = toSignal(
     combineLatest([
       this.query.valueChanges.pipe(
@@ -207,22 +207,23 @@ export class Search {
 
   protected loadMore(current: DoneState): void {
     const { page } = this.shown();
+    const updateIfCurrent = (change: (shown: Shown) => Shown) => {
+      if (this.state() === current) this.shown.update(change);
+    };
     this.shown.update((shown) => ({ ...shown, more: 'loading' }));
     this.searchApi
       .search({ query: current.query, page: page + 1, type: current.type })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response) => {
-          if (this.state() !== current) return;
-          this.shown.update((shown) => ({
+          updateIfCurrent((shown) => ({
             items: appendItems(shown.items, toSearchResults(response).items),
             page: page + 1,
             more: 'idle',
           }));
         },
         error: () => {
-          if (this.state() !== current) return;
-          this.shown.update((shown) => ({ ...shown, more: 'failed' }));
+          updateIfCurrent((shown) => ({ ...shown, more: 'failed' }));
         },
       });
   }
