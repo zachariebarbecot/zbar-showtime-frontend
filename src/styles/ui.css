@@ -458,10 +458,6 @@ body {
   .zb-poster-action {
     opacity: 1;
   }
-  .zb-poster-action .zb-btn {
-    width: 44px;
-    height: 44px;
-  }
 }
 .zb-poster-progress {
   position: absolute;
@@ -637,6 +633,12 @@ body {
   height: 28px;
   padding: 0;
   justify-content: center;
+}
+@media (hover: none) {
+  .zb-poster-action .zb-btn {
+    width: 44px;
+    height: 44px;
+  }
 }
 .zb-poster-action .zb-btn[aria-pressed='false'],
 .zb-poster-action .zb-btn[aria-pressed='false']:hover {
