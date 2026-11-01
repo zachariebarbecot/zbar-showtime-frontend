@@ -350,6 +350,27 @@ describe('Search', () => {
       );
     });
 
+    it.each([
+      ['TO_WATCH', 'Watchlist'],
+      ['WATCHED', 'Vu'],
+      ['WATCHING', 'En cours'],
+      ['DROPPED', 'Abandonné'],
+    ])(
+      'should badge a result with status %s as %s, with an icon',
+      async (watchlistStatus, word) => {
+        const rendered = await open();
+
+        await searchFor(rendered, 'dune', {
+          ...RESULTS,
+          results: [{ id: 1, title: 'Dune', type: 'MOVIE', watchlistStatus }],
+        });
+
+        const badge = query(rendered.root, '.zb-poster .zb-badge');
+        expect(badge.textContent?.trim()).toBe(word);
+        expect(badge.querySelector('svg path')?.getAttribute('d')).toBeTruthy();
+      },
+    );
+
     it('should fall back to the poster without image when a result has none', async () => {
       const rendered = await open();
 

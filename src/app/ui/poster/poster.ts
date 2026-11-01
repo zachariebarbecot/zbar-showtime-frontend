@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { episodeCode } from '../../shared/episode-code';
 import { Icon } from '../icon/icon';
 
-export type PosterStatus = 'watchlist' | 'seen';
+export type PosterStatus = 'watchlist' | 'seen' | 'progress' | 'dropped';
 
 export interface PosterEpisode {
   readonly season: number;
@@ -14,7 +14,12 @@ export interface PosterProgress {
   readonly total: number;
 }
 
-const STATUS_LABELS: Record<PosterStatus, string> = { watchlist: 'Watchlist', seen: 'Vu' };
+const STATUS_LABELS: Record<PosterStatus, string> = {
+  watchlist: 'Watchlist',
+  seen: 'Vu',
+  progress: '',
+  dropped: '',
+};
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -29,7 +34,8 @@ const STATUS_LABELS: Record<PosterStatus, string> = { watchlist: 'Watchlist', se
         @if (status(); as status) {
           <span class="zb-poster-badge">
             <span [class]="'zb-badge zb-badge-' + status">
-              <svg appIcon [name]="status"></svg>{{ statusLabels[status] }}
+              <svg appIcon [name]="status === 'seen' ? 'seen' : 'watchlist'"></svg
+              >{{ statusLabels[status] }}
             </span>
           </span>
         } @else if (progress()) {

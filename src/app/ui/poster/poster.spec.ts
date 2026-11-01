@@ -31,6 +31,8 @@ describe('Poster', () => {
   it.each([
     ['watchlist', 'Watchlist'],
     ['seen', 'Vu'],
+    ['progress', 'En cours'],
+    ['dropped', 'Abandonné'],
   ] as const)('should show the %s badge with its icon and word', async (status, word) => {
     const poster = await render({ title: 'Past Lives', status });
 
