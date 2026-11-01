@@ -862,7 +862,6 @@ describe('Search', () => {
 
         buttonOf(root, 'Dune').click();
         http.expectOne('/watchlist/movies').flush(null, status);
-        await harness.fixture.whenStable();
         harness.detectChanges();
 
         const button = buttonOf(root, 'Dune');
