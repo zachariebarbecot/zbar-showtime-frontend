@@ -4,6 +4,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import {
   Observable,
   catchError,
+  combineLatest,
   debounceTime,
   distinctUntilChanged,
   map,
@@ -116,14 +117,19 @@ export class Search {
   protected readonly type = new FormControl('all', { nonNullable: true });
   protected readonly query = new FormControl('', { nonNullable: true });
   protected readonly state = toSignal(
-    this.query.valueChanges.pipe(
-      map((value) => value.trim()),
-      debounceTime(DEBOUNCE_MS),
-      distinctUntilChanged(),
-      switchMap((query): Observable<SearchState> =>
+    combineLatest([
+      this.query.valueChanges.pipe(
+        map((value) => value.trim()),
+        debounceTime(DEBOUNCE_MS),
+        distinctUntilChanged(),
+        startWith(''),
+      ),
+      this.type.valueChanges.pipe(startWith(this.type.value)),
+    ]).pipe(
+      switchMap(([query, type]): Observable<SearchState> =>
         query.length < MIN_LENGTH
           ? of(IDLE)
-          : this.searchApi.search({ query, page: 1 }).pipe(
+          : this.searchApi.search({ query, page: 1, type: type === 'all' ? undefined : type }).pipe(
               map((response): SearchState => ({
                 kind: 'done',
                 query,
