@@ -152,8 +152,8 @@ describe('Search', () => {
     }
 
     it.each([
-      ['Films', 'movie'],
-      ['Séries', 'tv'],
+      ['Films', 'MOVIE'],
+      ['Séries', 'TV'],
     ])(
       'should search again with type=%s mapped to %s, page 1 and the same input',
       async (label, type) => {
@@ -207,7 +207,7 @@ describe('Search', () => {
       rendered.harness.detectChanges();
 
       expect(first.cancelled).toBe(true);
-      expect(second.request.params.get('type')).toBe('tv');
+      expect(second.request.params.get('type')).toBe('TV');
       const titles = Array.from(rendered.root.querySelectorAll('.zb-poster-title'));
       expect(titles.map((title) => title.textContent)).toEqual(['Dune: Prophecy']);
     });
@@ -533,7 +533,7 @@ describe('Search', () => {
       loadMoreButton(rendered.root)?.click();
 
       const request = rendered.http.expectOne((req) => req.url === '/search');
-      expect(request.request.params.get('type')).toBe('movie');
+      expect(request.request.params.get('type')).toBe('MOVIE');
       expect(request.request.params.get('page')).toBe('2');
     });
 
@@ -611,7 +611,7 @@ describe('Search', () => {
       rendered.root.querySelectorAll<HTMLElement>('[role="radio"]')[2].click();
       await settle(rendered);
       const fresh = rendered.http.expectOne((req) => req.url === '/search');
-      expect(fresh.request.params.get('type')).toBe('tv');
+      expect(fresh.request.params.get('type')).toBe('TV');
       expect(fresh.request.params.get('page')).toBe('1');
       fresh.flush(page(1, 1, [{ id: 4, title: 'Série', type: 'TV' }]));
       late.flush(page(2, 3, [{ id: 9, title: 'Tardif', type: 'MOVIE' }]));

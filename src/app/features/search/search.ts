@@ -36,8 +36,8 @@ const ALL_TYPES = 'all';
 
 const TYPE_OPTIONS: readonly RadioOption[] = [
   { value: ALL_TYPES, label: 'Tout' },
-  { value: 'movie', label: 'Films' },
-  { value: 'tv', label: 'Séries' },
+  { value: 'MOVIE', label: 'Films' },
+  { value: 'TV', label: 'Séries' },
 ];
 
 type DoneState = {
