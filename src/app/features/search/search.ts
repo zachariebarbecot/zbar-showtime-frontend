@@ -1,5 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  inject,
+  linkedSignal,
+} from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import {
   Observable,
@@ -14,10 +20,11 @@ import {
 } from 'rxjs';
 import { SearchControllerService } from '../../api/services/search-controller.service';
 import { injectSession } from '../../core/auth/session';
-import { SearchResults, toSearchResults } from './search-results';
+import { SearchItem, SearchResults, appendItems, toSearchResults } from './search-results';
 import { AppHeader } from '../../ui/app-header/app-header';
 import { EmptyState } from '../../ui/empty-state/empty-state';
 import { FormAlert } from '../../ui/form-alert/form-alert';
+import { Button } from '../../ui/button/button';
 import { Poster } from '../../ui/poster/poster';
 import { Icon } from '../../ui/icon/icon';
 import { RadioChips, RadioOption } from '../../ui/radio-chips/radio-chips';
@@ -33,11 +40,23 @@ const TYPE_OPTIONS: readonly RadioOption[] = [
   { value: 'tv', label: 'Séries' },
 ];
 
+type DoneState = {
+  readonly kind: 'done';
+  readonly query: string;
+  readonly type?: string;
+} & SearchResults;
+
 type SearchState =
   | { readonly kind: 'idle' }
   | { readonly kind: 'loading' }
   | { readonly kind: 'error' }
-  | ({ readonly kind: 'done'; readonly query: string } & SearchResults);
+  | DoneState;
+
+interface Shown {
+  readonly items: readonly SearchItem[];
+  readonly page: number;
+  readonly more: 'idle' | 'loading' | 'failed';
+}
 
 const IDLE: SearchState = { kind: 'idle' };
 const LOADING: SearchState = { kind: 'loading' };
@@ -46,7 +65,16 @@ const FAILED: SearchState = { kind: 'error' };
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-search',
-  imports: [AppHeader, EmptyState, FormAlert, Icon, Poster, RadioChips, ReactiveFormsModule],
+  imports: [
+    AppHeader,
+    Button,
+    EmptyState,
+    FormAlert,
+    Icon,
+    Poster,
+    RadioChips,
+    ReactiveFormsModule,
+  ],
   template: `
     @if (session.answered()) {
       <app-header active="search" [user]="session.user()" (logout)="session.logout()" />
@@ -90,10 +118,26 @@ const FAILED: SearchState = { kind: 'error' };
           {{ current.total }} {{ current.total === 1 ? 'résultat' : 'résultats' }}
         </p>
         <div class="sr-grid">
-          @for (item of current.items; track item.id) {
+          @for (item of shown().items; track item.key) {
             <app-poster [title]="item.title" [src]="item.posterUrl" [meta]="item.meta" />
           }
         </div>
+        @if (shown().more === 'loading') {
+          <p role="status">Chargement…</p>
+        } @else if (shown().more === 'failed') {
+          <app-form-alert message="Le chargement a échoué. Réessaie dans un instant." />
+        }
+        @if (shown().page < current.totalPages) {
+          <div class="sr-more">
+            <app-button
+              variant="secondary"
+              [disabled]="shown().more === 'loading'"
+              (click)="loadMore(current)"
+            >
+              Charger plus
+            </app-button>
+          </div>
+        }
       }
     </main>
   `,
@@ -109,11 +153,17 @@ const FAILED: SearchState = { kind: 'error' };
       grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
       gap: var(--space-4);
     }
+    .sr-more {
+      display: flex;
+      justify-content: center;
+      margin-top: var(--space-6);
+    }
   `,
 })
 export class Search {
   protected readonly session = injectSession();
   private readonly searchApi = inject(SearchControllerService);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly typeOptions = TYPE_OPTIONS;
   protected readonly type = new FormControl(ALL_TYPES, { nonNullable: true });
@@ -128,22 +178,53 @@ export class Search {
       ),
       this.type.valueChanges.pipe(startWith(this.type.value)),
     ]).pipe(
-      switchMap(([query, type]): Observable<SearchState> =>
-        query.length < MIN_LENGTH
+      switchMap(([query, type]): Observable<SearchState> => {
+        const typeFilter = type === ALL_TYPES ? undefined : type;
+        return query.length < MIN_LENGTH
           ? of(IDLE)
-          : this.searchApi
-              .search({ query, page: 1, type: type === ALL_TYPES ? undefined : type })
-              .pipe(
-                map((response): SearchState => ({
-                  kind: 'done',
-                  query,
-                  ...toSearchResults(response),
-                })),
-                catchError(() => of(FAILED)),
-                startWith(LOADING),
-              ),
-      ),
+          : this.searchApi.search({ query, page: 1, type: typeFilter }).pipe(
+              map((response): SearchState => ({
+                kind: 'done',
+                query,
+                type: typeFilter,
+                ...toSearchResults(response),
+              })),
+              catchError(() => of(FAILED)),
+              startWith(LOADING),
+            );
+      }),
     ),
     { initialValue: IDLE },
   );
+
+  protected readonly shown = linkedSignal<SearchState, Shown>({
+    source: this.state,
+    computation: (state) =>
+      state.kind === 'done'
+        ? { items: state.items, page: state.page, more: 'idle' }
+        : { items: [], page: 0, more: 'idle' },
+  });
+
+  protected loadMore(current: DoneState): void {
+    const { page } = this.shown();
+    const updateIfCurrent = (change: (shown: Shown) => Shown) => {
+      if (this.state() === current) this.shown.update(change);
+    };
+    this.shown.update((shown) => ({ ...shown, more: 'loading' }));
+    this.searchApi
+      .search({ query: current.query, page: page + 1, type: current.type })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response) => {
+          updateIfCurrent((shown) => ({
+            items: appendItems(shown.items, toSearchResults(response).items),
+            page: page + 1,
+            more: 'idle',
+          }));
+        },
+        error: () => {
+          updateIfCurrent((shown) => ({ ...shown, more: 'failed' }));
+        },
+      });
+  }
 }

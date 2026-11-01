@@ -2,13 +2,15 @@ import { Result } from '../../api/models/result';
 import { SearchResponse } from '../../api/models/search-response';
 
 export interface SearchItem {
-  readonly id: number;
+  readonly key: string;
   readonly title: string;
   readonly posterUrl?: string;
   readonly meta: string;
 }
 
 export interface SearchResults {
+  readonly page: number;
+  readonly totalPages: number;
   readonly total: number;
   readonly items: readonly SearchItem[];
 }
@@ -20,7 +22,7 @@ const toItem = ({ id, title, posterUrl, releaseDate, type }: Result): SearchItem
     ? []
     : [
         {
-          id,
+          key: `${type}:${id}`,
           title,
           posterUrl,
           meta: [type && KIND_LABELS[type], releaseDate?.slice(0, 4)].filter(Boolean).join(' · '),
@@ -29,5 +31,18 @@ const toItem = ({ id, title, posterUrl, releaseDate, type }: Result): SearchItem
 
 export const toSearchResults = (response: SearchResponse): SearchResults => {
   const items = (response.results ?? []).flatMap(toItem);
-  return { total: response.totalResults ?? items.length, items };
+  return {
+    page: response.page ?? 1,
+    totalPages: response.totalPages ?? 1,
+    total: response.totalResults ?? items.length,
+    items,
+  };
+};
+
+export const appendItems = (
+  shown: readonly SearchItem[],
+  incoming: readonly SearchItem[],
+): readonly SearchItem[] => {
+  const keys = new Set(shown.map(({ key }) => key));
+  return [...shown, ...incoming.filter(({ key }) => !keys.has(key))];
 };
