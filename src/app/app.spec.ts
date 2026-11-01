@@ -36,6 +36,13 @@ describe('App', () => {
     expect(fixture.nativeElement.querySelector('h1')).toBeNull();
   });
 
+  it('mounts the toast once in the shell', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelectorAll('app-toast')).toHaveLength(1);
+  });
+
   it.each(['/', '/connexion', '/inscription'])('shows %s to a guest', async (url) => {
     const harness = await setup(null);
     await harness.navigateByUrl(url);
