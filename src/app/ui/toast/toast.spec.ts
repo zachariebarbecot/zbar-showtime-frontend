@@ -60,4 +60,32 @@ describe('Toast', () => {
       expect(text(element)?.trim()).toBe('');
     });
   });
+
+  describe('replacement', () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
+    it('shows only the second toast, replacing the first', () => {
+      const { fixture, toasts, element } = setup();
+
+      toasts.show('Premier.');
+      toasts.show('Second.');
+      fixture.detectChanges();
+
+      expect(element.querySelectorAll('.zb-toast')).toHaveLength(1);
+      expect(element.querySelector('[role="status"]')?.textContent).toContain('Second.');
+      expect(element.textContent).not.toContain('Premier.');
+    });
+
+    it('gives the second toast its own full duration', async () => {
+      const { fixture, toasts, element } = setup();
+      toasts.show('Premier.');
+      await vi.advanceTimersByTimeAsync(3000);
+      toasts.show('Second.');
+      await vi.advanceTimersByTimeAsync(4000);
+      fixture.detectChanges();
+
+      expect(element.textContent).toContain('Second.');
+    });
+  });
 });
