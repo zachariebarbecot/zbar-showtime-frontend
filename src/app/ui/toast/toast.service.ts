@@ -5,6 +5,6 @@ export class ToastService {
   readonly message = signal<string | null>(null);
 
   show(message: string): void {
-    void message;
+    this.message.set(message);
   }
 }
