@@ -810,7 +810,7 @@ describe('Search', () => {
       const button = buttonOf(root, 'Dune');
       expect(button.getAttribute('aria-pressed')).toBe('false');
       expect(button.getAttribute('aria-label')).toBe('Ajouter Dune à la watchlist');
-      expect(button.textContent?.trim()).toBe('Watchlist');
+      expect(button.querySelector('.zb-sr')?.textContent).toBe('Watchlist');
       expect(buttonOf(root, 'Dune: Prophecy').getAttribute('aria-label')).toBe(
         'Ajouter Dune: Prophecy à la watchlist',
       );

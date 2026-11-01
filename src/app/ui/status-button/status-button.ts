@@ -24,6 +24,7 @@ export class StatusButton {
   readonly size = input<'md' | 'sm'>('md');
   readonly active = model(false);
   readonly ariaLabel = input<string>();
+  readonly iconOnly = input(false);
   readonly controlled = input(false);
   readonly locked = input(false);
   readonly add = output<void>();

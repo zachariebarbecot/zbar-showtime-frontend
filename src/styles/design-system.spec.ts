@@ -100,6 +100,23 @@ describe('ui.css', () => {
     });
   });
 
+  describe('status button on a poster', () => {
+    it('is a 28px icon square, 44px on touch screens', () => {
+      expect(ui).toMatch(
+        /\n\.zb-poster-action \.zb-btn\s*\{[^}]*width: 28px;[^}]*height: 28px;[^}]*padding: 0/,
+      );
+      expect(ui).toMatch(
+        /@media \(hover: none\)\s*\{[^@]*\.zb-poster-action \.zb-btn\s*\{[^}]*width: 44px;[^}]*height: 44px/,
+      );
+    });
+
+    it('sits on the scrim with poster title ink when unpressed', () => {
+      expect(ui).toMatch(
+        /\.zb-poster-action \.zb-btn\[aria-pressed='false'\][^{]*\{[^}]*background: var\(--scrim\)[^}]*color: #f4efe8/,
+      );
+    });
+  });
+
   describe('locked status button', () => {
     it('looks inert: default cursor and no hover background', () => {
       expect(ui).toMatch(/\.zb-btn\[aria-disabled='true'\]\s*\{[^}]*cursor: default/);

@@ -109,6 +109,24 @@ describe('StatusButton', () => {
     });
   });
 
+  it('should keep the label as visible text by default', async () => {
+    const { button } = await render('watchlist');
+
+    expect(button.querySelector('.zb-sr')).toBeNull();
+  });
+
+  it('should hide the label visually when icon only, keeping the name, the icon and the state', async () => {
+    const { fixture, button } = await render('watchlist');
+    fixture.componentRef.setInput('iconOnly', true);
+    fixture.componentRef.setInput('ariaLabel', 'Ajouter Dune à la watchlist');
+    await fixture.whenStable();
+
+    expect(query(button, '.zb-sr').textContent).toBe('Watchlist');
+    expect(button.getAttribute('aria-label')).toBe('Ajouter Dune à la watchlist');
+    expect(button.getAttribute('aria-pressed')).toBe('false');
+    expect(button.querySelector('svg path')?.getAttribute('d')).toBe('M12 5v14M5 12h14');
+  });
+
   it('should apply the small size', async () => {
     const { button } = await render('seen', false, 'sm');
 
