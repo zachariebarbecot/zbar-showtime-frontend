@@ -11,7 +11,11 @@ import { TOKEN_STORAGE } from '../../core/auth/auth.service';
 import { query } from '../../testing/query';
 import { Search } from './search';
 
-const USER = { firstName: 'Camille', lastName: 'Durand', email: 'camille.durand@exemple.fr' };
+const USER = {
+  firstName: 'Camille',
+  lastName: 'Durand',
+  email: 'camille.durand@exemple.fr',
+};
 
 const validToken = `h.${btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 }))}.s`;
 
@@ -53,10 +57,19 @@ describe('Search', () => {
     const page = await rendered.harness.navigateByUrl('/recherche', Search);
     rendered.http.expectOne('/users/me').flush(USER);
     await rendered.harness.fixture.whenStable();
-    return { ...rendered, page, root: rendered.harness.routeNativeElement as HTMLElement };
+    return {
+      ...rendered,
+      page,
+      root: rendered.harness.routeNativeElement as HTMLElement,
+    };
   }
 
-  const EMPTY_RESPONSE = { page: 1, results: [], totalPages: 1, totalResults: 0 };
+  const EMPTY_RESPONSE = {
+    page: 1,
+    results: [],
+    totalPages: 1,
+    totalResults: 0,
+  };
 
   function type(rendered: Awaited<ReturnType<typeof open>>, value: string) {
     const input = query<HTMLInputElement>(rendered.root, 'main input');
@@ -314,7 +327,12 @@ describe('Search', () => {
           releaseDate: '2021-09-15',
           posterUrl: 'https://img.exemple.fr/dune.jpg',
         },
-        { id: 2, title: 'Dune: Prophecy', type: 'TV', releaseDate: '2024-11-17' },
+        {
+          id: 2,
+          title: 'Dune: Prophecy',
+          type: 'TV',
+          releaseDate: '2024-11-17',
+        },
         { id: 3, title: 'Dune, le film', type: 'MOVIE' },
         { title: 'Sans identifiant', type: 'MOVIE', releaseDate: '2000-01-01' },
         { id: 5, type: 'TV', releaseDate: '2000-01-01' },
@@ -395,7 +413,12 @@ describe('Search', () => {
         ...RESULTS,
         results: [
           { id: 1, title: 'Dune', type: 'MOVIE', watchlistStatus: 'WATCHED' },
-          { id: 1, title: 'Dune, la série', type: 'TV', watchlistStatus: 'DROPPED' },
+          {
+            id: 1,
+            title: 'Dune, la série',
+            type: 'TV',
+            watchlistStatus: 'DROPPED',
+          },
         ],
       });
 
@@ -621,7 +644,12 @@ describe('Search', () => {
         .expectOne((req) => req.url === '/search')
         .flush(
           page(2, 3, [
-            { id: 2, title: 'Dune 2', type: 'MOVIE', watchlistStatus: 'WATCHING' },
+            {
+              id: 2,
+              title: 'Dune 2',
+              type: 'MOVIE',
+              watchlistStatus: 'WATCHING',
+            },
             { id: 3, title: 'Dune 3', type: 'MOVIE' },
           ]),
         );
@@ -766,5 +794,46 @@ describe('Search', () => {
         expect(rendered.root.querySelector('[role="alert"]')).toBeNull();
       },
     );
+  });
+
+  describe('add to watchlist', () => {
+    const DUNE = { id: 1, title: 'Dune', type: 'MOVIE' };
+    const PROPHECY = { id: 2, title: 'Dune: Prophecy', type: 'TV' };
+
+    async function searchFor(results: object[]) {
+      const rendered = await open();
+      vi.useFakeTimers();
+      type(rendered, 'dune');
+      await settle(rendered);
+      rendered.http
+        .expectOne((req) => req.url === '/search')
+        .flush({
+          page: 1,
+          totalPages: 1,
+          totalResults: results.length,
+          results,
+        });
+      rendered.harness.detectChanges();
+      return rendered;
+    }
+
+    const posterOf = (root: HTMLElement, title: string) =>
+      Array.from(root.querySelectorAll('.zb-poster')).find(
+        (poster) => poster.querySelector('.zb-poster-title')?.textContent === title,
+      ) as HTMLElement;
+    const buttonOf = (root: HTMLElement, title: string) =>
+      query<HTMLButtonElement>(posterOf(root, title), '.zb-poster-action button');
+
+    it('should offer an unpressed Watchlist button named after the title on a result without status', async () => {
+      const { root } = await searchFor([DUNE, PROPHECY]);
+
+      const button = buttonOf(root, 'Dune');
+      expect(button.getAttribute('aria-pressed')).toBe('false');
+      expect(button.getAttribute('aria-label')).toBe('Ajouter Dune à la watchlist');
+      expect(button.textContent?.trim()).toBe('Watchlist');
+      expect(buttonOf(root, 'Dune: Prophecy').getAttribute('aria-label')).toBe(
+        'Ajouter Dune: Prophecy à la watchlist',
+      );
+    });
   });
 });

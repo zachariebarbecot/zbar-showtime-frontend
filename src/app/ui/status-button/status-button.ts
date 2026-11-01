@@ -21,6 +21,7 @@ export class StatusButton {
   readonly kind = input.required<'watchlist' | 'seen'>();
   readonly size = input<'md' | 'sm'>('md');
   readonly active = model(false);
+  readonly ariaLabel = input<string>();
 
   protected readonly classes = computed(
     () => `zb-btn zb-btn-${this.kind()}${this.size() === 'sm' ? ' zb-btn-sm' : ''}`,

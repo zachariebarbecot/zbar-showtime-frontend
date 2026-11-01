@@ -65,6 +65,16 @@ describe('StatusButton', () => {
     expect(button.getAttribute('aria-pressed')).toBe('false');
   });
 
+  it('should name the button with the accessible name given', async () => {
+    const { fixture, button } = await render('watchlist');
+    expect(button.hasAttribute('aria-label')).toBe(false);
+
+    fixture.componentRef.setInput('ariaLabel', 'Ajouter Dune à la watchlist');
+    await fixture.whenStable();
+
+    expect(button.getAttribute('aria-label')).toBe('Ajouter Dune à la watchlist');
+  });
+
   it('should apply the small size', async () => {
     const { button } = await render('seen', false, 'sm');
 

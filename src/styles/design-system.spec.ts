@@ -72,6 +72,26 @@ describe('ui.css', () => {
     expect(rule('.zb-poster-caption-scrim .zb-poster-meta')).toContain('color: var(--marquee)');
   });
 
+  describe('poster action', () => {
+    const action = [...ui.matchAll(/(?:^|\n)(\.zb-poster-action[^{]*)\{([^}]*)\}/g)]
+      .map((m) => m[2])
+      .join('\n');
+
+    it('sits at the top right, hidden at rest', () => {
+      expect(action).toContain('position: absolute');
+      expect(action).toContain('top: var(--space-2)');
+      expect(action).toContain('right: var(--space-2)');
+      expect(action).toContain('opacity: 0');
+    });
+
+    it('shows on hover and keyboard focus, always on touch screens', () => {
+      expect(ui).toMatch(
+        /\.zb-poster:hover \.zb-poster-action,\s*\.zb-poster:focus-within \.zb-poster-action\s*\{[^}]*opacity: 1/,
+      );
+      expect(ui).toMatch(/@media \(hover: none\)\s*\{\s*\.zb-poster-action\s*\{[^}]*opacity: 1/);
+    });
+  });
+
   describe('toast', () => {
     const tokens = read('src/styles/tokens.css');
     const toastCss = [...ui.matchAll(/(?:^|\n)(\.zb-toast[^{]*)\{([^}]*)\}/g)]
