@@ -582,5 +582,42 @@ describe('Search', () => {
 
       expect(titles(rendered.root)).toEqual(['Dune', 'Dune (série)', 'Dune 2']);
     });
+
+    it('should ignore a late page when the input changes and restart from page 1', async () => {
+      const rendered = await open();
+      await searchFor(rendered, page(1, 3, [DUNE]));
+      loadMoreButton(rendered.root)?.click();
+      const late = rendered.http.expectOne((req) => req.url === '/search');
+
+      type(rendered, 'arrakis');
+      await settle(rendered);
+      const fresh = rendered.http.expectOne((req) => req.url === '/search');
+      expect(fresh.request.params.get('page')).toBe('1');
+      expect(fresh.request.params.get('query')).toBe('arrakis');
+      fresh.flush(page(1, 2, [{ id: 3, title: 'Arrakis', type: 'MOVIE' }]));
+      late.flush(page(2, 3, [{ id: 9, title: 'Tardif', type: 'MOVIE' }]));
+      rendered.harness.detectChanges();
+
+      expect(titles(rendered.root)).toEqual(['Arrakis']);
+      expect(rendered.root.querySelector('[role="status"]')).toBeNull();
+    });
+
+    it('should ignore a late page when the filter changes and restart from page 1', async () => {
+      const rendered = await open();
+      await searchFor(rendered, page(1, 3, [DUNE]));
+      loadMoreButton(rendered.root)?.click();
+      const late = rendered.http.expectOne((req) => req.url === '/search');
+
+      rendered.root.querySelectorAll<HTMLElement>('[role="radio"]')[2].click();
+      await settle(rendered);
+      const fresh = rendered.http.expectOne((req) => req.url === '/search');
+      expect(fresh.request.params.get('type')).toBe('tv');
+      expect(fresh.request.params.get('page')).toBe('1');
+      fresh.flush(page(1, 1, [{ id: 4, title: 'Série', type: 'TV' }]));
+      late.flush(page(2, 3, [{ id: 9, title: 'Tardif', type: 'MOVIE' }]));
+      rendered.harness.detectChanges();
+
+      expect(titles(rendered.root)).toEqual(['Série']);
+    });
   });
 });
