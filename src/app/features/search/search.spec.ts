@@ -117,6 +117,20 @@ describe('Search', () => {
     });
   });
 
+  it('should expose the search bar as a search landmark', async () => {
+    const { root } = await open();
+
+    expect(root.querySelector('[role="search"] input[type="search"]')).not.toBeNull();
+  });
+
+  it('should name the chips "Filtrer" for assistive technologies only', async () => {
+    const { root } = await open();
+
+    const label = root.querySelector<HTMLElement>('.zb-search-scopes .zb-field-label');
+    expect(label?.textContent?.trim()).toBe('Filtrer');
+    expect(label?.classList).toContain('zb-sr');
+  });
+
   describe('type filter', () => {
     const chips = (root: HTMLElement) =>
       Array.from(root.querySelectorAll<HTMLElement>('[role="radio"]'));
@@ -392,6 +406,28 @@ describe('Search', () => {
       );
       expect(rendered.root.querySelector('.zb-empty')?.textContent).not.toContain('2 caractères');
       expect(rendered.root.querySelector('.zb-poster')).toBeNull();
+    });
+
+    it('should say what to do and offer to clear the search', async () => {
+      const rendered = await open();
+      vi.useFakeTimers();
+      type(rendered, 'zzzz');
+      await settle(rendered);
+      rendered.http.expectOne((req) => req.url === '/search').flush(EMPTY_RESPONSE);
+      rendered.harness.detectChanges();
+
+      const empty = rendered.root.querySelector<HTMLElement>('.zb-empty');
+      expect(empty?.querySelector('.zb-empty-text')?.textContent).toContain('autre titre');
+      const clear = Array.from(empty?.querySelectorAll('button') ?? []).find(
+        (button) => button.textContent?.trim() === 'Effacer la recherche',
+      );
+      expect(clear).toBeDefined();
+      clear?.click();
+      await settle(rendered);
+
+      expect(rendered.root.querySelector<HTMLInputElement>('input[type="search"]')?.value).toBe('');
+      expect(rendered.root.querySelector('.zb-empty')?.textContent).toContain('2 caractères');
+      expect(searchCalls(rendered.http)).toHaveLength(0);
     });
   });
 

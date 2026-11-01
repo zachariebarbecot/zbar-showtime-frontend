@@ -80,7 +80,7 @@ const FAILED: SearchState = { kind: 'error' };
       <app-header active="search" [user]="session.user()" (logout)="session.logout()" />
     }
     <main class="hm-wrap">
-      <div class="zb-search">
+      <div class="zb-search" role="search">
         <div class="zb-search-field">
           <svg appIcon name="search"></svg>
           <input
@@ -95,7 +95,8 @@ const FAILED: SearchState = { kind: 'error' };
         <div class="zb-search-scopes">
           <app-radio-chips
             name="type"
-            label="Type de contenu"
+            label="Filtrer"
+            labelHidden
             [options]="typeOptions"
             [formControl]="type"
           />
@@ -112,7 +113,14 @@ const FAILED: SearchState = { kind: 'error' };
       } @else if (current.kind === 'error') {
         <app-form-alert message="La recherche a échoué. Réessaie dans un instant." />
       } @else if (current.items.length === 0) {
-        <app-empty-state title="Aucun résultat pour &quot;{{ current.query }}&quot;" />
+        <app-empty-state
+          title="Aucun résultat pour &quot;{{ current.query }}&quot;"
+          text="Vérifie l'orthographe ou essaie un autre titre."
+        >
+          <app-button variant="secondary" (click)="query.setValue('')">
+            Effacer la recherche
+          </app-button>
+        </app-empty-state>
       } @else {
         <p class="sr-count">
           {{ current.total }} {{ current.total === 1 ? 'résultat' : 'résultats' }}
@@ -142,8 +150,11 @@ const FAILED: SearchState = { kind: 'error' };
     </main>
   `,
   styles: `
+    .zb-search {
+      margin-bottom: var(--space-6);
+    }
     .sr-count {
-      margin: var(--space-6) 0 var(--space-4);
+      margin: 0 0 var(--space-4);
       color: var(--ink-muted);
       font: 400 14px/20px var(--font-sans);
     }
