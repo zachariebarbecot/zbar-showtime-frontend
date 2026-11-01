@@ -31,16 +31,12 @@ const STATUSES: Record<PosterStatus, { readonly label: string; readonly icon: Ic
         @if (src(); as src) {
           <img [src]="src" alt="" />
         }
-        @if (status(); as status) {
+        @if (badge(); as badge) {
           <span class="zb-poster-badge">
-            <span [class]="'zb-badge zb-badge-' + status">
-              <svg appIcon [name]="statuses[status].icon"></svg>{{ statuses[status].label }}
+            <span [class]="'zb-badge zb-badge-' + badge">
+              <svg appIcon [name]="statuses[badge].icon"></svg>{{ statuses[badge].label }}
             </span>
           </span>
-        } @else if (progress()) {
-          <span class="zb-poster-badge"
-            ><span class="zb-badge zb-badge-progress">En cours</span></span
-          >
         }
         <span class="zb-poster-caption" [class.zb-poster-caption-scrim]="src()">
           <span class="zb-poster-title">{{ title() }}</span>
@@ -78,6 +74,9 @@ export class Poster {
   readonly progress = input<PosterProgress>();
 
   protected readonly statuses = STATUSES;
+  protected readonly badge = computed<PosterStatus | undefined>(
+    () => this.status() ?? (this.progress() ? 'progress' : undefined),
+  );
   protected readonly code = computed(() => {
     const next = this.next();
     return next && episodeCode(next.season, next.episode);

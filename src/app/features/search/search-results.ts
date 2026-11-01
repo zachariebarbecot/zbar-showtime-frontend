@@ -17,12 +17,12 @@ export interface SearchResults {
   readonly items: readonly SearchItem[];
 }
 
-const STATUSES: Readonly<Record<string, PosterStatus>> = {
-  TO_WATCH: 'watchlist',
-  WATCHED: 'seen',
-  WATCHING: 'progress',
-  DROPPED: 'dropped',
-};
+const STATUSES = new Map<string, PosterStatus>([
+  ['TO_WATCH', 'watchlist'],
+  ['WATCHED', 'seen'],
+  ['WATCHING', 'progress'],
+  ['DROPPED', 'dropped'],
+]);
 
 const toItem = ({
   id,
@@ -40,7 +40,7 @@ const toItem = ({
           title,
           posterUrl,
           meta: releaseDate?.slice(0, 4),
-          status: watchlistStatus === undefined ? undefined : STATUSES[watchlistStatus],
+          status: STATUSES.get(watchlistStatus ?? ''),
         },
       ];
 
