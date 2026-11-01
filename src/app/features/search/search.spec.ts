@@ -76,7 +76,19 @@ describe('Search', () => {
       const { root, http } = await open();
 
       expect(root.querySelector('.zb-empty')?.textContent).toContain('2 caractères');
-      expect(http.match((req) => req.url === '/search')).toHaveLength(0);
+      expect(searchCalls(http)).toHaveLength(0);
+    });
+
+    it('should not render the header before /users/me answers', async () => {
+      const { harness, http } = await render();
+
+      await harness.navigateByUrl('/recherche', Search);
+      const root = harness.routeNativeElement as HTMLElement;
+
+      expect(root.querySelector('header')).toBeNull();
+      http.expectOne('/users/me').flush(USER);
+      await harness.fixture.whenStable();
+      expect(root.querySelector('header')).not.toBeNull();
     });
 
     it('should mark Recherche as the current header link, not Accueil', async () => {
