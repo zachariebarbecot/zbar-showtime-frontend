@@ -10,6 +10,7 @@ import { Icon } from '../icon/icon';
       type="button"
       [class]="classes()"
       [attr.aria-pressed]="active()"
+      [attr.aria-label]="ariaLabel()"
       (click)="active.set(!active())"
     >
       <svg appIcon [name]="icon()"></svg>{{ label() }}

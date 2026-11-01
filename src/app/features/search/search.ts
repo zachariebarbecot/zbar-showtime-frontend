@@ -26,6 +26,7 @@ import { EmptyState } from '../../ui/empty-state/empty-state';
 import { FormAlert } from '../../ui/form-alert/form-alert';
 import { Button } from '../../ui/button/button';
 import { Poster } from '../../ui/poster/poster';
+import { StatusButton } from '../../ui/status-button/status-button';
 import { Icon } from '../../ui/icon/icon';
 import { RadioChips, RadioOption } from '../../ui/radio-chips/radio-chips';
 
@@ -74,6 +75,7 @@ const FAILED: SearchState = { kind: 'error' };
     Poster,
     RadioChips,
     ReactiveFormsModule,
+    StatusButton,
   ],
   template: `
     @if (session.answered()) {
@@ -132,7 +134,13 @@ const FAILED: SearchState = { kind: 'error' };
               [src]="item.posterUrl"
               [meta]="item.meta"
               [status]="item.status"
-            />
+            >
+              <app-status-button
+                kind="watchlist"
+                size="sm"
+                [ariaLabel]="'Ajouter ' + item.title + ' à la watchlist'"
+              />
+            </app-poster>
           }
         </div>
         @if (shown().more === 'loading') {

@@ -38,6 +38,7 @@ const STATUSES: Record<PosterStatus, { readonly label: string; readonly icon: Ic
             </span>
           </span>
         }
+        <span class="zb-poster-action"><ng-content /></span>
         <span class="zb-poster-caption" [class.zb-poster-caption-scrim]="src()">
           <span class="zb-poster-title">{{ title() }}</span>
           @if (meta()) {

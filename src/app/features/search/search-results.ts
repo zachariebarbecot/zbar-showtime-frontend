@@ -4,6 +4,8 @@ import { PosterStatus } from '../../ui/poster/poster';
 
 export interface SearchItem {
   readonly key: string;
+  readonly type: 'MOVIE' | 'TV';
+  readonly tmdbId: number;
   readonly title: string;
   readonly posterUrl?: string;
   readonly meta?: string;
@@ -32,11 +34,13 @@ const toItem = ({
   type,
   watchlistStatus,
 }: Result): SearchItem[] =>
-  id === undefined || title === undefined
+  id === undefined || title === undefined || type === undefined
     ? []
     : [
         {
           key: `${type}:${id}`,
+          type,
+          tmdbId: id,
           title,
           posterUrl,
           meta: releaseDate?.slice(0, 4),
