@@ -4,11 +4,14 @@ const DISPLAY_MS = 5000;
 
 @Injectable({ providedIn: 'root' })
 export class ToastService {
+  private timer?: ReturnType<typeof setTimeout>;
+
   readonly message = signal<string | null>(null);
 
   show(message: string): void {
     this.message.set(message);
-    setTimeout(() => this.dismiss(), DISPLAY_MS);
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => this.dismiss(), DISPLAY_MS);
   }
 
   dismiss(): void {
