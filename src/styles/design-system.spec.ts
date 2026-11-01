@@ -92,6 +92,22 @@ describe('ui.css', () => {
     });
   });
 
+  describe('touch targets', () => {
+    it('grows the poster action button to 44px on touch screens', () => {
+      expect(ui).toMatch(
+        /@media \(hover: none\)\s*\{[^@]*\.zb-poster-action \.zb-btn\s*\{[^}]*height: 44px/,
+      );
+    });
+  });
+
+  describe('locked status button', () => {
+    it('looks inert: default cursor and no hover background', () => {
+      expect(ui).toMatch(/\.zb-btn\[aria-disabled='true'\]\s*\{[^}]*cursor: default/);
+      expect(ui).toMatch(/\.zb-btn:hover:not\(\[aria-disabled='true'\]\)\s*\{[^}]*background/);
+      expect(ui).not.toMatch(/\.zb-btn:hover\s*\{/);
+    });
+  });
+
   describe('toast', () => {
     const tokens = read('src/styles/tokens.css');
     const toastCss = [...ui.matchAll(/(?:^|\n)(\.zb-toast[^{]*)\{([^}]*)\}/g)]
