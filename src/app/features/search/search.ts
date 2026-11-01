@@ -25,8 +25,10 @@ import { RadioChips, RadioOption } from '../../ui/radio-chips/radio-chips';
 const MIN_LENGTH = 2;
 const DEBOUNCE_MS = 300;
 
+const ALL_TYPES = 'all';
+
 const TYPE_OPTIONS: readonly RadioOption[] = [
-  { value: 'all', label: 'Tout' },
+  { value: ALL_TYPES, label: 'Tout' },
   { value: 'movie', label: 'Films' },
   { value: 'tv', label: 'Séries' },
 ];
@@ -114,7 +116,7 @@ export class Search {
   private readonly searchApi = inject(SearchControllerService);
 
   protected readonly typeOptions = TYPE_OPTIONS;
-  protected readonly type = new FormControl('all', { nonNullable: true });
+  protected readonly type = new FormControl(ALL_TYPES, { nonNullable: true });
   protected readonly query = new FormControl('', { nonNullable: true });
   protected readonly state = toSignal(
     combineLatest([
@@ -129,15 +131,17 @@ export class Search {
       switchMap(([query, type]): Observable<SearchState> =>
         query.length < MIN_LENGTH
           ? of(IDLE)
-          : this.searchApi.search({ query, page: 1, type: type === 'all' ? undefined : type }).pipe(
-              map((response): SearchState => ({
-                kind: 'done',
-                query,
-                ...toSearchResults(response),
-              })),
-              catchError(() => of(FAILED)),
-              startWith(LOADING),
-            ),
+          : this.searchApi
+              .search({ query, page: 1, type: type === ALL_TYPES ? undefined : type })
+              .pipe(
+                map((response): SearchState => ({
+                  kind: 'done',
+                  query,
+                  ...toSearchResults(response),
+                })),
+                catchError(() => of(FAILED)),
+                startWith(LOADING),
+              ),
       ),
     ),
     { initialValue: IDLE },
