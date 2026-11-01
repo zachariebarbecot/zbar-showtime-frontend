@@ -1,5 +1,9 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import {
+  HttpTestingController,
+  TestRequest,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
@@ -863,6 +867,39 @@ describe('Search', () => {
 
         expect(http.match('/watchlist/movies')).toHaveLength(1);
         expect(http.match('/watchlist/series')).toHaveLength(1);
+      });
+
+      it.each([
+        [
+          '500',
+          (request: TestRequest) =>
+            request.flush(
+              { detail: 'boom', traceId: 'abc-123' },
+              { status: 500, statusText: 'Server Error' },
+            ),
+        ],
+        [
+          '404',
+          (request: TestRequest) =>
+            request.flush({ detail: 'nope' }, { status: 404, statusText: 'Not Found' }),
+        ],
+        ['network error', (request: TestRequest) => request.error(new ProgressEvent('error'))],
+      ])('should restore the poster, toast and allow a retry on %s', async (_, fail) => {
+        const { root, http, harness } = await searchFor([DUNE]);
+
+        buttonOf(root, 'Dune').click();
+        fail(http.expectOne('/watchlist/movies'));
+        harness.detectChanges();
+
+        const button = buttonOf(root, 'Dune');
+        expect(button.getAttribute('aria-pressed')).toBe('false');
+        expect(button.getAttribute('aria-disabled')).toBeNull();
+        expect(posterOf(root, 'Dune').querySelector('.zb-badge')).toBeNull();
+        expect(TestBed.inject(ToastService).message()).toBe(
+          "L'ajout a échoué. Réessaie dans un instant.",
+        );
+        button.click();
+        expect(http.match('/watchlist/movies')).toHaveLength(1);
       });
 
       it.each([
