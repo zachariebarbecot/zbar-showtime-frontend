@@ -32,18 +32,18 @@ import { RadioChips, RadioOption } from '../../ui/radio-chips/radio-chips';
 const MIN_LENGTH = 2;
 const DEBOUNCE_MS = 300;
 
-const ALL_TYPES = 'all';
+const ALL_TYPES = 'ALL';
 
 const TYPE_OPTIONS: readonly RadioOption[] = [
   { value: ALL_TYPES, label: 'Tout' },
-  { value: 'movie', label: 'Films' },
-  { value: 'tv', label: 'Séries' },
+  { value: 'MOVIE', label: 'Films' },
+  { value: 'TV', label: 'Séries' },
 ];
 
 type DoneState = {
   readonly kind: 'done';
   readonly query: string;
-  readonly type?: string;
+  readonly type: string;
 } & SearchResults;
 
 type SearchState =
@@ -179,14 +179,13 @@ export class Search {
       this.type.valueChanges.pipe(startWith(this.type.value)),
     ]).pipe(
       switchMap(([query, type]): Observable<SearchState> => {
-        const typeFilter = type === ALL_TYPES ? undefined : type;
         return query.length < MIN_LENGTH
           ? of(IDLE)
-          : this.searchApi.search({ query, page: 1, type: typeFilter }).pipe(
+          : this.searchApi.search({ query, page: 1, type }).pipe(
               map((response): SearchState => ({
                 kind: 'done',
                 query,
-                type: typeFilter,
+                type,
                 ...toSearchResults(response),
               })),
               catchError(() => of(FAILED)),
