@@ -117,6 +117,26 @@ describe('Search', () => {
     });
   });
 
+  describe('type filter', () => {
+    const chips = (root: HTMLElement) =>
+      Array.from(root.querySelectorAll<HTMLElement>('[role="radio"]'));
+
+    it('should show the three chips under the field with "Tout" selected by default', async () => {
+      const { root } = await open();
+
+      expect(chips(root).map((chip) => chip.textContent?.trim())).toEqual([
+        'Tout',
+        'Films',
+        'Séries',
+      ]);
+      expect(chips(root).map((chip) => chip.getAttribute('aria-checked'))).toEqual([
+        'true',
+        'false',
+        'false',
+      ]);
+    });
+  });
+
   describe('searching', () => {
     it('should call search once with the trimmed input, page 1 and no type, 300 ms after the last key', async () => {
       const rendered = await open();
@@ -264,7 +284,7 @@ describe('Search', () => {
 
       await searchFor(rendered, 'dune', RESULTS);
 
-      expect(rendered.root.querySelectorAll('main a, main button')).toHaveLength(0);
+      expect(rendered.root.querySelectorAll('.sr-grid a, .sr-grid button')).toHaveLength(0);
       expect(rendered.root.querySelector('.zb-empty')).toBeNull();
     });
   });
