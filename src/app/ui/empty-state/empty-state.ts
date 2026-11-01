@@ -9,6 +9,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
       @if (text()) {
         <p class="zb-empty-text">{{ text() }}</p>
       }
+      <ng-content />
     </div>
   `,
   host: { style: 'display: contents' },

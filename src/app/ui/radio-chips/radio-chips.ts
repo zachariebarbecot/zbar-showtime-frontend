@@ -1,4 +1,5 @@
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   ElementRef,
@@ -29,7 +30,9 @@ const STEP_BY_KEY: Readonly<Record<string, number>> = {
   imports: [Icon],
   template: `
     <div class="zb-field" [class.zb-field-invalid]="error()">
-      <span class="zb-field-label" [id]="labelId()">{{ label() }}</span>
+      <span class="zb-field-label" [class.zb-sr]="labelHidden()" [id]="labelId()">{{
+        label()
+      }}</span>
       <div
         class="chips"
         role="radiogroup"
@@ -85,6 +88,7 @@ const STEP_BY_KEY: Readonly<Record<string, number>> = {
 export class RadioChips implements ControlValueAccessor {
   readonly name = input.required<string>();
   readonly label = input.required<string>();
+  readonly labelHidden = input(false, { transform: booleanAttribute });
   readonly options = input.required<readonly RadioOption[]>();
   readonly error = input<string>();
 
