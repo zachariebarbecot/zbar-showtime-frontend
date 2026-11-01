@@ -491,6 +491,10 @@ body {
   background: var(--scrim);
   color: #f4efe8;
 }
+.zb-badge-dropped {
+  background: var(--surface-raised);
+  color: var(--ink);
+}
 
 /* TextField */
 .zb-field {

@@ -31,6 +31,8 @@ describe('Poster', () => {
   it.each([
     ['watchlist', 'Watchlist'],
     ['seen', 'Vu'],
+    ['progress', 'En cours'],
+    ['dropped', 'Abandonné'],
   ] as const)('should show the %s badge with its icon and word', async (status, word) => {
     const poster = await render({ title: 'Past Lives', status });
 
@@ -64,6 +66,9 @@ describe('Poster', () => {
     expect(poster.querySelector('.zb-poster-badge .zb-badge-progress')?.textContent?.trim()).toBe(
       'En cours',
     );
+    expect(
+      poster.querySelector('.zb-poster-badge .zb-badge svg path')?.getAttribute('d'),
+    ).toBeTruthy();
   });
 
   it('should prefer the status badge over the in-progress badge', async () => {

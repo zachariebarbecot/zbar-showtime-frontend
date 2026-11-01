@@ -127,7 +127,12 @@ const FAILED: SearchState = { kind: 'error' };
         </p>
         <div class="sr-grid">
           @for (item of shown().items; track item.key) {
-            <app-poster [title]="item.title" [src]="item.posterUrl" [meta]="item.meta" />
+            <app-poster
+              [title]="item.title"
+              [src]="item.posterUrl"
+              [meta]="item.meta"
+              [status]="item.status"
+            />
           }
         </div>
         @if (shown().more === 'loading') {

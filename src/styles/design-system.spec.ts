@@ -102,6 +102,12 @@ describe('ui.css', () => {
     });
   });
 
+  it('renders the dropped badge on a raised surface with readable ink', () => {
+    const rule = ui.match(/(?:^|\n)\.zb-badge-dropped\s*\{([^}]*)\}/)?.[1] ?? '';
+    expect(rule).toContain('background: var(--surface-raised)');
+    expect(rule).toContain('color: var(--ink)');
+  });
+
   it('has no Google Fonts import', () => {
     expect(ui).not.toMatch(/@import|googleapis/);
   });

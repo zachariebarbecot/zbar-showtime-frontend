@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { episodeCode } from '../../shared/episode-code';
-import { Icon } from '../icon/icon';
+import { Icon, IconName } from '../icon/icon';
 
-export type PosterStatus = 'watchlist' | 'seen';
+export type PosterStatus = 'watchlist' | 'seen' | 'progress' | 'dropped';
 
 export interface PosterEpisode {
   readonly season: number;
@@ -14,7 +14,12 @@ export interface PosterProgress {
   readonly total: number;
 }
 
-const STATUS_LABELS: Record<PosterStatus, string> = { watchlist: 'Watchlist', seen: 'Vu' };
+const STATUSES: Record<PosterStatus, { readonly label: string; readonly icon: IconName }> = {
+  watchlist: { label: 'Watchlist', icon: 'watchlist' },
+  seen: { label: 'Vu', icon: 'seen' },
+  progress: { label: 'En cours', icon: 'eye' },
+  dropped: { label: 'Abandonné', icon: 'eyeOff' },
+};
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -26,16 +31,12 @@ const STATUS_LABELS: Record<PosterStatus, string> = { watchlist: 'Watchlist', se
         @if (src(); as src) {
           <img [src]="src" alt="" />
         }
-        @if (status(); as status) {
+        @if (badge(); as badge) {
           <span class="zb-poster-badge">
-            <span [class]="'zb-badge zb-badge-' + status">
-              <svg appIcon [name]="status"></svg>{{ statusLabels[status] }}
+            <span [class]="'zb-badge zb-badge-' + badge">
+              <svg appIcon [name]="statuses[badge].icon"></svg>{{ statuses[badge].label }}
             </span>
           </span>
-        } @else if (progress()) {
-          <span class="zb-poster-badge"
-            ><span class="zb-badge zb-badge-progress">En cours</span></span
-          >
         }
         <span class="zb-poster-caption" [class.zb-poster-caption-scrim]="src()">
           <span class="zb-poster-title">{{ title() }}</span>
@@ -72,7 +73,10 @@ export class Poster {
   readonly next = input<PosterEpisode>();
   readonly progress = input<PosterProgress>();
 
-  protected readonly statusLabels = STATUS_LABELS;
+  protected readonly statuses = STATUSES;
+  protected readonly badge = computed<PosterStatus | undefined>(
+    () => this.status() ?? (this.progress() ? 'progress' : undefined),
+  );
   protected readonly code = computed(() => {
     const next = this.next();
     return next && episodeCode(next.season, next.episode);

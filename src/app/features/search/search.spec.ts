@@ -350,6 +350,61 @@ describe('Search', () => {
       );
     });
 
+    it.each([
+      ['TO_WATCH', 'Watchlist'],
+      ['WATCHED', 'Vu'],
+      ['WATCHING', 'En cours'],
+      ['DROPPED', 'Abandonné'],
+    ])(
+      'should badge a result with status %s as %s, with an icon',
+      async (watchlistStatus, word) => {
+        const rendered = await open();
+
+        await searchFor(rendered, 'dune', {
+          ...RESULTS,
+          results: [{ id: 1, title: 'Dune', type: 'MOVIE', watchlistStatus }],
+        });
+
+        const badge = query(rendered.root, '.zb-poster .zb-badge');
+        expect(badge.textContent?.trim()).toBe(word);
+        expect(badge.querySelector('svg path')?.getAttribute('d')).toBeTruthy();
+      },
+    );
+
+    it.each([
+      ['null', null],
+      ['absent', undefined],
+      ['unknown', 'ARCHIVED'],
+      ['an inherited property name', 'constructor'],
+      ['another inherited property name', 'toString'],
+    ])('should show no badge when the status is %s', async (_label, watchlistStatus) => {
+      const rendered = await open();
+
+      await searchFor(rendered, 'dune', {
+        ...RESULTS,
+        results: [{ id: 1, title: 'Dune', type: 'MOVIE', watchlistStatus }],
+      });
+
+      expect(rendered.root.querySelector('.zb-poster .zb-badge')).toBeNull();
+    });
+
+    it('should badge each poster with the status of its own type and id', async () => {
+      const rendered = await open();
+
+      await searchFor(rendered, 'dune', {
+        ...RESULTS,
+        results: [
+          { id: 1, title: 'Dune', type: 'MOVIE', watchlistStatus: 'WATCHED' },
+          { id: 1, title: 'Dune, la série', type: 'TV', watchlistStatus: 'DROPPED' },
+        ],
+      });
+
+      const badges = Array.from(rendered.root.querySelectorAll('.zb-poster')).map((poster) =>
+        poster.querySelector('.zb-badge')?.textContent?.trim(),
+      );
+      expect(badges).toEqual(['Vu', 'Abandonné']);
+    });
+
     it('should fall back to the poster without image when a result has none', async () => {
       const rendered = await open();
 
@@ -555,6 +610,27 @@ describe('Search', () => {
       request.flush(page(2, 3, [{ id: 2, title: 'Dune 2', type: 'MOVIE' }]));
       rendered.harness.detectChanges();
       expect(titles(rendered.root)).toEqual(['Dune', 'Dune 2']);
+    });
+
+    it('should badge the loaded posters with their own status and keep the shown badges', async () => {
+      const rendered = await open();
+      await searchFor(rendered, page(1, 3, [{ ...DUNE, watchlistStatus: 'TO_WATCH' }]));
+
+      loadMoreButton(rendered.root)?.click();
+      rendered.http
+        .expectOne((req) => req.url === '/search')
+        .flush(
+          page(2, 3, [
+            { id: 2, title: 'Dune 2', type: 'MOVIE', watchlistStatus: 'WATCHING' },
+            { id: 3, title: 'Dune 3', type: 'MOVIE' },
+          ]),
+        );
+      rendered.harness.detectChanges();
+
+      const badges = Array.from(rendered.root.querySelectorAll('.zb-poster')).map((poster) =>
+        poster.querySelector('.zb-badge')?.textContent?.trim(),
+      );
+      expect(badges).toEqual(['Watchlist', 'En cours', undefined]);
     });
 
     it('should keep the type filter when loading more', async () => {
