@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { episodeCode } from '../../shared/episode-code';
-import { Icon } from '../icon/icon';
+import { Icon, IconName } from '../icon/icon';
 
 export type PosterStatus = 'watchlist' | 'seen' | 'progress' | 'dropped';
 
@@ -14,11 +14,11 @@ export interface PosterProgress {
   readonly total: number;
 }
 
-const STATUS_LABELS: Record<PosterStatus, string> = {
-  watchlist: 'Watchlist',
-  seen: 'Vu',
-  progress: '',
-  dropped: '',
+const STATUSES: Record<PosterStatus, { readonly label: string; readonly icon: IconName }> = {
+  watchlist: { label: 'Watchlist', icon: 'watchlist' },
+  seen: { label: 'Vu', icon: 'seen' },
+  progress: { label: 'En cours', icon: 'eye' },
+  dropped: { label: 'Abandonné', icon: 'eyeOff' },
 };
 
 @Component({
@@ -34,8 +34,7 @@ const STATUS_LABELS: Record<PosterStatus, string> = {
         @if (status(); as status) {
           <span class="zb-poster-badge">
             <span [class]="'zb-badge zb-badge-' + status">
-              <svg appIcon [name]="status === 'seen' ? 'seen' : 'watchlist'"></svg
-              >{{ statusLabels[status] }}
+              <svg appIcon [name]="statuses[status].icon"></svg>{{ statuses[status].label }}
             </span>
           </span>
         } @else if (progress()) {
@@ -78,7 +77,7 @@ export class Poster {
   readonly next = input<PosterEpisode>();
   readonly progress = input<PosterProgress>();
 
-  protected readonly statusLabels = STATUS_LABELS;
+  protected readonly statuses = STATUSES;
   protected readonly code = computed(() => {
     const next = this.next();
     return next && episodeCode(next.season, next.episode);

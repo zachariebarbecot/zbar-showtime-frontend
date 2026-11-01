@@ -1,11 +1,13 @@
 import { Result } from '../../api/models/result';
 import { SearchResponse } from '../../api/models/search-response';
+import { PosterStatus } from '../../ui/poster/poster';
 
 export interface SearchItem {
   readonly key: string;
   readonly title: string;
   readonly posterUrl?: string;
   readonly meta?: string;
+  readonly status?: PosterStatus;
 }
 
 export interface SearchResults {
@@ -15,7 +17,21 @@ export interface SearchResults {
   readonly items: readonly SearchItem[];
 }
 
-const toItem = ({ id, title, posterUrl, releaseDate, type }: Result): SearchItem[] =>
+const STATUSES: Readonly<Record<string, PosterStatus>> = {
+  TO_WATCH: 'watchlist',
+  WATCHED: 'seen',
+  WATCHING: 'progress',
+  DROPPED: 'dropped',
+};
+
+const toItem = ({
+  id,
+  title,
+  posterUrl,
+  releaseDate,
+  type,
+  watchlistStatus,
+}: Result): SearchItem[] =>
   id === undefined || title === undefined
     ? []
     : [
@@ -24,6 +40,7 @@ const toItem = ({ id, title, posterUrl, releaseDate, type }: Result): SearchItem
           title,
           posterUrl,
           meta: releaseDate?.slice(0, 4),
+          status: watchlistStatus === undefined ? undefined : STATUSES[watchlistStatus],
         },
       ];
 
