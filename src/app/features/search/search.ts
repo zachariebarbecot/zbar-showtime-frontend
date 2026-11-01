@@ -4,6 +4,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import {
   Observable,
   catchError,
+  combineLatest,
   debounceTime,
   distinctUntilChanged,
   map,
@@ -18,10 +19,19 @@ import { AppHeader } from '../../ui/app-header/app-header';
 import { EmptyState } from '../../ui/empty-state/empty-state';
 import { FormAlert } from '../../ui/form-alert/form-alert';
 import { Poster } from '../../ui/poster/poster';
-import { TextField } from '../../ui/text-field/text-field';
+import { Icon } from '../../ui/icon/icon';
+import { RadioChips, RadioOption } from '../../ui/radio-chips/radio-chips';
 
 const MIN_LENGTH = 2;
 const DEBOUNCE_MS = 300;
+
+const ALL_TYPES = 'all';
+
+const TYPE_OPTIONS: readonly RadioOption[] = [
+  { value: ALL_TYPES, label: 'Tout' },
+  { value: 'movie', label: 'Films' },
+  { value: 'tv', label: 'Séries' },
+];
 
 type SearchState =
   | { readonly kind: 'idle' }
@@ -36,13 +46,33 @@ const FAILED: SearchState = { kind: 'error' };
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-search',
-  imports: [AppHeader, EmptyState, FormAlert, Poster, ReactiveFormsModule, TextField],
+  imports: [AppHeader, EmptyState, FormAlert, Icon, Poster, RadioChips, ReactiveFormsModule],
   template: `
     @if (session.answered()) {
       <app-header active="search" [user]="session.user()" (logout)="session.logout()" />
     }
     <main class="hm-wrap">
-      <app-text-field name="search" label="Rechercher un film ou une série" [formControl]="query" />
+      <div class="zb-search">
+        <div class="zb-search-field">
+          <svg appIcon name="search"></svg>
+          <input
+            type="search"
+            name="search"
+            autocomplete="off"
+            aria-label="Rechercher un film ou une série"
+            placeholder="Rechercher un film ou une série"
+            [formControl]="query"
+          />
+        </div>
+        <div class="zb-search-scopes">
+          <app-radio-chips
+            name="type"
+            label="Type de contenu"
+            [options]="typeOptions"
+            [formControl]="type"
+          />
+        </div>
+      </div>
       @let current = state();
       @if (current.kind === 'idle') {
         <app-empty-state
@@ -85,24 +115,33 @@ export class Search {
   protected readonly session = injectSession();
   private readonly searchApi = inject(SearchControllerService);
 
+  protected readonly typeOptions = TYPE_OPTIONS;
+  protected readonly type = new FormControl(ALL_TYPES, { nonNullable: true });
   protected readonly query = new FormControl('', { nonNullable: true });
   protected readonly state = toSignal(
-    this.query.valueChanges.pipe(
-      map((value) => value.trim()),
-      debounceTime(DEBOUNCE_MS),
-      distinctUntilChanged(),
-      switchMap((query): Observable<SearchState> =>
+    combineLatest([
+      this.query.valueChanges.pipe(
+        map((value) => value.trim()),
+        debounceTime(DEBOUNCE_MS),
+        distinctUntilChanged(),
+        startWith(''),
+      ),
+      this.type.valueChanges.pipe(startWith(this.type.value)),
+    ]).pipe(
+      switchMap(([query, type]): Observable<SearchState> =>
         query.length < MIN_LENGTH
           ? of(IDLE)
-          : this.searchApi.search({ query, page: 1 }).pipe(
-              map((response): SearchState => ({
-                kind: 'done',
-                query,
-                ...toSearchResults(response),
-              })),
-              catchError(() => of(FAILED)),
-              startWith(LOADING),
-            ),
+          : this.searchApi
+              .search({ query, page: 1, type: type === ALL_TYPES ? undefined : type })
+              .pipe(
+                map((response): SearchState => ({
+                  kind: 'done',
+                  query,
+                  ...toSearchResults(response),
+                })),
+                catchError(() => of(FAILED)),
+                startWith(LOADING),
+              ),
       ),
     ),
     { initialValue: IDLE },

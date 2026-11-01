@@ -117,6 +117,114 @@ describe('Search', () => {
     });
   });
 
+  describe('type filter', () => {
+    const chips = (root: HTMLElement) =>
+      Array.from(root.querySelectorAll<HTMLElement>('[role="radio"]'));
+
+    it('should show the three chips under the field with "Tout" selected by default', async () => {
+      const { root } = await open();
+
+      expect(chips(root).map((chip) => chip.textContent?.trim())).toEqual([
+        'Tout',
+        'Films',
+        'Séries',
+      ]);
+      expect(chips(root).map((chip) => chip.getAttribute('aria-checked'))).toEqual([
+        'true',
+        'false',
+        'false',
+      ]);
+    });
+
+    async function choose(rendered: Awaited<ReturnType<typeof open>>, label: string) {
+      const chip = chips(rendered.root).find(
+        (candidate) => candidate.textContent?.trim() === label,
+      );
+      chip?.click();
+      await settle(rendered);
+    }
+
+    async function searchDune(rendered: Awaited<ReturnType<typeof open>>) {
+      vi.useFakeTimers();
+      type(rendered, 'dune');
+      await settle(rendered);
+      rendered.http.expectOne((req) => req.url === '/search').flush(EMPTY_RESPONSE);
+    }
+
+    it.each([
+      ['Films', 'movie'],
+      ['Séries', 'tv'],
+    ])(
+      'should search again with type=%s mapped to %s, page 1 and the same input',
+      async (label, type) => {
+        const rendered = await open();
+        await searchDune(rendered);
+
+        await choose(rendered, label);
+
+        const request = rendered.http.expectOne((req) => req.url === '/search');
+        expect(request.request.params.get('type')).toBe(type);
+        expect(request.request.params.get('page')).toBe('1');
+        expect(request.request.params.get('query')).toBe('dune');
+        request.flush({
+          page: 1,
+          totalPages: 1,
+          totalResults: 1,
+          results: [{ id: 1, title: 'Dune', type: 'MOVIE' }],
+        });
+        rendered.harness.detectChanges();
+        const titles = Array.from(rendered.root.querySelectorAll('.zb-poster-title'));
+        expect(titles.map((title) => title.textContent)).toEqual(['Dune']);
+      },
+    );
+
+    it('should search without type when going back to "Tout"', async () => {
+      const rendered = await open();
+      await searchDune(rendered);
+      await choose(rendered, 'Films');
+      rendered.http.expectOne((req) => req.url === '/search').flush(EMPTY_RESPONSE);
+
+      await choose(rendered, 'Tout');
+
+      const request = rendered.http.expectOne((req) => req.url === '/search');
+      expect(request.request.params.has('type')).toBe(false);
+    });
+
+    it('should cancel the call in flight when the chip changes', async () => {
+      const rendered = await open();
+      await searchDune(rendered);
+      await choose(rendered, 'Films');
+      const first = rendered.http.expectOne((req) => req.url === '/search');
+
+      await choose(rendered, 'Séries');
+      const second = rendered.http.expectOne((req) => req.url === '/search');
+      second.flush({
+        page: 1,
+        totalPages: 1,
+        totalResults: 1,
+        results: [{ id: 2, title: 'Dune: Prophecy', type: 'TV' }],
+      });
+      rendered.harness.detectChanges();
+
+      expect(first.cancelled).toBe(true);
+      expect(second.request.params.get('type')).toBe('tv');
+      const titles = Array.from(rendered.root.querySelectorAll('.zb-poster-title'));
+      expect(titles.map((title) => title.textContent)).toEqual(['Dune: Prophecy']);
+    });
+
+    it('should not search and keep the prompt when the chip changes with less than 2 characters', async () => {
+      const rendered = await open();
+      vi.useFakeTimers();
+      type(rendered, 'd');
+      await settle(rendered);
+
+      await choose(rendered, 'Films');
+
+      expect(searchCalls(rendered.http)).toHaveLength(0);
+      expect(rendered.root.querySelector('.zb-empty')?.textContent).toContain('2 caractères');
+    });
+  });
+
   describe('searching', () => {
     it('should call search once with the trimmed input, page 1 and no type, 300 ms after the last key', async () => {
       const rendered = await open();
@@ -264,7 +372,7 @@ describe('Search', () => {
 
       await searchFor(rendered, 'dune', RESULTS);
 
-      expect(rendered.root.querySelectorAll('main a, main button')).toHaveLength(0);
+      expect(rendered.root.querySelectorAll('.sr-grid a, .sr-grid button')).toHaveLength(0);
       expect(rendered.root.querySelector('.zb-empty')).toBeNull();
     });
   });
