@@ -45,7 +45,7 @@ const toItem = ({
           title,
           posterUrl,
           meta: releaseDate?.slice(0, 4),
-          watchlisted: watchlistStatus !== undefined,
+          watchlisted: !!watchlistStatus,
           status: STATUSES.get(watchlistStatus ?? ''),
         },
       ];
