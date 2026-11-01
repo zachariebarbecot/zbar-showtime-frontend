@@ -464,4 +464,43 @@ describe('Search', () => {
       );
     });
   });
+
+  describe('load more', () => {
+    const page = (current: number, totalPages: number, results: object[] = []) => ({
+      page: current,
+      totalPages,
+      totalResults: 42,
+      results,
+    });
+    const DUNE = { id: 1, title: 'Dune', type: 'MOVIE' };
+
+    async function searchFor(rendered: Awaited<ReturnType<typeof open>>, response: object) {
+      vi.useFakeTimers();
+      type(rendered, 'dune');
+      await settle(rendered);
+      rendered.http.expectOne((req) => req.url === '/search').flush(response);
+      rendered.harness.detectChanges();
+    }
+
+    const loadMoreButton = (root: HTMLElement) =>
+      Array.from(root.querySelectorAll<HTMLButtonElement>('main button')).find(
+        (button) => button.textContent?.trim() === 'Charger plus',
+      );
+
+    it('should show the button when page is below totalPages', async () => {
+      const rendered = await open();
+
+      await searchFor(rendered, page(1, 3, [DUNE]));
+
+      expect(loadMoreButton(rendered.root)).toBeDefined();
+    });
+
+    it('should hide the button when page equals totalPages', async () => {
+      const rendered = await open();
+
+      await searchFor(rendered, page(1, 1, [DUNE]));
+
+      expect(loadMoreButton(rendered.root)).toBeUndefined();
+    });
+  });
 });
