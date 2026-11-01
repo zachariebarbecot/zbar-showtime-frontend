@@ -178,7 +178,7 @@ describe('Search', () => {
       },
     );
 
-    it('should search without type when going back to "Tout"', async () => {
+    it('should search with type=ALL when going back to "Tout"', async () => {
       const rendered = await open();
       await searchDune(rendered);
       await choose(rendered, 'Films');
@@ -187,7 +187,7 @@ describe('Search', () => {
       await choose(rendered, 'Tout');
 
       const request = rendered.http.expectOne((req) => req.url === '/search');
-      expect(request.request.params.has('type')).toBe(false);
+      expect(request.request.params.get('type')).toBe('ALL');
     });
 
     it('should cancel the call in flight when the chip changes', async () => {
@@ -226,7 +226,7 @@ describe('Search', () => {
   });
 
   describe('searching', () => {
-    it('should call search once with the trimmed input, page 1 and no type, 300 ms after the last key', async () => {
+    it('should call search once with the trimmed input, page 1 and type=ALL, 300 ms after the last key', async () => {
       const rendered = await open();
       vi.useFakeTimers();
 
@@ -240,7 +240,7 @@ describe('Search', () => {
       const request = rendered.http.expectOne((req) => req.url === '/search');
       expect(request.request.params.get('query')).toBe('dune');
       expect(request.request.params.get('page')).toBe('1');
-      expect(request.request.params.has('type')).toBe(false);
+      expect(request.request.params.get('type')).toBe('ALL');
     });
 
     it('should show a loading indicator during the call, then remove it', async () => {
@@ -515,7 +515,7 @@ describe('Search', () => {
       const request = rendered.http.expectOne((req) => req.url === '/search');
       expect(request.request.params.get('page')).toBe('2');
       expect(request.request.params.get('query')).toBe('dune');
-      expect(request.request.params.has('type')).toBe(false);
+      expect(request.request.params.get('type')).toBe('ALL');
       request.flush(page(2, 3, [{ id: 2, title: 'Dune 2', type: 'MOVIE' }]));
       rendered.harness.detectChanges();
       expect(titles(rendered.root)).toEqual(['Dune', 'Dune 2']);
