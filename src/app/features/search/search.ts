@@ -146,7 +146,7 @@ const FAILED: SearchState = { kind: 'error' };
             >
               <app-status-button
                 kind="watchlist"
-                size="sm"
+                [iconOnly]="true"
                 [controlled]="true"
                 [active]="item.watchlisted || adding(item)"
                 [locked]="item.watchlisted || adding(item)"

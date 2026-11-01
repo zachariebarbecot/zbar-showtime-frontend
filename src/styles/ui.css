@@ -459,6 +459,7 @@ body {
     opacity: 1;
   }
   .zb-poster-action .zb-btn {
+    width: 44px;
     height: 44px;
   }
 }
@@ -630,6 +631,17 @@ body {
 }
 .zb-btn:hover:not([aria-disabled='true']) {
   background: var(--surface-raised);
+}
+.zb-poster-action .zb-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  justify-content: center;
+}
+.zb-poster-action .zb-btn[aria-pressed='false'],
+.zb-poster-action .zb-btn[aria-pressed='false']:hover {
+  background: var(--scrim);
+  color: #f4efe8;
 }
 .zb-btn[aria-disabled='true'] {
   cursor: default;

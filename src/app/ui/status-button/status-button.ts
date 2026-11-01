@@ -14,7 +14,12 @@ import { Icon } from '../icon/icon';
       [attr.aria-disabled]="locked() || null"
       (click)="press()"
     >
-      <svg appIcon [name]="icon()"></svg>{{ label() }}
+      <svg appIcon [name]="icon()"></svg>
+      @if (iconOnly()) {
+        <span class="zb-sr">{{ label() }}</span>
+      } @else {
+        {{ label() }}
+      }
     </button>
   `,
   host: { style: 'display: contents' },
