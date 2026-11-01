@@ -21,6 +21,7 @@ describe('tokens.css', () => {
     'danger',
     'focus-ring',
     'scrim',
+    'scrim-fade',
     'space-1',
     'space-2',
     'space-3',
@@ -60,6 +61,16 @@ describe('ui.css', () => {
       expect(ui).toContain(`.${name}`);
     },
   );
+
+  it('fades the poster caption into the image and shows the meta in marquee', () => {
+    const rule = (selector: string) =>
+      ui.match(
+        new RegExp(String.raw`(?:^|\n)${selector.replace(/[.]/g, '\\.')}\s*\{([^}]*)\}`),
+      )?.[1] ?? '';
+    expect(rule('.zb-poster-caption-scrim')).toContain('background: var(--scrim-fade)');
+    expect(rule('.zb-poster-meta')).toContain('color: var(--marquee-ink)');
+    expect(rule('.zb-poster-caption-scrim .zb-poster-meta')).toContain('color: var(--marquee)');
+  });
 
   it('has no Google Fonts import', () => {
     expect(ui).not.toMatch(/@import|googleapis/);

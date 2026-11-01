@@ -13,6 +13,12 @@
   --on-seen: #0e0d0c;
   --danger: #ff8a6b;
   --scrim: rgba(14, 13, 12, 0.78);
+  --scrim-fade: linear-gradient(
+    to top,
+    rgba(14, 13, 12, 0.92) 0%,
+    rgba(14, 13, 12, 0.78) 55%,
+    rgba(14, 13, 12, 0) 100%
+  );
   --focus-ring: var(--marquee);
 
   --font-display: 'Big Shoulders Display', 'Arial Narrow', sans-serif;
