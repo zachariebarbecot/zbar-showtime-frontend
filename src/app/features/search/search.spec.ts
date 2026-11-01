@@ -323,6 +323,7 @@ describe('Search', () => {
         { id: 3, title: 'Dune, le film', type: 'MOVIE' },
         { title: 'Sans identifiant', type: 'MOVIE', releaseDate: '2000-01-01' },
         { id: 5, type: 'TV', releaseDate: '2000-01-01' },
+        { id: 6, title: 'Sans type', releaseDate: '2000-01-01' },
       ],
     };
 
