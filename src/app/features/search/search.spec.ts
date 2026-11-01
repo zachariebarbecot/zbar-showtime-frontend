@@ -816,6 +816,23 @@ describe('Search', () => {
       );
     });
 
+    it.each([null, ''])(
+      'should keep an actionable unpressed button on a result with watchlistStatus %j',
+      async (watchlistStatus) => {
+        const { root, http, harness } = await searchFor([{ ...DUNE, watchlistStatus }]);
+
+        const button = buttonOf(root, 'Dune');
+        expect(button.getAttribute('aria-pressed')).toBe('false');
+        expect(button.getAttribute('aria-disabled')).toBeNull();
+        expect(posterOf(root, 'Dune').querySelector('.zb-badge')).toBeNull();
+
+        button.click();
+        harness.detectChanges();
+
+        expect(http.expectOne('/watchlist/movies').request.method).toBe('POST');
+      },
+    );
+
     it.each(['TO_WATCH', 'WATCHED', 'WATCHING', 'DROPPED', 'SOMETHING_NEW'])(
       'should show a pressed, locked button on a result with status %s and call nothing',
       async (watchlistStatus) => {
