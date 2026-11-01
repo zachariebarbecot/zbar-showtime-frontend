@@ -9,6 +9,8 @@ export interface SearchItem {
 }
 
 export interface SearchResults {
+  readonly page: number;
+  readonly totalPages: number;
   readonly total: number;
   readonly items: readonly SearchItem[];
 }
@@ -29,5 +31,10 @@ const toItem = ({ id, title, posterUrl, releaseDate, type }: Result): SearchItem
 
 export const toSearchResults = (response: SearchResponse): SearchResults => {
   const items = (response.results ?? []).flatMap(toItem);
-  return { total: response.totalResults ?? items.length, items };
+  return {
+    page: response.page ?? 1,
+    totalPages: response.totalPages ?? 1,
+    total: response.totalResults ?? items.length,
+    items,
+  };
 };

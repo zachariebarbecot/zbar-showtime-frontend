@@ -18,6 +18,7 @@ import { SearchResults, toSearchResults } from './search-results';
 import { AppHeader } from '../../ui/app-header/app-header';
 import { EmptyState } from '../../ui/empty-state/empty-state';
 import { FormAlert } from '../../ui/form-alert/form-alert';
+import { Button } from '../../ui/button/button';
 import { Poster } from '../../ui/poster/poster';
 import { Icon } from '../../ui/icon/icon';
 import { RadioChips, RadioOption } from '../../ui/radio-chips/radio-chips';
@@ -46,7 +47,16 @@ const FAILED: SearchState = { kind: 'error' };
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-search',
-  imports: [AppHeader, EmptyState, FormAlert, Icon, Poster, RadioChips, ReactiveFormsModule],
+  imports: [
+    AppHeader,
+    Button,
+    EmptyState,
+    FormAlert,
+    Icon,
+    Poster,
+    RadioChips,
+    ReactiveFormsModule,
+  ],
   template: `
     @if (session.answered()) {
       <app-header active="search" [user]="session.user()" (logout)="session.logout()" />
@@ -94,6 +104,11 @@ const FAILED: SearchState = { kind: 'error' };
             <app-poster [title]="item.title" [src]="item.posterUrl" [meta]="item.meta" />
           }
         </div>
+        @if (current.page < current.totalPages) {
+          <div class="sr-more">
+            <app-button variant="secondary">Charger plus</app-button>
+          </div>
+        }
       }
     </main>
   `,
@@ -108,6 +123,11 @@ const FAILED: SearchState = { kind: 'error' };
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
       gap: var(--space-4);
+    }
+    .sr-more {
+      display: flex;
+      justify-content: center;
+      margin-top: var(--space-6);
     }
   `,
 })
