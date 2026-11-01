@@ -4,6 +4,7 @@ import {
   DestroyRef,
   inject,
   linkedSignal,
+  signal,
 } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -14,6 +15,7 @@ import {
   combineLatest,
   debounceTime,
   distinctUntilChanged,
+  finalize,
   map,
   of,
   throwError,
@@ -138,14 +140,14 @@ const FAILED: SearchState = { kind: 'error' };
               [title]="item.title"
               [src]="item.posterUrl"
               [meta]="item.meta"
-              [status]="item.status"
+              [status]="adding(item) ? 'watchlist' : item.status"
             >
               <app-status-button
                 kind="watchlist"
                 size="sm"
                 [controlled]="true"
-                [active]="!!item.status"
-                [locked]="!!item.status"
+                [active]="!!item.status || adding(item)"
+                [locked]="!!item.status || adding(item)"
                 (add)="add(item)"
                 [ariaLabel]="'Ajouter ' + item.title + ' à la watchlist'"
               />
@@ -238,7 +240,14 @@ export class Search {
         : { items: [], page: 0, more: 'idle' },
   });
 
+  private readonly pending = signal<ReadonlySet<string>>(new Set());
+
+  protected adding(item: SearchItem): boolean {
+    return this.pending().has(item.key);
+  }
+
   protected add(item: SearchItem): void {
+    this.pending.update((keys) => new Set(keys).add(item.key));
     const body = { tmdbId: item.tmdbId };
     (item.type === 'MOVIE'
       ? this.watchlistApi.addMovie({ body })
@@ -249,6 +258,9 @@ export class Search {
           error.status === CONFLICT ? of(undefined) : throwError(() => error),
         ),
         takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.pending.update((keys) => new Set([...keys].filter((key) => key !== item.key)));
+        }),
       )
       .subscribe(() => {
         this.shown.update((shown) => ({
