@@ -5,6 +5,7 @@ import {
   inject,
   linkedSignal,
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -15,9 +16,11 @@ import {
   distinctUntilChanged,
   map,
   of,
+  throwError,
   startWith,
   switchMap,
 } from 'rxjs';
+import { WatchlistControllerService } from '../../api/services/watchlist-controller.service';
 import { SearchControllerService } from '../../api/services/search-controller.service';
 import { injectSession } from '../../core/auth/session';
 import { SearchItem, SearchResults, appendItems, toSearchResults } from './search-results';
@@ -32,6 +35,8 @@ import { RadioChips, RadioOption } from '../../ui/radio-chips/radio-chips';
 
 const MIN_LENGTH = 2;
 const DEBOUNCE_MS = 300;
+
+const CONFLICT = 409;
 
 const ALL_TYPES = 'ALL';
 
@@ -138,6 +143,10 @@ const FAILED: SearchState = { kind: 'error' };
               <app-status-button
                 kind="watchlist"
                 size="sm"
+                [controlled]="true"
+                [active]="!!item.status"
+                [locked]="!!item.status"
+                (add)="add(item)"
                 [ariaLabel]="'Ajouter ' + item.title + ' à la watchlist'"
               />
             </app-poster>
@@ -186,6 +195,7 @@ const FAILED: SearchState = { kind: 'error' };
 })
 export class Search {
   protected readonly session = injectSession();
+  private readonly watchlistApi = inject(WatchlistControllerService);
   private readonly searchApi = inject(SearchControllerService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -227,6 +237,28 @@ export class Search {
         ? { items: state.items, page: state.page, more: 'idle' }
         : { items: [], page: 0, more: 'idle' },
   });
+
+  protected add(item: SearchItem): void {
+    const body = { tmdbId: item.tmdbId };
+    (item.type === 'MOVIE'
+      ? this.watchlistApi.addMovie({ body })
+      : this.watchlistApi.addSeries({ body })
+    )
+      .pipe(
+        catchError((error: HttpErrorResponse) =>
+          error.status === CONFLICT ? of(undefined) : throwError(() => error),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => {
+        this.shown.update((shown) => ({
+          ...shown,
+          items: shown.items.map((shown) =>
+            shown.key === item.key ? { ...shown, status: 'watchlist' } : shown,
+          ),
+        }));
+      });
+  }
 
   protected loadMore(current: DoneState): void {
     const { page } = this.shown();

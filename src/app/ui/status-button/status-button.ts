@@ -11,7 +11,8 @@ import { Icon } from '../icon/icon';
       [class]="classes()"
       [attr.aria-pressed]="active()"
       [attr.aria-label]="ariaLabel()"
-      (click)="active.set(!active())"
+      [attr.aria-disabled]="locked() || null"
+      (click)="press()"
     >
       <svg appIcon [name]="icon()"></svg>{{ label() }}
     </button>
@@ -26,6 +27,12 @@ export class StatusButton {
   readonly controlled = input(false);
   readonly locked = input(false);
   readonly add = output<void>();
+
+  protected press(): void {
+    if (this.locked()) return;
+    if (this.controlled()) this.add.emit();
+    else this.active.set(!this.active());
+  }
 
   protected readonly classes = computed(
     () => `zb-btn zb-btn-${this.kind()}${this.size() === 'sm' ? ' zb-btn-sm' : ''}`,
