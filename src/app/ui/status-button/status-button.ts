@@ -28,12 +28,6 @@ export class StatusButton {
   readonly locked = input(false);
   readonly add = output<void>();
 
-  protected press(): void {
-    if (this.locked()) return;
-    if (this.controlled()) this.add.emit();
-    else this.active.set(!this.active());
-  }
-
   protected readonly classes = computed(
     () => `zb-btn zb-btn-${this.kind()}${this.size() === 'sm' ? ' zb-btn-sm' : ''}`,
   );
@@ -44,4 +38,10 @@ export class StatusButton {
     if (this.kind() === 'watchlist') return 'Watchlist';
     return this.active() ? 'Vu' : 'Marquer vu';
   });
+
+  protected press(): void {
+    if (this.locked()) return;
+    if (this.controlled()) this.add.emit();
+    else this.active.set(!this.active());
+  }
 }

@@ -269,8 +269,10 @@ export class Search {
         next: () => {
           this.shown.update((shown) => ({
             ...shown,
-            items: shown.items.map((shown) =>
-              shown.key === item.key ? { ...shown, watchlisted: true, status: 'watchlist' } : shown,
+            items: shown.items.map((candidate) =>
+              candidate.key === item.key
+                ? { ...candidate, watchlisted: true, status: 'watchlist' }
+                : candidate,
             ),
           }));
         },
