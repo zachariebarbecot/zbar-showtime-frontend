@@ -619,5 +619,40 @@ describe('Search', () => {
 
       expect(titles(rendered.root)).toEqual(['Série']);
     });
+
+    it.each([
+      ['a network error', { status: 0, statusText: 'Unknown Error' }],
+      ['a 400', { status: 400, statusText: 'Bad Request' }],
+      ['a 500', { status: 500, statusText: 'Server Error' }],
+    ])(
+      'should show a generic message on %s, keep the results and retry the same page',
+      async (_label, init) => {
+        const rendered = await open();
+        await searchFor(rendered, page(1, 3, [DUNE]));
+        loadMoreButton(rendered.root)?.click();
+
+        rendered.http
+          .expectOne((req) => req.url === '/search')
+          .flush({ detail: 'secret detail' }, init);
+        rendered.harness.detectChanges();
+
+        expect(query(rendered.root, '[role="alert"]').textContent).toContain(
+          'Le chargement a échoué',
+        );
+        expect(rendered.root.textContent).not.toContain('secret detail');
+        expect(rendered.root.querySelector('[role="status"]')).toBeNull();
+        expect(titles(rendered.root)).toEqual(['Dune']);
+        expect(loadMoreButton(rendered.root)?.disabled).toBe(false);
+
+        loadMoreButton(rendered.root)?.click();
+        rendered.harness.detectChanges();
+        const retry = rendered.http.expectOne((req) => req.url === '/search');
+        expect(retry.request.params.get('page')).toBe('2');
+        retry.flush(page(2, 3, [{ id: 2, title: 'Dune 2', type: 'MOVIE' }]));
+        rendered.harness.detectChanges();
+        expect(titles(rendered.root)).toEqual(['Dune', 'Dune 2']);
+        expect(rendered.root.querySelector('[role="alert"]')).toBeNull();
+      },
+    );
   });
 });
