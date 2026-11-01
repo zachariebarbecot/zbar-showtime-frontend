@@ -840,6 +840,31 @@ describe('Search', () => {
     });
 
     describe('activating the button', () => {
+      it('should lock the button while the call is in flight and send no second call', async () => {
+        const { root, http, harness } = await searchFor([DUNE]);
+
+        buttonOf(root, 'Dune').click();
+        harness.detectChanges();
+        buttonOf(root, 'Dune').click();
+        harness.detectChanges();
+
+        const button = buttonOf(root, 'Dune');
+        expect(button.getAttribute('aria-pressed')).toBe('true');
+        expect(button.getAttribute('aria-disabled')).toBe('true');
+        expect(http.match('/watchlist/movies')).toHaveLength(1);
+      });
+
+      it('should still allow adding another poster while one call is in flight', async () => {
+        const { root, http, harness } = await searchFor([DUNE, PROPHECY]);
+
+        buttonOf(root, 'Dune').click();
+        harness.detectChanges();
+        buttonOf(root, 'Dune: Prophecy').click();
+
+        expect(http.match('/watchlist/movies')).toHaveLength(1);
+        expect(http.match('/watchlist/series')).toHaveLength(1);
+      });
+
       it.each([
         ['Dune', '/watchlist/movies', 1],
         ['Dune: Prophecy', '/watchlist/series', 2],
