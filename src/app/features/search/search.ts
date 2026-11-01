@@ -55,7 +55,7 @@ type SearchState =
 interface Shown {
   readonly items: readonly SearchItem[];
   readonly page: number;
-  readonly loadingMore: boolean;
+  readonly more: 'idle' | 'loading' | 'failed';
 }
 
 const IDLE: SearchState = { kind: 'idle' };
@@ -122,14 +122,16 @@ const FAILED: SearchState = { kind: 'error' };
             <app-poster [title]="item.title" [src]="item.posterUrl" [meta]="item.meta" />
           }
         </div>
-        @if (shown().loadingMore) {
+        @if (shown().more === 'loading') {
           <p role="status">Chargement…</p>
+        } @else if (shown().more === 'failed') {
+          <app-form-alert message="Le chargement a échoué. Réessaie dans un instant." />
         }
         @if (shown().page < current.totalPages) {
           <div class="sr-more">
             <app-button
               variant="secondary"
-              [disabled]="shown().loadingMore"
+              [disabled]="shown().more === 'loading'"
               (click)="loadMore(current)"
             >
               Charger plus
@@ -199,23 +201,29 @@ export class Search {
     source: this.state,
     computation: (state) =>
       state.kind === 'done'
-        ? { items: state.items, page: state.page, loadingMore: false }
-        : { items: [], page: 0, loadingMore: false },
+        ? { items: state.items, page: state.page, more: 'idle' }
+        : { items: [], page: 0, more: 'idle' },
   });
 
   protected loadMore(current: DoneState): void {
     const { page } = this.shown();
-    this.shown.update((shown) => ({ ...shown, loadingMore: true }));
+    this.shown.update((shown) => ({ ...shown, more: 'loading' }));
     this.searchApi
       .search({ query: current.query, page: page + 1, type: current.type })
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((response) => {
-        if (this.state() !== current) return;
-        this.shown.update((shown) => ({
-          items: appendItems(shown.items, toSearchResults(response).items),
-          page: page + 1,
-          loadingMore: false,
-        }));
+      .subscribe({
+        next: (response) => {
+          if (this.state() !== current) return;
+          this.shown.update((shown) => ({
+            items: appendItems(shown.items, toSearchResults(response).items),
+            page: page + 1,
+            more: 'idle',
+          }));
+        },
+        error: () => {
+          if (this.state() !== current) return;
+          this.shown.update((shown) => ({ ...shown, more: 'failed' }));
+        },
       });
   }
 }
