@@ -249,5 +249,26 @@ describe('MovieDetail', () => {
         expect(root.querySelector('.md-directors')).toBeNull();
       },
     );
+
+    const CAST = [
+      { name: 'Keanu Reeves', character: 'Neo' },
+      { name: 'Carrie-Anne Moss', character: 'Trinity' },
+    ];
+
+    it('should render one cast card per member with name and character', async () => {
+      const root = await show({ cast: CAST });
+
+      expect(root.querySelector('.md-cast h2')?.textContent).toContain('Casting');
+      const cards = [...root.querySelectorAll('.md-cast app-cast-card')];
+      expect(
+        cards.map((card) => [
+          card.querySelector('.zb-cast-name')?.textContent,
+          card.querySelector('.zb-cast-role')?.textContent,
+        ]),
+      ).toEqual([
+        ['Keanu Reeves', 'Neo'],
+        ['Carrie-Anne Moss', 'Trinity'],
+      ]);
+    });
   });
 });
