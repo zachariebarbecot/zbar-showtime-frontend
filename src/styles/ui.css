@@ -1277,9 +1277,10 @@ body {
 .md-cast {
   margin-top: var(--space-8);
 }
-.md-section-title {
-  margin: 0 0 var(--space-4);
-  font: 700 32px/34px var(--font-display);
+.md-directors {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 .md-people {
   display: flex;
