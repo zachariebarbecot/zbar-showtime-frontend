@@ -157,6 +157,18 @@ describe('MovieDetail', () => {
     });
   });
 
+  describe('not found', () => {
+    it.each([404, 400])('should show the not found empty state on a %i', async (status) => {
+      const { harness, http, root } = await open();
+      http.expectOne('/movies/603').flush('', { status, statusText: 'Error' });
+      await harness.fixture.whenStable();
+
+      expect(root.querySelector('.zb-empty-title')?.textContent).toContain('Film introuvable');
+      expect(root.querySelector('a[href="/recherche"].zb-button')).not.toBeNull();
+      expect(root.querySelector('.md-hero')).toBeNull();
+    });
+  });
+
   describe('back link', () => {
     it('should go back to the search page', async () => {
       const { harness, http, root, router } = await open();
