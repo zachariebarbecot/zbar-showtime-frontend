@@ -18,7 +18,7 @@ const STATUSES: Record<ShowStatusValue, { readonly label: string; readonly tone:
 };
 
 export const isShowStatus = (status: string | undefined): status is ShowStatusValue =>
-  status !== undefined && status in STATUSES;
+  status !== undefined && Object.hasOwn(STATUSES, status);
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
