@@ -270,5 +270,11 @@ describe('MovieDetail', () => {
         ['Carrie-Anne Moss', 'Trinity'],
       ]);
     });
+
+    it.each([[[]], [undefined]])('should hide the cast section when cast is %j', async (cast) => {
+      const root = await show({ cast });
+
+      expect(root.querySelector('.md-cast')).toBeNull();
+    });
   });
 });
