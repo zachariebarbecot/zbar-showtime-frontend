@@ -219,6 +219,25 @@ describe('SeriesSeasons', () => {
         expect(thumb?.querySelector('.zb-ep-code')?.textContent?.trim()).toBe('S01E03');
         expect(root.querySelector('app-episode-row button')).toBeNull();
       });
+
+      it('should keep an empty thumb with the code for an episode without still when others have one', async () => {
+        const root = await flushEpisodes([
+          { episodeNumber: 1, name: 'Un', stillUrl: 'https://image.tmdb.org/t/p/w500/a.jpg' },
+          { episodeNumber: 2, name: 'Deux' },
+        ]);
+
+        const thumbs = [...root.querySelectorAll('app-episode-row .zb-ep-thumb')];
+        expect(thumbs).toHaveLength(2);
+        expect(thumbs[1].querySelector('img')).toBeNull();
+        expect(thumbs[1].querySelector('.zb-ep-code')?.textContent?.trim()).toBe('S01E02');
+      });
+
+      it('should keep the compact row when no episode of the season has a still', async () => {
+        const root = await flushEpisodes([{ episodeNumber: 1, name: 'Un' }]);
+
+        expect(root.querySelector('app-episode-row .zb-ep')).not.toBeNull();
+        expect(root.querySelector('.zb-ep-thumb')).toBeNull();
+      });
     });
 
     it.each([[{ seasonNumber: 1, episodes: [] }], [{ seasonNumber: 1 }]])(
