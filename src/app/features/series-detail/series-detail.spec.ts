@@ -431,6 +431,17 @@ describe('SeriesDetail', () => {
         expect(addButton(root)).toBeNull();
         expect(TestBed.inject(ToastService).message()).toBe(SUCCESS);
       });
+
+      it('should treat a 409 as a success', async () => {
+        const { harness, http, root } = await click();
+
+        http.expectOne('/watchlist/series').flush(null, { status: 409, statusText: 'Conflict' });
+        await harness.fixture.whenStable();
+
+        expect(badge(root)?.textContent?.trim()).toBe('Watchlist');
+        expect(addButton(root)).toBeNull();
+        expect(TestBed.inject(ToastService).message()).toBe(SUCCESS);
+      });
     });
   });
 
