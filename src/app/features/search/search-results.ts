@@ -1,5 +1,6 @@
 import { Result } from '../../api/models/result';
 import { SearchResponse } from '../../api/models/search-response';
+import { toBadgeStatus } from '../../shared/watchlist-status';
 import { PosterStatus } from '../../ui/poster/poster';
 
 export interface SearchItem {
@@ -20,13 +21,6 @@ export interface SearchResults {
   readonly items: readonly SearchItem[];
 }
 
-const STATUSES = new Map<string, PosterStatus>([
-  ['TO_WATCH', 'watchlist'],
-  ['WATCHED', 'seen'],
-  ['WATCHING', 'progress'],
-  ['DROPPED', 'dropped'],
-]);
-
 const toItem = ({
   id,
   title,
@@ -46,7 +40,7 @@ const toItem = ({
           posterUrl,
           meta: releaseDate?.slice(0, 4),
           watchlisted: !!watchlistStatus,
-          status: STATUSES.get(watchlistStatus ?? ''),
+          status: toBadgeStatus(watchlistStatus),
         },
       ];
 

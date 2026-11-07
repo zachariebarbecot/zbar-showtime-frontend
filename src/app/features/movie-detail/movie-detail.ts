@@ -1,21 +1,37 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { map } from 'rxjs';
+import { finalize, map } from 'rxjs';
 import { MovieControllerService } from '../../api/services/movie-controller.service';
 import { injectSession } from '../../core/auth/session';
+import { WatchlistAdder } from '../../shared/watchlist-adder';
 import { AppHeader } from '../../ui/app-header/app-header';
 import { Button } from '../../ui/button/button';
 import { CastCard } from '../../ui/cast-card/cast-card';
 import { EmptyState } from '../../ui/empty-state/empty-state';
 import { FormAlert } from '../../ui/form-alert/form-alert';
+import { StatusBadge } from '../../ui/status-badge/status-badge';
+import { StatusButton } from '../../ui/status-button/status-button';
+import { ToastService } from '../../ui/toast/toast.service';
 import { toMovieDetailView } from './movie-detail-view';
+
+const ADDED = 'Ajouté à ta watchlist.';
+const ADD_FAILED = "L'ajout a échoué. Réessaie dans un instant.";
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-movie-detail',
-  imports: [AppHeader, Button, CastCard, EmptyState, FormAlert, RouterLink],
+  imports: [
+    AppHeader,
+    Button,
+    CastCard,
+    EmptyState,
+    FormAlert,
+    RouterLink,
+    StatusBadge,
+    StatusButton,
+  ],
   template: `
     @if (session.answered()) {
       <app-header active="search" [user]="session.user()" (logout)="session.logout()" />
@@ -50,6 +66,18 @@ import { toMovieDetailView } from './movie-detail-view';
             @if (view.meta) {
               <p class="zb-meta md-meta">{{ view.meta }}</p>
             }
+            <div class="md-watchlist">
+              @if (status(); as status) {
+                <app-status-badge [status]="status" />
+              } @else {
+                <app-status-button
+                  kind="watchlist"
+                  [controlled]="true"
+                  [locked]="adding()"
+                  (add)="add()"
+                />
+              }
+            </div>
             @if (view.genres.length) {
               <ul class="md-genres">
                 @for (genre of view.genres; track genre) {
@@ -95,6 +123,8 @@ import { toMovieDetailView } from './movie-detail-view';
 export class MovieDetail {
   protected readonly session = injectSession();
   private readonly api = inject(MovieControllerService);
+  private readonly adder = inject(WatchlistAdder);
+  private readonly toast = inject(ToastService);
   private readonly tmdbId = toSignal(
     inject(ActivatedRoute).paramMap.pipe(
       map((params) => {
@@ -115,4 +145,21 @@ export class MovieDetail {
     const error = this.movie.error();
     return error instanceof HttpErrorResponse && (error.status === 404 || error.status === 400);
   });
+  private readonly added = signal(false);
+  protected readonly adding = signal(false);
+  protected readonly status = computed(() => (this.added() ? 'watchlist' : this.view()?.status));
+
+  protected add(): void {
+    this.adding.set(true);
+    this.adder
+      .add('MOVIE', this.tmdbId()!)
+      .pipe(finalize(() => this.adding.set(false)))
+      .subscribe({
+        next: () => {
+          this.added.set(true);
+          this.toast.show(ADDED);
+        },
+        error: () => this.toast.show(ADD_FAILED),
+      });
+  }
 }

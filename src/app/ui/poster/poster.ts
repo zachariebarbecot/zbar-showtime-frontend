@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { episodeCode } from '../../shared/episode-code';
-import { Icon, IconName } from '../icon/icon';
+import { StatusBadge, WatchlistBadgeStatus } from '../status-badge/status-badge';
 
-export type PosterStatus = 'watchlist' | 'seen' | 'progress' | 'dropped';
+export type PosterStatus = WatchlistBadgeStatus;
 
 export interface PosterEpisode {
   readonly season: number;
@@ -15,17 +15,10 @@ export interface PosterProgress {
   readonly total: number;
 }
 
-const STATUSES: Record<PosterStatus, { readonly label: string; readonly icon: IconName }> = {
-  watchlist: { label: 'Watchlist', icon: 'watchlist' },
-  seen: { label: 'Vu', icon: 'seen' },
-  progress: { label: 'En cours', icon: 'eye' },
-  dropped: { label: 'Abandonné', icon: 'eyeOff' },
-};
-
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-poster',
-  imports: [Icon, RouterLink],
+  imports: [RouterLink, StatusBadge],
   template: `
     <div class="zb-poster">
       <div class="zb-poster-frame">
@@ -34,9 +27,7 @@ const STATUSES: Record<PosterStatus, { readonly label: string; readonly icon: Ic
         }
         @if (badge(); as badge) {
           <span class="zb-poster-badge">
-            <span [class]="'zb-badge zb-badge-' + badge">
-              <svg appIcon [name]="statuses[badge].icon"></svg>{{ statuses[badge].label }}
-            </span>
+            <app-status-badge [status]="badge" />
           </span>
         }
         <span class="zb-poster-action"><ng-content /></span>
@@ -79,7 +70,6 @@ export class Poster {
   readonly next = input<PosterEpisode>();
   readonly progress = input<PosterProgress>();
 
-  protected readonly statuses = STATUSES;
   protected readonly badge = computed<PosterStatus | undefined>(
     () => this.status() ?? (this.progress() ? 'progress' : undefined),
   );

@@ -5,6 +5,8 @@ export interface CastMemberView {
   readonly character: string;
   readonly photoUrl?: string;
 }
+import { toBadgeStatus } from '../../shared/watchlist-status';
+import { WatchlistBadgeStatus } from '../../ui/status-badge/status-badge';
 
 export interface MovieDetailView {
   readonly title?: string;
@@ -15,6 +17,7 @@ export interface MovieDetailView {
   readonly overview?: string;
   readonly directors: readonly string[];
   readonly cast: readonly CastMemberView[];
+  readonly status?: WatchlistBadgeStatus;
 }
 
 export const toMovieDetailView = ({
@@ -27,6 +30,7 @@ export const toMovieDetailView = ({
   overview,
   directors,
   cast,
+  watchlistStatus,
 }: MovieDetailResponse): MovieDetailView => ({
   title,
   originalTitle: originalTitle === title ? undefined : originalTitle,
@@ -41,4 +45,5 @@ export const toMovieDetailView = ({
   cast: (cast ?? []).flatMap(({ name, character, photoUrl }) =>
     name ? [{ name, character: character ?? '', photoUrl }] : [],
   ),
+  status: toBadgeStatus(watchlistStatus),
 });
