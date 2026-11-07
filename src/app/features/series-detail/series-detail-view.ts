@@ -14,6 +14,15 @@ export interface SeriesDetailView {
 
 const plural = (count: number, word: string) => `${count} ${word}${count > 1 ? 's' : ''}`;
 
+const year = (date: string) => date.slice(0, 4);
+
+const toPeriod = (status: string | undefined, firstAirDate: string, lastAirDate?: string) => {
+  const from = year(firstAirDate);
+  if (status !== 'ENDED' && status !== 'CANCELED') return `${from} –`;
+  const to = lastAirDate && year(lastAirDate);
+  return to && to !== from ? `${from}–${to}` : from;
+};
+
 export const toSeriesDetailView = ({
   name,
   originalName,
@@ -24,6 +33,7 @@ export const toSeriesDetailView = ({
   overview,
   status,
   firstAirDate,
+  lastAirDate,
 }: SeriesDetailResponse): SeriesDetailView => ({
   name,
   originalName: originalName === name ? undefined : originalName,
@@ -36,7 +46,7 @@ export const toSeriesDetailView = ({
       .filter(Boolean)
       .join(' · ') || undefined,
   status: isShowStatus(status) ? status : undefined,
-  period: firstAirDate ? `${firstAirDate.slice(0, 4)} –` : undefined,
+  period: firstAirDate ? toPeriod(status, firstAirDate, lastAirDate) : undefined,
   genres: genres ?? [],
   overview,
 });
