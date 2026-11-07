@@ -42,8 +42,10 @@ const formatDate = (isoDate: string) =>
     timeZone: 'UTC',
   });
 
+const tmdbSize = (url: string, size: string) => url.replace(/\/w\d+\//, `/${size}/`);
+
 const toStill = (stillUrl: string | undefined, seasonHasStill: boolean) => {
-  if (stillUrl) return stillUrl.replace(/\/w\d+\//, '/w300/');
+  if (stillUrl) return tmdbSize(stillUrl, 'w300');
   return seasonHasStill ? null : undefined;
 };
 
@@ -148,7 +150,7 @@ export class SeriesSeasons {
                 ]
                   .filter(Boolean)
                   .join(' · '),
-                poster: posterUrl?.replace(/\/w\d+\//, '/w92/'),
+                poster: posterUrl && tmdbSize(posterUrl, 'w92'),
               },
             ],
       )
