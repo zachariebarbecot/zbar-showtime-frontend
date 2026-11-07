@@ -22,7 +22,7 @@ interface Episode {
   number: number;
   title: string;
   runtime?: number;
-  still?: string;
+  still?: string | null;
 }
 
 interface Loaded {
@@ -32,23 +32,30 @@ interface Loaded {
 
 type EpisodesState = Loaded | 'failed' | undefined;
 
-const toLoaded = ({ overview, episodes = [] }: SeasonDetailResponse): Loaded => ({
-  overview,
-  episodes: episodes
-    .flatMap(({ episodeNumber, name, runtime, stillUrl }) =>
-      episodeNumber === undefined
-        ? []
-        : [
-            {
-              number: episodeNumber,
-              title: name ?? '',
-              runtime,
-              still: stillUrl?.replace(/\/w\d+\//, '/w300/'),
-            },
-          ],
-    )
-    .sort((a, b) => a.number - b.number),
-});
+const toLoaded = ({ overview, episodes = [] }: SeasonDetailResponse): Loaded => {
+  const hasStill = episodes.some(({ stillUrl }) => stillUrl);
+  return {
+    overview,
+    episodes: episodes
+      .flatMap(({ episodeNumber, name, runtime, stillUrl }) =>
+        episodeNumber === undefined
+          ? []
+          : [
+              {
+                number: episodeNumber,
+                title: name ?? '',
+                runtime,
+                still: stillUrl
+                  ? stillUrl.replace(/\/w\d+\//, '/w300/')
+                  : hasStill
+                    ? null
+                    : undefined,
+              },
+            ],
+      )
+      .sort((a, b) => a.number - b.number),
+  };
+};
 
 const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNumber);
 
