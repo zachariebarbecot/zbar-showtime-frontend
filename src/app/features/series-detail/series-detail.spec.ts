@@ -8,6 +8,7 @@ import { provideApiConfiguration } from '../../api/api-configuration';
 import { routes } from '../../app.routes';
 import { authInterceptor } from '../../core/auth/auth.interceptor';
 import { TOKEN_STORAGE } from '../../core/auth/auth.service';
+import { SeriesDetail } from './series-detail';
 
 const USER = { firstName: 'Camille', lastName: 'Durand', email: 'camille.durand@exemple.fr' };
 
@@ -42,6 +43,14 @@ describe('SeriesDetail', () => {
     return { harness, http, router: TestBed.inject(Router) };
   }
 
+  async function open(id: number | string = 1396) {
+    const rendered = await render();
+    await rendered.harness.navigateByUrl(`/serie/${id}`, SeriesDetail);
+    rendered.http.expectOne('/users/me').flush(USER);
+    rendered.harness.detectChanges();
+    return { ...rendered, root: rendered.harness.routeNativeElement as HTMLElement };
+  }
+
   describe('access', () => {
     it('should redirect a signed-out visitor to the login page', async () => {
       const { harness, http, router } = await render(false);
@@ -50,6 +59,25 @@ describe('SeriesDetail', () => {
 
       expect(router.url).toMatch(/^\/connexion/);
       http.expectNone('/series/1396');
+    });
+  });
+
+  describe('loading', () => {
+    it('should call the series endpoint once', async () => {
+      const { http } = await open();
+
+      expect(http.match('/series/1396')).toHaveLength(1);
+    });
+
+    it('should show a loading state until the series answers', async () => {
+      const { harness, http, root } = await open();
+
+      expect(root.querySelector('[role="status"]')?.textContent).toContain('Chargement');
+
+      http.expectOne('/series/1396').flush({ id: 1396, name: 'Breaking Bad' });
+      await harness.fixture.whenStable();
+
+      expect(root.querySelector('[role="status"]')).toBeNull();
     });
   });
 });
