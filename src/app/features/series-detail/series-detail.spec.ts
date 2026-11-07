@@ -246,6 +246,15 @@ describe('SeriesDetail', () => {
     ])('should show the %s status as « %s »', async (status, label) => {
       expect(tag(await airing({ status }))).toBe(label);
     });
+
+    const period = (root: HTMLElement) => root.querySelector('.md-period')?.textContent?.trim();
+
+    it.each(['RETURNING', 'IN_PRODUCTION', 'PLANNED', 'PILOT'])(
+      'should show an open period for the open status %s',
+      async (status) => {
+        expect(period(await airing({ status, firstAirDate: '2019-03-14' }))).toBe('2019 –');
+      },
+    );
   });
 
   describe('back link', () => {
