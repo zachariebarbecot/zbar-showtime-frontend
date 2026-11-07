@@ -43,7 +43,7 @@ describe('MovieDetail', () => {
     return { harness, http, router: TestBed.inject(Router) };
   }
 
-  async function open(id = 603) {
+  async function open(id: number | string = 603) {
     const rendered = await render();
     await rendered.harness.navigateByUrl(`/film/${id}`, MovieDetail);
     rendered.http.expectOne('/users/me').flush(USER);
@@ -158,6 +158,18 @@ describe('MovieDetail', () => {
   });
 
   describe('not found', () => {
+    it.each(['abc', '0', '-3', '1.5'])(
+      'should show the not found empty state without calling the API for id %s',
+      async (id) => {
+        const { harness, http, root } = await open(id);
+        await harness.fixture.whenStable();
+
+        http.expectNone((request) => request.url.startsWith('/movies/'));
+        expect(root.querySelector('.zb-empty-title')?.textContent).toContain('Film introuvable');
+        expect(root.querySelector('[role="status"]')).toBeNull();
+      },
+    );
+
     it.each([404, 400])('should show the not found empty state on a %i', async (status) => {
       const { harness, http, root } = await open();
       http.expectOne('/movies/603').flush('', { status, statusText: 'Error' });
