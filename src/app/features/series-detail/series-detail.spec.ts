@@ -348,6 +348,26 @@ describe('SeriesDetail', () => {
 
       expect(root.querySelector('.md-cast')).toBeNull();
     });
+
+    it('should show the photo of a member, the placeholder when there is none', async () => {
+      const root = await show({
+        cast: [
+          {
+            name: 'Bryan Cranston',
+            character: 'Walter White',
+            photoUrl: 'https://image.tmdb.org/t/p/w185/bc.jpg',
+          },
+          { name: 'Aaron Paul', character: 'Jesse Pinkman' },
+        ],
+      });
+
+      const [withPhoto, withoutPhoto] = [...root.querySelectorAll('.md-cast app-cast-card')];
+      expect(withPhoto.querySelector('img')?.getAttribute('src')).toBe(
+        'https://image.tmdb.org/t/p/w185/bc.jpg',
+      );
+      expect(withoutPhoto.querySelector('img')).toBeNull();
+      expect(withoutPhoto.querySelector('.zb-cast-photo')?.textContent?.trim()).toBe('AP');
+    });
   });
 
   describe('back link', () => {
