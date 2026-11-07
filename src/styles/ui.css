@@ -1307,3 +1307,14 @@ body {
     transform: translateX(-50%);
   }
 }
+.zb-poster-link {
+  position: absolute;
+  inset: 0;
+}
+.zb-poster-link:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+.zb-poster-action {
+  z-index: 1;
+}

@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { episodeCode } from '../../shared/episode-code';
 import { Icon, IconName } from '../icon/icon';
 
@@ -24,7 +25,7 @@ const STATUSES: Record<PosterStatus, { readonly label: string; readonly icon: Ic
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-poster',
-  imports: [Icon],
+  imports: [Icon, RouterLink],
   template: `
     <div class="zb-poster">
       <div class="zb-poster-frame">
@@ -37,6 +38,9 @@ const STATUSES: Record<PosterStatus, { readonly label: string; readonly icon: Ic
               <svg appIcon [name]="statuses[badge].icon"></svg>{{ statuses[badge].label }}
             </span>
           </span>
+        }
+        @if (link(); as link) {
+          <a class="zb-poster-link" [routerLink]="link"></a>
         }
         <span class="zb-poster-action"><ng-content /></span>
         <span class="zb-poster-caption" [class.zb-poster-caption-scrim]="src()">
