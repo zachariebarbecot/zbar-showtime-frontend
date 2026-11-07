@@ -1,6 +1,6 @@
-import { CastMemberView } from '../movie-detail/movie-detail-view';
 import { SeriesDetailResponse } from '../../api/models/series-detail-response';
 import { ShowStatusValue, isShowStatus } from '../../ui/show-status/show-status';
+import { CastMemberView, toCastMemberViews } from '../../shared/cast-member-view';
 
 export interface SeriesDetailView {
   readonly name?: string;
@@ -55,7 +55,5 @@ export const toSeriesDetailView = ({
   genres: genres ?? [],
   overview,
   creators: creators ?? [],
-  cast: (cast ?? []).flatMap(({ name, character, photoUrl }) =>
-    name ? [{ name, character: character ?? '', photoUrl }] : [],
-  ),
+  cast: toCastMemberViews(cast),
 });
