@@ -316,6 +316,18 @@ describe('SeriesSeasons', () => {
         [...root.querySelectorAll('.zb-season-overview, app-episode-row')].map((el) => el.tagName),
       ).toEqual(['P', 'APP-EPISODE-ROW']);
     });
+
+    it.each([[{ seasonNumber: 1, episodes: [] }], [{ seasonNumber: 1, overview: '' }]])(
+      'should render no overview when the response has none: %j',
+      async (response) => {
+        const { fixture, root, http } = await render([{ seasonNumber: 1, name: 'Saison 1' }]);
+
+        http.expectOne('/series/1396/seasons/1').flush(response);
+        await fixture.whenStable();
+
+        expect(overview(root)).toBeNull();
+      },
+    );
   });
 
   describe('without seasons', () => {
