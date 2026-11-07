@@ -48,6 +48,8 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
                     [runtime]="episode.runtime"
                     [showCheck]="false"
                   />
+                } @empty {
+                  <p>Aucun épisode pour cette saison</p>
                 }
               } @else {
                 <p role="status">Chargement…</p>
