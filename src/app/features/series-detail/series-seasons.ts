@@ -24,14 +24,21 @@ interface Episode {
   runtime?: number;
 }
 
-type EpisodesState = readonly Episode[] | 'failed' | undefined;
+interface Loaded {
+  overview?: string;
+  episodes: readonly Episode[];
+}
 
-const toEpisodes = ({ episodes = [] }: SeasonDetailResponse): Episode[] =>
-  episodes
+type EpisodesState = Loaded | 'failed' | undefined;
+
+const toLoaded = ({ overview, episodes = [] }: SeasonDetailResponse): Loaded => ({
+  overview,
+  episodes: episodes
     .flatMap(({ episodeNumber, name, runtime }) =>
       episodeNumber === undefined ? [] : [{ number: episodeNumber, title: name ?? '', runtime }],
     )
-    .sort((a, b) => a.number - b.number);
+    .sort((a, b) => a.number - b.number),
+});
 
 const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNumber);
 
@@ -59,7 +66,8 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
                   >Réessayer</app-button
                 >
               } @else if (state) {
-                @for (episode of state; track episode.number) {
+                <p class="zb-season-overview">{{ state.overview }}</p>
+                @for (episode of state.episodes; track episode.number) {
                   <app-episode-row
                     [season]="season.number"
                     [episode]="episode.number"
@@ -134,7 +142,7 @@ export class SeriesSeasons {
       .season({ tmdbId: this.tmdbId(), seasonNumber })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (season) => this.setState(seasonNumber, toEpisodes(season)),
+        next: (season) => this.setState(seasonNumber, toLoaded(season)),
         error: () => this.setState(seasonNumber, 'failed'),
       });
   }

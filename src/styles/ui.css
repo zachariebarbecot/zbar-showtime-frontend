@@ -1061,6 +1061,13 @@ body {
   object-fit: cover;
   display: block;
 }
+.zb-season-overview {
+  margin: 0;
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  border-bottom: 1px solid var(--line);
+  font: 400 14px/21px var(--font-sans);
+  color: var(--ink-muted);
+}
 .zb-season-bar {
   height: 3px;
   background: var(--surface-raised);
