@@ -442,6 +442,17 @@ describe('SeriesDetail', () => {
         expect(addButton(root)).toBeNull();
         expect(TestBed.inject(ToastService).message()).toBe(SUCCESS);
       });
+
+      it('should toast the failure and keep the add button on another error', async () => {
+        const { harness, http, root } = await click();
+
+        http.expectOne('/watchlist/series').flush(null, { status: 500, statusText: 'Error' });
+        await harness.fixture.whenStable();
+
+        expect(TestBed.inject(ToastService).message()).toBe(FAILURE);
+        expect(badge(root)).toBeNull();
+        expect(addButton(root)).not.toBeNull();
+      });
     });
   });
 
