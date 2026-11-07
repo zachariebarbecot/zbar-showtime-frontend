@@ -40,7 +40,7 @@ const STATUSES: Record<PosterStatus, { readonly label: string; readonly icon: Ic
           </span>
         }
         @if (link(); as link) {
-          <a class="zb-poster-link" [routerLink]="link"></a>
+          <a class="zb-poster-link" [routerLink]="link" [attr.aria-label]="title()"></a>
         }
         <span class="zb-poster-action"><ng-content /></span>
         <span class="zb-poster-caption" [class.zb-poster-caption-scrim]="src()">
