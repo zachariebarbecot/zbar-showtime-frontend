@@ -289,6 +289,13 @@ describe('SeriesSeasons', () => {
         [...root.querySelectorAll('.zb-season-poster, .zb-season-title')].map((el) => el.className),
       ).toEqual(['zb-season-poster', 'zb-season-title']);
     });
+
+    it('should show the empty surface-raised block when the season has no poster', async () => {
+      const { root } = await render([{ seasonNumber: 1, name: 'Saison 1' }]);
+
+      expect(poster(root)).not.toBeNull();
+      expect(poster(root)?.querySelector('img')).toBeNull();
+    });
   });
 
   describe('without seasons', () => {
