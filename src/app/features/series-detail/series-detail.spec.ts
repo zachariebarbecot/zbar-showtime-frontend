@@ -296,6 +296,24 @@ describe('SeriesDetail', () => {
     });
   });
 
+  describe('credits', () => {
+    async function show(series: object) {
+      const opened = await open();
+      opened.http.expectOne('/series/1396').flush({ id: 1396, name: 'Breaking Bad', ...series });
+      await opened.harness.fixture.whenStable();
+      return opened.root;
+    }
+
+    it('should list every creator', async () => {
+      const root = await show({ creators: ['Vince Gilligan', 'Peter Gould'] });
+
+      expect(root.querySelector('.md-directors h2')?.textContent).toContain('Création');
+      expect(
+        [...root.querySelectorAll('.md-directors li')].map((li) => li.textContent?.trim()),
+      ).toEqual(['Vince Gilligan', 'Peter Gould']);
+    });
+  });
+
   describe('back link', () => {
     it('should go back to the search page', async () => {
       const { harness, http, root, router } = await open();
