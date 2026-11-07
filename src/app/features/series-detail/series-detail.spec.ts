@@ -80,4 +80,54 @@ describe('SeriesDetail', () => {
       expect(root.querySelector('[role="status"]')).toBeNull();
     });
   });
+
+  describe('details', () => {
+    const BREAKING_BAD = {
+      id: 1396,
+      name: 'Breaking Bad',
+      originalName: 'Breaking Bad VO',
+      posterUrl: 'https://image.tmdb.org/t/p/w500/bb.jpg',
+      genres: ['Drame', 'Crime'],
+      overview: 'Un professeur de chimie devient fabricant de méthamphétamine.',
+    };
+
+    async function show(series: object) {
+      const opened = await open();
+      opened.http.expectOne('/series/1396').flush(series);
+      await opened.harness.fixture.whenStable();
+      return opened;
+    }
+
+    const text = (root: HTMLElement, selector: string) =>
+      root.querySelector(selector)?.textContent?.trim();
+
+    it('should show the poster, name, original name, genres and overview', async () => {
+      const { root } = await show(BREAKING_BAD);
+
+      expect(root.querySelector('img.md-poster')?.getAttribute('src')).toBe(BREAKING_BAD.posterUrl);
+      expect(text(root, 'h1.md-title')).toBe('Breaking Bad');
+      expect(text(root, '.md-original')).toBe('Breaking Bad VO');
+      expect(
+        [...root.querySelectorAll('.md-genres li')].map((li) => li.textContent?.trim()),
+      ).toEqual(BREAKING_BAD.genres);
+      expect(text(root, '.md-overview')).toBe(BREAKING_BAD.overview);
+    });
+
+    it('should hide the original name when it equals the name', async () => {
+      const { root } = await show({ ...BREAKING_BAD, originalName: 'Breaking Bad' });
+
+      expect(root.querySelector('.md-original')).toBeNull();
+    });
+
+    it('should render nothing for absent fields, with a placeholder for the poster', async () => {
+      const { root } = await show({ id: 1396, name: 'Breaking Bad' });
+
+      expect(text(root, 'h1.md-title')).toBe('Breaking Bad');
+      expect(root.querySelector('img.md-poster')).toBeNull();
+      expect(text(root, '.md-poster-empty')).toBe('Breaking Bad');
+      for (const absent of ['.md-original', '.md-genres', '.md-overview']) {
+        expect(root.querySelector(absent)).toBeNull();
+      }
+    });
+  });
 });
