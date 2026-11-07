@@ -22,6 +22,7 @@ interface Episode {
   number: number;
   title: string;
   runtime?: number;
+  still?: string;
 }
 
 interface Loaded {
@@ -34,8 +35,17 @@ type EpisodesState = Loaded | 'failed' | undefined;
 const toLoaded = ({ overview, episodes = [] }: SeasonDetailResponse): Loaded => ({
   overview,
   episodes: episodes
-    .flatMap(({ episodeNumber, name, runtime }) =>
-      episodeNumber === undefined ? [] : [{ number: episodeNumber, title: name ?? '', runtime }],
+    .flatMap(({ episodeNumber, name, runtime, stillUrl }) =>
+      episodeNumber === undefined
+        ? []
+        : [
+            {
+              number: episodeNumber,
+              title: name ?? '',
+              runtime,
+              still: stillUrl?.replace(/\/w\d+\//, '/w300/'),
+            },
+          ],
     )
     .sort((a, b) => a.number - b.number),
 });
@@ -75,6 +85,7 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
                     [episode]="episode.number"
                     [title]="episode.title"
                     [runtime]="episode.runtime"
+                    [still]="episode.still"
                     [showCheck]="false"
                   />
                 } @empty {
