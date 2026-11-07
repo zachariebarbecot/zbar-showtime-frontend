@@ -7,12 +7,24 @@ import { Icon } from '../icon/icon';
   selector: 'app-episode-row',
   imports: [Icon],
   template: `
-    <div class="zb-ep" [class.zb-ep-seen]="seen()">
-      <span class="zb-meta">{{ code() }}</span>
-      <div>
+    <div class="zb-ep" [class.zb-ep-seen]="seen()" [class.zb-ep-still]="still() !== undefined">
+      @if (still() === undefined) {
+        <span class="zb-meta">{{ code() }}</span>
+      } @else {
+        <div class="zb-ep-thumb">
+          @if (still()) {
+            <img [src]="still()" alt="" loading="lazy" />
+          }
+          <span class="zb-ep-code">{{ code() }}</span>
+        </div>
+      }
+      <div [class.zb-ep-info]="still() !== undefined">
         <div class="zb-ep-title">{{ title() }}</div>
-        @if (runtime()) {
-          <div class="zb-meta">{{ runtime() }} min</div>
+        @if (meta()) {
+          <div class="zb-meta">{{ meta() }}</div>
+        }
+        @if (overview()) {
+          <p class="zb-ep-overview">{{ overview() }}</p>
         }
       </div>
       @if (showCheck()) {
@@ -36,8 +48,16 @@ export class EpisodeRow {
   readonly episode = input.required<number>();
   readonly title = input.required<string>();
   readonly runtime = input<number>();
+  readonly still = input<string | null>();
+  readonly airDate = input<string>();
+  readonly overview = input<string>();
   readonly showCheck = input(true);
   readonly seen = model(false);
 
+  protected readonly meta = computed(() =>
+    [this.runtime() ? `${this.runtime()} min` : undefined, this.airDate()]
+      .filter(Boolean)
+      .join(' · '),
+  );
   protected readonly code = computed(() => episodeCode(this.season(), this.episode()));
 }

@@ -144,6 +144,13 @@ describe('SeriesSeasons', () => {
   describe('episodes', () => {
     const rows = (root: HTMLElement) => [...root.querySelectorAll('app-episode-row .zb-ep')];
 
+    const flushEpisodes = async (episodes: object[]) => {
+      const view = await render([{ seasonNumber: 1, name: 'Saison 1' }]);
+      view.http.expectOne('/series/1396/seasons/1').flush({ seasonNumber: 1, episodes });
+      await view.fixture.whenStable();
+      return view.root;
+    };
+
     it('should show a local loading state until the season response is received', async () => {
       const { fixture, root, http } = await render([{ seasonNumber: 1, name: 'Saison 1' }]);
 
@@ -193,6 +200,86 @@ describe('SeriesSeasons', () => {
       expect(root.querySelector('app-episode-row .zb-ep')).not.toBeNull();
       expect(root.querySelector('app-episode-row button')).toBeNull();
       expect(root.querySelector('app-episode-row [role="checkbox"]')).toBeNull();
+    });
+
+    describe('still', () => {
+      it('should show the still in w300 with the code laid on it', async () => {
+        const root = await flushEpisodes([
+          {
+            episodeNumber: 3,
+            name: 'Trois',
+            stillUrl: 'https://image.tmdb.org/t/p/w500/still.jpg',
+          },
+        ]);
+
+        const thumb = root.querySelector('app-episode-row .zb-ep-thumb');
+        expect(thumb?.querySelector('img')?.getAttribute('src')).toBe(
+          'https://image.tmdb.org/t/p/w300/still.jpg',
+        );
+        expect(thumb?.querySelector('.zb-ep-code')?.textContent?.trim()).toBe('S01E03');
+        expect(root.querySelector('app-episode-row button')).toBeNull();
+      });
+
+      it('should keep an empty thumb with the code for an episode without still when others have one', async () => {
+        const root = await flushEpisodes([
+          { episodeNumber: 1, name: 'Un', stillUrl: 'https://image.tmdb.org/t/p/w500/a.jpg' },
+          { episodeNumber: 2, name: 'Deux' },
+        ]);
+
+        const thumbs = [...root.querySelectorAll('app-episode-row .zb-ep-thumb')];
+        expect(thumbs).toHaveLength(2);
+        expect(thumbs[1].querySelector('img')).toBeNull();
+        expect(thumbs[1].querySelector('.zb-ep-code')?.textContent?.trim()).toBe('S01E02');
+      });
+
+      it('should keep the compact row when no episode of the season has a still', async () => {
+        const root = await flushEpisodes([{ episodeNumber: 1, name: 'Un' }]);
+
+        expect(root.querySelector('app-episode-row .zb-ep')).not.toBeNull();
+        expect(root.querySelector('.zb-ep-thumb')).toBeNull();
+      });
+    });
+
+    describe('details', () => {
+      it('should show the overview as TMDB gives it', async () => {
+        const root = await flushEpisodes([
+          { episodeNumber: 1, name: 'Un', overview: 'Walter  apprend sa maladie.' },
+        ]);
+
+        expect(root.querySelector('app-episode-row .zb-ep-overview')?.textContent).toBe(
+          'Walter  apprend sa maladie.',
+        );
+      });
+
+      it('should show the air date in French in the meta line', async () => {
+        const root = await flushEpisodes([
+          { episodeNumber: 1, name: 'Un', runtime: 47, airDate: '2025-01-17' },
+        ]);
+
+        expect(
+          [...root.querySelectorAll('app-episode-row .zb-meta')].at(-1)?.textContent?.trim(),
+        ).toBe('47 min · 17 janv. 2025');
+      });
+
+      it('should show the date alone when the runtime is missing, and nothing without date', async () => {
+        const root = await flushEpisodes([
+          { episodeNumber: 1, name: 'Un', airDate: '2025-01-17' },
+          { episodeNumber: 2, name: 'Deux' },
+        ]);
+
+        const metas = [...root.querySelectorAll('app-episode-row .zb-meta')];
+        expect(metas.map((el) => el.textContent?.trim())).toEqual([
+          'S01E01',
+          '17 janv. 2025',
+          'S01E02',
+        ]);
+      });
+
+      it.each([[undefined], ['']])('should render no overview for %j', async (overview) => {
+        const root = await flushEpisodes([{ episodeNumber: 1, name: 'Un', overview }]);
+
+        expect(root.querySelector('app-episode-row .zb-ep-overview')).toBeNull();
+      });
     });
 
     it.each([[{ seasonNumber: 1, episodes: [] }], [{ seasonNumber: 1 }]])(

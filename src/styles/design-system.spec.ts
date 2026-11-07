@@ -205,6 +205,10 @@ describe('movie detail styles', () => {
     expect(block('.md-poster')).toContain('box-shadow: var(--shadow-poster)');
   });
 
+  it('keeps the episode code light on its scrim in both themes', () => {
+    expect(ui).toMatch(/\n\.zb-ep-code\s*\{[^}]*background: var\(--scrim\)[^}]*color: #f4efe8/);
+  });
+
   it('lays poster and text side by side, stacked below 1024px', () => {
     expect(block('.md-hero')).toContain('grid-template-columns:');
     expect(ui).toMatch(

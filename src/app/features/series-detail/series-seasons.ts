@@ -22,6 +22,9 @@ interface Episode {
   number: number;
   title: string;
   runtime?: number;
+  overview?: string;
+  airDate?: string;
+  still?: string | null;
 }
 
 interface Loaded {
@@ -31,14 +34,43 @@ interface Loaded {
 
 type EpisodesState = Loaded | 'failed' | undefined;
 
-const toLoaded = ({ overview, episodes = [] }: SeasonDetailResponse): Loaded => ({
-  overview,
-  episodes: episodes
-    .flatMap(({ episodeNumber, name, runtime }) =>
-      episodeNumber === undefined ? [] : [{ number: episodeNumber, title: name ?? '', runtime }],
-    )
-    .sort((a, b) => a.number - b.number),
-});
+const formatDate = (isoDate: string) =>
+  new Date(isoDate).toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+
+const tmdbSize = (url: string, size: string) => url.replace(/\/w\d+\//, `/${size}/`);
+
+const toStill = (stillUrl: string | undefined, seasonHasStill: boolean) => {
+  if (stillUrl) return tmdbSize(stillUrl, 'w300');
+  return seasonHasStill ? null : undefined;
+};
+
+const toLoaded = ({ overview, episodes = [] }: SeasonDetailResponse): Loaded => {
+  const hasStill = episodes.some(({ stillUrl }) => stillUrl);
+  return {
+    overview,
+    episodes: episodes
+      .flatMap(({ episodeNumber, name, runtime, overview, airDate, stillUrl }) =>
+        episodeNumber === undefined
+          ? []
+          : [
+              {
+                number: episodeNumber,
+                title: name ?? '',
+                runtime,
+                overview,
+                airDate: airDate && formatDate(airDate),
+                still: toStill(stillUrl, hasStill),
+              },
+            ],
+      )
+      .sort((a, b) => a.number - b.number),
+  };
+};
 
 const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNumber);
 
@@ -75,6 +107,9 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
                     [episode]="episode.number"
                     [title]="episode.title"
                     [runtime]="episode.runtime"
+                    [still]="episode.still"
+                    [overview]="episode.overview"
+                    [airDate]="episode.airDate"
                     [showCheck]="false"
                   />
                 } @empty {
@@ -115,7 +150,7 @@ export class SeriesSeasons {
                 ]
                   .filter(Boolean)
                   .join(' · '),
-                poster: posterUrl?.replace(/\/w\d+\//, '/w92/'),
+                poster: posterUrl && tmdbSize(posterUrl, 'w92'),
               },
             ],
       )
