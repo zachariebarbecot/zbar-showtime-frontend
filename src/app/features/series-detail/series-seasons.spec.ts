@@ -64,4 +64,29 @@ describe('SeriesSeasons', () => {
       expect(titles(root)).toEqual(['Saison 1', 'Épisodes spéciaux']);
     });
   });
+
+  describe('initial state', () => {
+    const open = (root: HTMLElement) =>
+      [...root.querySelectorAll('.zb-season')].map((el) => el.classList.contains('zb-season-open'));
+
+    it('should expand and load only the first season from 1', async () => {
+      const { root, http } = await render([
+        { seasonNumber: 0, name: 'Specials' },
+        { seasonNumber: 2, name: 'Saison 2' },
+        { seasonNumber: 1, name: 'Saison 1' },
+      ]);
+
+      expect(open(root)).toEqual([true, false, false]);
+      expect(http.match('/series/1396/seasons/1')).toHaveLength(1);
+      http.expectNone('/series/1396/seasons/2');
+      http.expectNone('/series/1396/seasons/0');
+    });
+
+    it('should expand and load the season 0 when it is the only one', async () => {
+      const { root, http } = await render([{ seasonNumber: 0, name: 'Specials' }]);
+
+      expect(open(root)).toEqual([true]);
+      expect(http.match('/series/1396/seasons/0')).toHaveLength(1);
+    });
+  });
 });
