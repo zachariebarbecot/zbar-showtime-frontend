@@ -8,6 +8,7 @@ import { provideApiConfiguration } from '../../api/api-configuration';
 import { routes } from '../../app.routes';
 import { authInterceptor } from '../../core/auth/auth.interceptor';
 import { TOKEN_STORAGE } from '../../core/auth/auth.service';
+import { ToastService } from '../../ui/toast/toast.service';
 import { SeriesDetail } from './series-detail';
 
 const USER = { firstName: 'Camille', lastName: 'Durand', email: 'camille.durand@exemple.fr' };
@@ -403,6 +404,33 @@ describe('SeriesDetail', () => {
       expect(badge(root)).toBeNull();
       expect(addButton(root)).not.toBeNull();
       expect(root.querySelector('.md-info app-status-button .zb-btn-watchlist')).not.toBeNull();
+    });
+
+    describe('adding', () => {
+      const SUCCESS = 'Ajouté à ta watchlist.';
+      const FAILURE = "L'ajout a échoué. Réessaie dans un instant.";
+
+      async function click() {
+        const shown = await showWithStatus();
+        addButton(shown.root)?.click();
+        await shown.harness.fixture.whenStable();
+        return shown;
+      }
+
+      it('should post once, then show the Watchlist badge and a success toast', async () => {
+        const { harness, http, root } = await click();
+        addButton(root)?.click();
+
+        const requests = http.match('/watchlist/series');
+        expect(requests).toHaveLength(1);
+        expect(requests[0].request.body).toEqual({ tmdbId: 1396 });
+        requests[0].flush(null);
+        await harness.fixture.whenStable();
+
+        expect(badge(root)?.textContent?.trim()).toBe('Watchlist');
+        expect(addButton(root)).toBeNull();
+        expect(TestBed.inject(ToastService).message()).toBe(SUCCESS);
+      });
     });
   });
 
