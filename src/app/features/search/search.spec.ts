@@ -4,7 +4,7 @@ import {
   TestRequest,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
-import { Component, provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -19,9 +19,6 @@ import { Search } from './search';
 const USER = { firstName: 'Camille', lastName: 'Durand', email: 'camille.durand@exemple.fr' };
 
 const validToken = `h.${btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 }))}.s`;
-
-@Component({ template: '' })
-class SeriesStub {}
 
 describe('Search', () => {
   const store = new Map<string, string>();
@@ -47,7 +44,7 @@ describe('Search', () => {
         provideHttpClient(withInterceptors([authInterceptor])),
         provideHttpClientTesting(),
         provideApiConfiguration(''),
-        provideRouter([...routes, { path: 'serie/:tmdbId', component: SeriesStub }]),
+        provideRouter(routes),
         { provide: TOKEN_STORAGE, useValue: storage },
       ],
     });
@@ -515,6 +512,7 @@ describe('Search', () => {
 
       vi.useRealTimers();
       query<HTMLAnchorElement>(rendered.root, '.sr-grid a').click();
+      await vi.waitFor(() => rendered.http.expectOne('/series/1396').flush({}));
       await rendered.harness.fixture.whenStable();
 
       expect(rendered.router.url).toBe('/serie/1396');
