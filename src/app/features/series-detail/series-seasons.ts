@@ -15,7 +15,12 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
       <h2 class="zb-car-title">Saisons</h2>
       <div class="md-seasons-list">
         @for (season of sorted(); track season.number; let first = $first) {
-          <app-season [title]="season.title" [info]="season.info" [expanded]="first" />
+          <app-season
+            [title]="season.title"
+            [info]="season.info"
+            [expanded]="first"
+            (expandedChange)="onExpandedChange($event, season.number)"
+          />
         }
       </div>
     </section>
@@ -49,6 +54,10 @@ export class SeriesSeasons {
       const [first] = this.sorted();
       if (first) this.load(first.number);
     });
+  }
+
+  protected onExpandedChange(expanded: boolean, seasonNumber: number) {
+    if (expanded) this.load(seasonNumber);
   }
 
   private load(seasonNumber: number) {
