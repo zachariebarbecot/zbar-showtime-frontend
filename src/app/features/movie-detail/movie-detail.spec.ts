@@ -223,4 +223,78 @@ describe('MovieDetail', () => {
       expect(router.url).toBe('/recherche');
     });
   });
+
+  describe('credits', () => {
+    async function show(movie: object) {
+      const opened = await open();
+      opened.http.expectOne('/movies/603').flush({ id: 603, title: 'Matrix', ...movie });
+      await opened.harness.fixture.whenStable();
+      return opened.root;
+    }
+
+    it('should list every director', async () => {
+      const root = await show({ directors: ['Lana Wachowski', 'Lilly Wachowski'] });
+
+      expect(root.querySelector('.md-directors h2')?.textContent).toContain('Réalisation');
+      expect(
+        [...root.querySelectorAll('.md-directors li')].map((li) => li.textContent?.trim()),
+      ).toEqual(['Lana Wachowski', 'Lilly Wachowski']);
+    });
+
+    it.each([[[]], [undefined]])(
+      'should hide the directors section when directors is %j',
+      async (directors) => {
+        const root = await show({ directors });
+
+        expect(root.querySelector('.md-directors')).toBeNull();
+      },
+    );
+
+    const CAST = [
+      { name: 'Keanu Reeves', character: 'Neo' },
+      { name: 'Carrie-Anne Moss', character: 'Trinity' },
+    ];
+
+    it('should render one cast card per member with name and character', async () => {
+      const root = await show({ cast: CAST });
+
+      expect(root.querySelector('.md-cast h2')?.textContent).toContain('Casting');
+      const cards = [...root.querySelectorAll('.md-cast app-cast-card')];
+      expect(
+        cards.map((card) => [
+          card.querySelector('.zb-cast-name')?.textContent,
+          card.querySelector('.zb-cast-role')?.textContent,
+        ]),
+      ).toEqual([
+        ['Keanu Reeves', 'Neo'],
+        ['Carrie-Anne Moss', 'Trinity'],
+      ]);
+    });
+
+    it.each([[[]], [undefined]])('should hide the cast section when cast is %j', async (cast) => {
+      const root = await show({ cast });
+
+      expect(root.querySelector('.md-cast')).toBeNull();
+    });
+
+    it('should show the photo of a member, the placeholder when there is none', async () => {
+      const root = await show({
+        cast: [
+          {
+            name: 'Keanu Reeves',
+            character: 'Neo',
+            photoUrl: 'https://image.tmdb.org/t/p/w185/k.jpg',
+          },
+          { name: 'Carrie-Anne Moss', character: 'Trinity' },
+        ],
+      });
+
+      const [withPhoto, withoutPhoto] = [...root.querySelectorAll('.md-cast app-cast-card')];
+      expect(withPhoto.querySelector('img')?.getAttribute('src')).toBe(
+        'https://image.tmdb.org/t/p/w185/k.jpg',
+      );
+      expect(withoutPhoto.querySelector('img')).toBeNull();
+      expect(withoutPhoto.querySelector('.zb-cast-photo')?.textContent?.trim()).toBe('CM');
+    });
+  });
 });

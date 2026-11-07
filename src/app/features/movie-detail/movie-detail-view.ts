@@ -1,5 +1,11 @@
 import { MovieDetailResponse } from '../../api/models/movie-detail-response';
 
+export interface CastMemberView {
+  readonly name: string;
+  readonly character: string;
+  readonly photoUrl?: string;
+}
+
 export interface MovieDetailView {
   readonly title?: string;
   readonly originalTitle?: string;
@@ -7,6 +13,8 @@ export interface MovieDetailView {
   readonly meta?: string;
   readonly genres: readonly string[];
   readonly overview?: string;
+  readonly directors: readonly string[];
+  readonly cast: readonly CastMemberView[];
 }
 
 export const toMovieDetailView = ({
@@ -17,6 +25,8 @@ export const toMovieDetailView = ({
   runtime,
   genres,
   overview,
+  directors,
+  cast,
 }: MovieDetailResponse): MovieDetailView => ({
   title,
   originalTitle: originalTitle === title ? undefined : originalTitle,
@@ -27,4 +37,8 @@ export const toMovieDetailView = ({
       .join(' · ') || undefined,
   genres: genres ?? [],
   overview,
+  directors: directors ?? [],
+  cast: (cast ?? []).flatMap(({ name, character, photoUrl }) =>
+    name ? [{ name, character: character ?? '', photoUrl }] : [],
+  ),
 });

@@ -5,7 +5,13 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
   selector: 'app-cast-card',
   template: `
     <div class="zb-cast">
-      <div class="zb-cast-photo">{{ initials() }}</div>
+      <div class="zb-cast-photo">
+        @if (photoUrl(); as photoUrl) {
+          <img [src]="photoUrl" alt="" />
+        } @else {
+          {{ initials() }}
+        }
+      </div>
       <div>
         <div class="zb-cast-name">{{ name() }}</div>
         <div class="zb-cast-role">{{ character() }}</div>
@@ -17,6 +23,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 export class CastCard {
   readonly name = input.required<string>();
   readonly character = input.required<string>();
+  readonly photoUrl = input<string>();
 
   protected readonly initials = computed(() =>
     this.name()
