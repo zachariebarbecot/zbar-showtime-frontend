@@ -270,6 +270,27 @@ describe('SeriesSeasons', () => {
     });
   });
 
+  describe('season poster', () => {
+    const poster = (root: HTMLElement) => root.querySelector('.zb-season-head .zb-season-poster');
+
+    it('should show the 2:3 poster in w92 before the title', async () => {
+      const { root } = await render([
+        {
+          seasonNumber: 1,
+          name: 'Saison 1',
+          posterUrl: 'https://image.tmdb.org/t/p/w500/s1.jpg',
+        },
+      ]);
+
+      expect(poster(root)?.querySelector('img')?.getAttribute('src')).toBe(
+        'https://image.tmdb.org/t/p/w92/s1.jpg',
+      );
+      expect(
+        [...root.querySelectorAll('.zb-season-poster, .zb-season-title')].map((el) => el.className),
+      ).toEqual(['zb-season-poster', 'zb-season-title']);
+    });
+  });
+
   describe('without seasons', () => {
     it('should render nothing, title included', async () => {
       const { root } = await render([]);
