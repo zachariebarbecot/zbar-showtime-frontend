@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 import { SeriesControllerService } from '../../api/services/series-controller.service';
 import { injectSession } from '../../core/auth/session';
@@ -10,12 +10,13 @@ import { toSeriesDetailView } from './series-detail-view';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-series-detail',
-  imports: [AppHeader],
+  imports: [AppHeader, RouterLink],
   template: `
     @if (session.answered()) {
       <app-header active="search" [user]="session.user()" (logout)="session.logout()" />
     }
     <main class="hm-wrap">
+      <a class="zb-link md-back" routerLink="/recherche">Retour à la recherche</a>
       @if (series.isLoading()) {
         <p role="status">Chargement…</p>
       } @else if (view(); as view) {
