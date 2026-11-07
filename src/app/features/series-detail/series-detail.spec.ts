@@ -237,8 +237,11 @@ describe('SeriesDetail', () => {
     const tag = (root: HTMLElement) =>
       root.querySelector('app-show-status .zb-tag')?.textContent?.trim();
 
+    it('should show the RETURNING status as « En cours de diffusion »', async () => {
+      expect(tag(await airing({ status: 'RETURNING' }))).toBe('En cours de diffusion');
+    });
+
     it.each([
-      ['RETURNING', 'En cours'],
       ['IN_PRODUCTION', 'En production'],
       ['PLANNED', 'Prévue'],
       ['PILOT', 'Pilote'],
@@ -293,7 +296,7 @@ describe('SeriesDetail', () => {
       const root = await airing({ status: 'RETURNING', lastAirDate: '2023-11-02' });
 
       expect(root.querySelector('.md-period')).toBeNull();
-      expect(tag(root)).toBe('En cours');
+      expect(tag(root)).toBe('En cours de diffusion');
     });
   });
 
