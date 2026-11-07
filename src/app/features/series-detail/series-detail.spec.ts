@@ -342,6 +342,12 @@ describe('SeriesDetail', () => {
         ['Aaron Paul', 'Jesse Pinkman'],
       ]);
     });
+
+    it.each([[[]], [undefined]])('should hide the cast section when cast is %j', async (cast) => {
+      const root = await show({ cast });
+
+      expect(root.querySelector('.md-cast')).toBeNull();
+    });
   });
 
   describe('back link', () => {
