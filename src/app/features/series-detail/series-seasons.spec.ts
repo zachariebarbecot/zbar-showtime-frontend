@@ -330,6 +330,17 @@ describe('SeriesSeasons', () => {
     );
   });
 
+  describe('season year', () => {
+    it('should show the year of the air date after the episode count', async () => {
+      const { root } = await render([
+        { seasonNumber: 1, episodeCount: 7, airDate: '2008-01-20' },
+        { seasonNumber: 2, airDate: '2009-03-08' },
+      ]);
+
+      expect(infos(root)).toEqual(['7 épisodes · 2008', '2009']);
+    });
+  });
+
   describe('without seasons', () => {
     it('should render nothing, title included', async () => {
       const { root } = await render([]);
