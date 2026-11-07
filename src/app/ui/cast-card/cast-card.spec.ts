@@ -2,10 +2,11 @@ import { TestBed } from '@angular/core/testing';
 import { CastCard } from './cast-card';
 
 describe('CastCard', () => {
-  async function render(name: string, character: string): Promise<HTMLElement> {
+  async function render(name: string, character: string, photoUrl?: string): Promise<HTMLElement> {
     const fixture = TestBed.createComponent(CastCard);
     fixture.componentRef.setInput('name', name);
     fixture.componentRef.setInput('character', character);
+    fixture.componentRef.setInput('photoUrl', photoUrl);
     await fixture.whenStable();
     return fixture.nativeElement;
   }
@@ -23,5 +24,14 @@ describe('CastCard', () => {
     const card = await render('Jean Claude Van Damme', 'Lui');
 
     expect(card.querySelector('.zb-cast-photo')?.textContent?.trim()).toBe('JC');
+  });
+
+  it('should show the photo instead of the initials when there is one', async () => {
+    const card = await render('Adam Scott', 'Mark S.', 'https://image.tmdb.org/t/p/w185/a.jpg');
+
+    expect(card.querySelector('.zb-cast-photo img')?.getAttribute('src')).toBe(
+      'https://image.tmdb.org/t/p/w185/a.jpg',
+    );
+    expect(card.querySelector('.zb-cast-photo')?.textContent?.trim()).toBe('');
   });
 });

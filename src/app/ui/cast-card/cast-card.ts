@@ -17,6 +17,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 export class CastCard {
   readonly name = input.required<string>();
   readonly character = input.required<string>();
+  readonly photoUrl = input<string>();
 
   protected readonly initials = computed(() =>
     this.name()

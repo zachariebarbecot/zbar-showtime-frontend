@@ -276,5 +276,25 @@ describe('MovieDetail', () => {
 
       expect(root.querySelector('.md-cast')).toBeNull();
     });
+
+    it('should show the photo of a member, the placeholder when there is none', async () => {
+      const root = await show({
+        cast: [
+          {
+            name: 'Keanu Reeves',
+            character: 'Neo',
+            photoUrl: 'https://image.tmdb.org/t/p/w185/k.jpg',
+          },
+          { name: 'Carrie-Anne Moss', character: 'Trinity' },
+        ],
+      });
+
+      const [withPhoto, withoutPhoto] = [...root.querySelectorAll('.md-cast app-cast-card')];
+      expect(withPhoto.querySelector('img')?.getAttribute('src')).toBe(
+        'https://image.tmdb.org/t/p/w185/k.jpg',
+      );
+      expect(withoutPhoto.querySelector('img')).toBeNull();
+      expect(withoutPhoto.querySelector('.zb-cast-photo')?.textContent?.trim()).toBe('CM');
+    });
   });
 });
