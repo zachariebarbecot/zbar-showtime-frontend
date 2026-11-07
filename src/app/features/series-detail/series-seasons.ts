@@ -48,6 +48,7 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
             <app-season
               [title]="season.title"
               [info]="season.info"
+              [poster]="season.poster"
               [expanded]="first"
               (expandedChange)="onExpandedChange($event, season.number)"
             >
@@ -91,7 +92,7 @@ export class SeriesSeasons {
 
   protected readonly sorted = computed(() =>
     this.seasons()
-      .flatMap(({ seasonNumber, name, episodeCount }) =>
+      .flatMap(({ seasonNumber, name, episodeCount, posterUrl }) =>
         seasonNumber === undefined
           ? []
           : [
@@ -99,6 +100,7 @@ export class SeriesSeasons {
                 number: seasonNumber,
                 title: seasonNumber === 0 ? 'Épisodes spéciaux' : name,
                 info: episodeCount ? plural(episodeCount, 'épisode') : undefined,
+                poster: posterUrl?.replace(/\/w\d+\//, '/w92/'),
               },
             ],
       )

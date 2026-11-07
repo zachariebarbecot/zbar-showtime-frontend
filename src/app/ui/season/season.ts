@@ -18,8 +18,13 @@ let nextId = 0;
           (click)="expanded.set(!expanded())"
         >
           <svg appIcon name="down"></svg>
-          <span class="zb-season-title">{{ title() }}</span>
-          <span class="zb-meta zb-season-info">{{ info() }}</span>
+          @if (poster(); as poster) {
+            <span class="zb-season-poster"><img [src]="poster" alt="" loading="lazy" /></span>
+          }
+          <span class="zb-season-label">
+            <span class="zb-season-title">{{ title() }}</span>
+            <span class="zb-meta zb-season-info">{{ info() }}</span>
+          </span>
         </button>
       </div>
       <div class="zb-season-body" [id]="bodyId" [hidden]="!expanded()">
@@ -32,6 +37,7 @@ let nextId = 0;
 export class Season {
   readonly title = input<string>();
   readonly info = input<string>();
+  readonly poster = input<string>();
   readonly expanded = model(false);
 
   protected readonly bodyId = `app-season-body-${nextId++}`;
