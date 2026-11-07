@@ -65,7 +65,12 @@ export class SeriesDetail {
   protected readonly session = injectSession();
   private readonly api = inject(SeriesControllerService);
   private readonly tmdbId = toSignal(
-    inject(ActivatedRoute).paramMap.pipe(map((params) => Number(params.get('tmdbId')))),
+    inject(ActivatedRoute).paramMap.pipe(
+      map((params) => {
+        const id = Number(params.get('tmdbId'));
+        return Number.isInteger(id) && id > 0 ? id : undefined;
+      }),
+    ),
     { requireSync: true },
   );
   protected readonly series = rxResource({
@@ -76,7 +81,8 @@ export class SeriesDetail {
     this.series.hasValue() ? toSeriesDetailView(this.series.value()) : undefined,
   );
   protected readonly notFound = computed(() => {
+    if (this.tmdbId() === undefined) return true;
     const error = this.series.error();
-    return error instanceof HttpErrorResponse && error.status === 404;
+    return error instanceof HttpErrorResponse && (error.status === 404 || error.status === 400);
   });
 }
