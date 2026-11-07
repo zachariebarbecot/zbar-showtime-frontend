@@ -15,6 +15,7 @@ import { ShowStatus } from '../../ui/show-status/show-status';
 import { PeopleSection } from '../../ui/people-section/people-section';
 import { StatusBadge } from '../../ui/status-badge/status-badge';
 import { StatusButton } from '../../ui/status-button/status-button';
+import { SeriesSeasons } from './series-seasons';
 import { toSeriesDetailView } from './series-detail-view';
 
 @Component({
@@ -28,6 +29,7 @@ import { toSeriesDetailView } from './series-detail-view';
     FormAlert,
     PeopleSection,
     RouterLink,
+    SeriesSeasons,
     ShowStatus,
     StatusBadge,
     StatusButton,
@@ -102,6 +104,9 @@ import { toSeriesDetailView } from './series-detail-view';
         </article>
         <app-people-section title="Création" [names]="view.creators" />
         <app-cast-row [cast]="view.cast" />
+        @if (tmdbId(); as tmdbId) {
+          <app-series-seasons [tmdbId]="tmdbId" [seasons]="view.seasons" />
+        }
       }
     </main>
   `,
@@ -110,7 +115,7 @@ export class SeriesDetail {
   protected readonly session = injectSession();
   private readonly api = inject(SeriesControllerService);
   private readonly watchlist = injectWatchlistAdd();
-  private readonly tmdbId = toSignal(inject(ActivatedRoute).paramMap.pipe(map(tmdbIdOf)), {
+  protected readonly tmdbId = toSignal(inject(ActivatedRoute).paramMap.pipe(map(tmdbIdOf)), {
     requireSync: true,
   });
   protected readonly series = rxResource({

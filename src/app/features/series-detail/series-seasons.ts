@@ -11,19 +11,21 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
   selector: 'app-series-seasons',
   imports: [Season],
   template: `
-    <section class="md-seasons">
-      <h2 class="zb-car-title">Saisons</h2>
-      <div class="md-seasons-list">
-        @for (season of sorted(); track season.number; let first = $first) {
-          <app-season
-            [title]="season.title"
-            [info]="season.info"
-            [expanded]="first"
-            (expandedChange)="onExpandedChange($event, season.number)"
-          />
-        }
-      </div>
-    </section>
+    @if (sorted().length) {
+      <section class="md-seasons">
+        <h2 class="zb-car-title">Saisons</h2>
+        <div class="md-seasons-list">
+          @for (season of sorted(); track season.number; let first = $first) {
+            <app-season
+              [title]="season.title"
+              [info]="season.info"
+              [expanded]="first"
+              (expandedChange)="onExpandedChange($event, season.number)"
+            />
+          }
+        </div>
+      </section>
+    }
   `,
 })
 export class SeriesSeasons {
