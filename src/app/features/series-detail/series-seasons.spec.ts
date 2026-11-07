@@ -194,6 +194,33 @@ describe('SeriesSeasons', () => {
       expect(root.querySelector('app-episode-row button')).toBeNull();
       expect(root.querySelector('app-episode-row [role="checkbox"]')).toBeNull();
     });
+
+    it.each([[{ seasonNumber: 1, episodes: [] }], [{ seasonNumber: 1 }]])(
+      'should tell the season has no episode for %j',
+      async (response) => {
+        const { fixture, root, http } = await render([{ seasonNumber: 1, name: 'Saison 1' }]);
+
+        http.expectOne('/series/1396/seasons/1').flush(response);
+        await fixture.whenStable();
+
+        expect(root.querySelector('app-season')?.textContent).toContain(
+          'Aucun épisode pour cette saison',
+        );
+        expect(root.querySelector('app-episode-row')).toBeNull();
+      },
+    );
+
+    it('should not tell the season has no episode when it has some', async () => {
+      const { fixture, root, http } = await render([{ seasonNumber: 1, name: 'Saison 1' }]);
+
+      http.expectOne('/series/1396/seasons/1').flush({
+        seasonNumber: 1,
+        episodes: [{ episodeNumber: 1, name: 'Un' }],
+      });
+      await fixture.whenStable();
+
+      expect(root.textContent).not.toContain('Aucun épisode');
+    });
   });
 
   describe('without seasons', () => {
