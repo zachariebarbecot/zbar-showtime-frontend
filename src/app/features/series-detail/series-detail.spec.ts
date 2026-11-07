@@ -251,6 +251,20 @@ describe('SeriesDetail', () => {
       expect(tag(await airing({ status }))).toBe(label);
     });
 
+    it.each([
+      ['RETURNING', 'zb-tag-live'],
+      ['IN_PRODUCTION', 'zb-tag-soon'],
+      ['PLANNED', 'zb-tag-soon'],
+      ['PILOT', 'zb-tag-soon'],
+      ['ENDED', 'zb-tag-ended'],
+      ['CANCELED', 'zb-tag-canceled'],
+    ])('should mark the %s status with the dot of the %s tone', async (status, tone) => {
+      const root = await airing({ status });
+
+      const dot = root.querySelector('app-show-status .zb-tag.' + tone + ' .zb-tag-dot');
+      expect(dot?.getAttribute('aria-hidden')).toBe('true');
+    });
+
     const period = (root: HTMLElement) => root.querySelector('.md-period')?.textContent?.trim();
 
     it.each(['RETURNING', 'IN_PRODUCTION', 'PLANNED', 'PILOT'])(
