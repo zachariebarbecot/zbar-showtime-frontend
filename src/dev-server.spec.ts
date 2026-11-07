@@ -6,9 +6,12 @@ const read = (path: string): string => readFileSync(join(process.cwd(), path), '
 describe('dev proxy', () => {
   const proxy = JSON.parse(read('proxy.conf.json'));
 
-  it.each(['/auth', '/users', '/search', '/watchlist'])('forwards %s to the backend', (path) => {
-    expect(proxy[path].target).toBe('http://localhost:8080');
-  });
+  it.each(['/auth', '/users', '/search', '/watchlist', '/movies', '/series'])(
+    'forwards %s to the backend',
+    (path) => {
+      expect(proxy[path].target).toBe('http://localhost:8080');
+    },
+  );
 
   it('is used by ng serve', () => {
     const angular = JSON.parse(read('angular.json'));
