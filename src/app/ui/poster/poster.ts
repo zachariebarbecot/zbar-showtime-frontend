@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { episodeCode } from '../../shared/episode-code';
 import { Icon, IconName } from '../icon/icon';
 
@@ -24,7 +25,7 @@ const STATUSES: Record<PosterStatus, { readonly label: string; readonly icon: Ic
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-poster',
-  imports: [Icon],
+  imports: [Icon, RouterLink],
   template: `
     <div class="zb-poster">
       <div class="zb-poster-frame">
@@ -61,6 +62,9 @@ const STATUSES: Record<PosterStatus, { readonly label: string; readonly icon: Ic
             <span [style.width.%]="(100 * progress.seen) / progress.total"></span>
           </span>
         }
+        @if (link(); as link) {
+          <a class="zb-poster-link" [routerLink]="link" [attr.aria-label]="title()"></a>
+        }
       </div>
     </div>
   `,
@@ -69,6 +73,7 @@ const STATUSES: Record<PosterStatus, { readonly label: string; readonly icon: Ic
 export class Poster {
   readonly title = input.required<string>();
   readonly src = input<string>();
+  readonly link = input<string>();
   readonly meta = input<string>();
   readonly status = input<PosterStatus>();
   readonly next = input<PosterEpisode>();

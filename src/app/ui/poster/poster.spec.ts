@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { Poster, PosterEpisode, PosterProgress, PosterStatus } from './poster';
 import { query } from '../../testing/query';
 
@@ -10,8 +11,13 @@ import { query } from '../../testing/query';
 class WithAction {}
 
 describe('Poster', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+  });
+
   async function render(inputs: {
     title: string;
+    link?: string;
     src?: string;
     meta?: string;
     status?: PosterStatus;
@@ -127,5 +133,19 @@ describe('Poster', () => {
       fixture.nativeElement.querySelector('.zb-poster-frame .zb-poster-action button'),
     ).not.toBeNull();
     expect(bare.querySelector('.zb-poster-action')?.children).toHaveLength(0);
+  });
+
+  it('should link the poster to the given route', async () => {
+    const poster = await render({ title: 'Matrix', link: '/film/603' });
+
+    expect(query(poster, '.zb-poster-frame a').getAttribute('href')).toBe('/film/603');
+  });
+
+  it('should stack the link over the caption by drawing it last in the frame', async () => {
+    const poster = await render({ title: 'Matrix', link: '/film/603' });
+
+    expect(query(poster, '.zb-poster-frame').lastElementChild?.matches('a.zb-poster-link')).toBe(
+      true,
+    );
   });
 });

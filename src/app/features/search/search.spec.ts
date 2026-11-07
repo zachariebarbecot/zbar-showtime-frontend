@@ -442,15 +442,76 @@ describe('Search', () => {
       expect(rendered.root.querySelector('main')?.textContent).not.toContain('1 résultats');
     });
 
-    it('should not make the results clickable and hide the prompt', async () => {
+    it('should offer no control besides the watchlist actions and hide the prompt', async () => {
       const rendered = await open();
 
       await searchFor(rendered, 'dune', RESULTS);
 
       expect(
-        rendered.root.querySelectorAll('.sr-grid a, .sr-grid button:not(.zb-poster-action button)'),
+        rendered.root.querySelectorAll('.sr-grid button:not(.zb-poster-action button)'),
       ).toHaveLength(0);
       expect(rendered.root.querySelector('.zb-empty')).toBeNull();
+    });
+  });
+
+  describe('opening a movie', () => {
+    const MOVIE = { id: 603, title: 'Matrix', type: 'MOVIE' };
+
+    async function searchWith(results: object[]) {
+      const rendered = await open();
+      vi.useFakeTimers();
+      type(rendered, 'matrix');
+      await settle(rendered);
+      rendered.http
+        .expectOne((req) => req.url === '/search')
+        .flush({
+          page: 1,
+          totalPages: 1,
+          totalResults: results.length,
+          results,
+        });
+      rendered.harness.detectChanges();
+      return rendered;
+    }
+
+    it('should navigate to the movie page when its poster is clicked', async () => {
+      const rendered = await searchWith([MOVIE]);
+
+      vi.useRealTimers();
+      query<HTMLAnchorElement>(rendered.root, '.sr-grid a').click();
+      await vi.waitFor(() => rendered.http.expectOne('/movies/603').flush({}));
+      await rendered.harness.fixture.whenStable();
+
+      expect(rendered.router.url).toBe('/film/603');
+    });
+
+    it('should add to the watchlist without navigating, the link not wrapping the button', async () => {
+      const rendered = await searchWith([MOVIE]);
+
+      vi.useRealTimers();
+      query<HTMLButtonElement>(rendered.root, '.zb-poster-action button').click();
+      await rendered.harness.fixture.whenStable();
+
+      expect(rendered.http.expectOne('/watchlist/movies').request.method).toBe('POST');
+      expect(rendered.router.url).toBe('/recherche');
+      expect(rendered.root.querySelector('.sr-grid a button')).toBeNull();
+      expect(
+        rendered.root
+          .querySelector('.sr-grid a')
+          ?.contains(rendered.root.querySelector('.zb-poster-action')),
+      ).toBe(false);
+    });
+
+    it('should name the poster link after the movie title', async () => {
+      const rendered = await searchWith([MOVIE]);
+
+      expect(query(rendered.root, '.sr-grid a').getAttribute('aria-label')).toBe('Matrix');
+    });
+
+    it('should not link the poster of a series', async () => {
+      const rendered = await searchWith([{ id: 1396, title: 'Breaking Bad', type: 'TV' }]);
+
+      expect(rendered.root.querySelector('.sr-grid a')).toBeNull();
     });
   });
 

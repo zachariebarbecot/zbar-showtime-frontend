@@ -142,6 +142,7 @@ const FAILED: SearchState = { kind: 'error' };
               [title]="item.title"
               [src]="item.posterUrl"
               [meta]="item.meta"
+              [link]="item.type === 'MOVIE' ? '/film/' + item.tmdbId : undefined"
               [status]="adding(item) ? 'watchlist' : item.status"
             >
               <app-status-button

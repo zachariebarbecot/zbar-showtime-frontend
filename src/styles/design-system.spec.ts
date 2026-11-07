@@ -72,6 +72,12 @@ describe('ui.css', () => {
     expect(rule('.zb-poster-caption-scrim .zb-poster-meta')).toContain('color: var(--marquee)');
   });
 
+  it('rings the poster link on keyboard focus', () => {
+    expect(ui).toMatch(
+      /\.zb-poster-link:focus-visible\s*\{[^}]*outline:\s*2px solid var\(--focus-ring\)/,
+    );
+  });
+
   describe('poster action', () => {
     const action = [...ui.matchAll(/(?:^|\n)(\.zb-poster-action[^{]*)\{([^}]*)\}/g)]
       .map((m) => m[2])
