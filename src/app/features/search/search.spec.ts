@@ -457,25 +457,20 @@ describe('Search', () => {
     });
   });
 
+  async function searchWith(results: object[]) {
+    const rendered = await open();
+    vi.useFakeTimers();
+    type(rendered, 'poster');
+    await settle(rendered);
+    rendered.http
+      .expectOne((req) => req.url === '/search')
+      .flush({ page: 1, totalPages: 1, totalResults: results.length, results });
+    rendered.harness.detectChanges();
+    return rendered;
+  }
+
   describe('opening a movie', () => {
     const MOVIE = { id: 603, title: 'Matrix', type: 'MOVIE' };
-
-    async function searchWith(results: object[]) {
-      const rendered = await open();
-      vi.useFakeTimers();
-      type(rendered, 'matrix');
-      await settle(rendered);
-      rendered.http
-        .expectOne((req) => req.url === '/search')
-        .flush({
-          page: 1,
-          totalPages: 1,
-          totalResults: results.length,
-          results,
-        });
-      rendered.harness.detectChanges();
-      return rendered;
-    }
 
     it('should navigate to the movie page when its poster is clicked', async () => {
       const rendered = await searchWith([MOVIE]);
@@ -514,18 +509,6 @@ describe('Search', () => {
 
   describe('opening a series', () => {
     const SERIES = { id: 1396, title: 'Breaking Bad', type: 'TV' };
-
-    async function searchWith(results: object[]) {
-      const rendered = await open();
-      vi.useFakeTimers();
-      type(rendered, 'breaking');
-      await settle(rendered);
-      rendered.http
-        .expectOne((req) => req.url === '/search')
-        .flush({ page: 1, totalPages: 1, totalResults: results.length, results });
-      rendered.harness.detectChanges();
-      return rendered;
-    }
 
     it('should navigate to the series page when its poster is clicked', async () => {
       const rendered = await searchWith([SERIES]);
