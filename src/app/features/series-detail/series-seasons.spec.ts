@@ -180,6 +180,20 @@ describe('SeriesSeasons', () => {
         ['S01E03', '52 min', 'Trois'],
       ]);
     });
+
+    it('should not render the seen checkbox of the episodes', async () => {
+      const { fixture, root, http } = await render([{ seasonNumber: 1, name: 'Saison 1' }]);
+
+      http.expectOne('/series/1396/seasons/1').flush({
+        seasonNumber: 1,
+        episodes: [{ episodeNumber: 1, name: 'Un', runtime: 47 }],
+      });
+      await fixture.whenStable();
+
+      expect(root.querySelector('app-episode-row .zb-ep')).not.toBeNull();
+      expect(root.querySelector('app-episode-row button')).toBeNull();
+      expect(root.querySelector('app-episode-row [role="checkbox"]')).toBeNull();
+    });
   });
 
   describe('without seasons', () => {

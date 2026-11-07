@@ -34,6 +34,7 @@ export class EpisodeRow {
   readonly episode = input.required<number>();
   readonly title = input.required<string>();
   readonly runtime = input<number>();
+  readonly showCheck = input(true);
   readonly seen = model(false);
 
   protected readonly code = computed(() => episodeCode(this.season(), this.episode()));

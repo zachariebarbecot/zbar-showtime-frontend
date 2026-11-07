@@ -30,6 +30,16 @@ describe('EpisodeRow', () => {
     expect(root.querySelectorAll('.zb-meta')).toHaveLength(1);
   });
 
+  it('should not render the checkbox when the check is hidden', async () => {
+    const { fixture, root } = await render();
+    fixture.componentRef.setInput('showCheck', false);
+    await fixture.whenStable();
+
+    expect(root.querySelector('button')).toBeNull();
+    expect(root.querySelector('[role="checkbox"]')).toBeNull();
+    expect(root.textContent).toContain('S02E03');
+  });
+
   it('should offer an unchecked checkbox to mark the episode seen', async () => {
     const { root, check } = await render();
 
