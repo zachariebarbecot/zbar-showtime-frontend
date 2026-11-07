@@ -43,9 +43,9 @@ describe('SeriesDetail', () => {
     return { harness, http, router: TestBed.inject(Router) };
   }
 
-  async function open() {
+  async function open(id = '1396') {
     const rendered = await render();
-    await rendered.harness.navigateByUrl('/serie/1396', SeriesDetail);
+    await rendered.harness.navigateByUrl(`/serie/${id}`, SeriesDetail);
     rendered.http.expectOne('/users/me').flush(USER);
     rendered.harness.detectChanges();
     return { ...rendered, root: rendered.harness.routeNativeElement as HTMLElement };
@@ -159,6 +159,18 @@ describe('SeriesDetail', () => {
 
     it('should render no meta when both counts are absent', async () => {
       expect(await meta({})).toBeUndefined();
+    });
+  });
+
+  describe('not found', () => {
+    it('should show the not found empty state with a link to the search page on a 404', async () => {
+      const { harness, http, root } = await open();
+      http.expectOne('/series/1396').flush('', { status: 404, statusText: 'Error' });
+      await harness.fixture.whenStable();
+
+      expect(root.querySelector('.zb-empty-title')?.textContent).toContain('Série introuvable');
+      expect(root.querySelector('a[href="/recherche"].zb-button')).not.toBeNull();
+      expect(root.querySelector('.md-hero')).toBeNull();
     });
   });
 
