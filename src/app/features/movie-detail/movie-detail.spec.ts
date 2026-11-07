@@ -169,6 +169,34 @@ describe('MovieDetail', () => {
     });
   });
 
+  describe('server error', () => {
+    it.each([500, 0])('should show an error message and a retry button on a %i', async (status) => {
+      const { harness, http, root } = await open();
+      http.expectOne('/movies/603').flush('', { status, statusText: 'Error' });
+      await harness.fixture.whenStable();
+
+      expect(root.querySelector('[role="alert"]')).not.toBeNull();
+      expect(root.querySelector('main button')?.textContent).toContain('Réessayer');
+      expect(root.querySelector('.zb-empty-title')).toBeNull();
+    });
+  });
+
+  describe('retry', () => {
+    it('should call the movie endpoint again and show the details on success', async () => {
+      const { harness, http, root } = await open();
+      http.expectOne('/movies/603').flush('', { status: 500, statusText: 'Error' });
+      await harness.fixture.whenStable();
+
+      root.querySelector<HTMLButtonElement>('main button')?.click();
+      harness.detectChanges();
+      http.expectOne('/movies/603').flush({ id: 603, title: 'Matrix' });
+      await harness.fixture.whenStable();
+
+      expect(root.querySelector('h1.md-title')?.textContent?.trim()).toBe('Matrix');
+      expect(root.querySelector('[role="alert"]')).toBeNull();
+    });
+  });
+
   describe('back link', () => {
     it('should go back to the search page', async () => {
       const { harness, http, root, router } = await open();
