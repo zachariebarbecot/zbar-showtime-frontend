@@ -25,7 +25,7 @@ import { toMovieDetailView } from './movie-detail-view';
             @if (view.posterUrl) {
               <img class="md-poster" [src]="view.posterUrl" alt="" />
             } @else {
-              <div class="md-poster-empty">{{ view.title }}</div>
+              <div class="zb-poster-frame md-poster-empty">{{ view.title }}</div>
             }
           </figure>
           <div class="md-info">

@@ -1226,11 +1226,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  aspect-ratio: 2 / 3;
   padding: var(--space-4);
   box-sizing: border-box;
-  border-radius: var(--radius-md);
-  background: var(--surface-raised);
   color: var(--ink-muted);
   font: 600 14px/18px var(--font-sans);
   text-align: center;
