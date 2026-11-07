@@ -141,6 +141,47 @@ describe('SeriesSeasons', () => {
     });
   });
 
+  describe('episodes', () => {
+    const rows = (root: HTMLElement) => [...root.querySelectorAll('app-episode-row .zb-ep')];
+
+    it('should show a local loading state until the season response is received', async () => {
+      const { fixture, root, http } = await render([{ seasonNumber: 1, name: 'Saison 1' }]);
+
+      expect(root.querySelector('app-season [role="status"]')?.textContent).toContain('Chargement');
+      expect(rows(root)).toHaveLength(0);
+
+      http.expectOne('/series/1396/seasons/1').flush({ seasonNumber: 1, episodes: [] });
+      await fixture.whenStable();
+
+      expect(root.querySelector('app-season [role="status"]')).toBeNull();
+    });
+
+    it('should render an episode row per episode ordered by episode number', async () => {
+      const { fixture, root, http } = await render([{ seasonNumber: 1, name: 'Saison 1' }]);
+
+      http.expectOne('/series/1396/seasons/1').flush({
+        seasonNumber: 1,
+        episodes: [
+          { episodeNumber: 3, name: 'Trois', runtime: 52 },
+          { episodeNumber: 1, name: 'Un', runtime: 47 },
+          { episodeNumber: 2, name: 'Deux', runtime: 50 },
+        ],
+      });
+      await fixture.whenStable();
+
+      expect(
+        rows(root).map((row) => [
+          ...[...row.querySelectorAll('.zb-meta')].map((el) => el.textContent?.trim()),
+          row.querySelector('.zb-ep-title')?.textContent,
+        ]),
+      ).toEqual([
+        ['S01E01', '47 min', 'Un'],
+        ['S01E02', '50 min', 'Deux'],
+        ['S01E03', '52 min', 'Trois'],
+      ]);
+    });
+  });
+
   describe('without seasons', () => {
     it('should render nothing, title included', async () => {
       const { root } = await render([]);
