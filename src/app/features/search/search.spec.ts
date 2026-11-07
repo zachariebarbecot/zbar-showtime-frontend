@@ -479,6 +479,7 @@ describe('Search', () => {
 
       vi.useRealTimers();
       query<HTMLAnchorElement>(rendered.root, '.sr-grid a').click();
+      await vi.waitFor(() => rendered.http.expectOne('/movies/603').flush({}));
       await rendered.harness.fixture.whenStable();
 
       expect(rendered.router.url).toBe('/film/603');
