@@ -25,7 +25,7 @@ import { toMovieDetailView } from './movie-detail-view';
         <p role="status">Chargement…</p>
       } @else if (notFound()) {
         <app-empty-state title="Film introuvable" text="Ce film n'existe pas ou plus.">
-          <app-button routerLink="/recherche">Retour à la recherche</app-button>
+          <app-button link="/recherche">Retour à la recherche</app-button>
         </app-empty-state>
       } @else if (movie.error()) {
         <app-form-alert message="Impossible de charger la fiche pour le moment." />

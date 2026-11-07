@@ -14,7 +14,7 @@ import { RouterLink } from '@angular/router';
   imports: [NgTemplateOutlet, RouterLink],
   template: `
     <ng-template #label><ng-content /></ng-template>
-    @if (routerLink(); as route) {
+    @if (link(); as route) {
       <a [class]="classes()" [routerLink]="route">
         <ng-container *ngTemplateOutlet="label" />
       </a>
@@ -37,7 +37,7 @@ export class Button {
   readonly type = input<'button' | 'submit'>('button');
   readonly disabled = input(false, { transform: booleanAttribute });
   readonly href = input<string>();
-  readonly routerLink = input<string>();
+  readonly link = input<string>();
 
   protected readonly classes = computed(
     () =>
