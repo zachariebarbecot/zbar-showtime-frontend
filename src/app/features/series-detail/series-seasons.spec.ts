@@ -53,4 +53,15 @@ describe('SeriesSeasons', () => {
       expect(infos(root)).toEqual(['7 épisodes', '8 épisodes', '3 épisodes']);
     });
   });
+
+  describe('special episodes', () => {
+    it('should title the season 0 « Épisodes spéciaux » instead of its API name', async () => {
+      const { root } = await render([
+        { seasonNumber: 1, name: 'Saison 1' },
+        { seasonNumber: 0, name: 'Specials' },
+      ]);
+
+      expect(titles(root)).toEqual(['Saison 1', 'Épisodes spéciaux']);
+    });
+  });
 });
