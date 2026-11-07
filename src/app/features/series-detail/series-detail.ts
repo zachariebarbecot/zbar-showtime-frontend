@@ -5,6 +5,7 @@ import { map } from 'rxjs';
 import { SeriesControllerService } from '../../api/services/series-controller.service';
 import { injectSession } from '../../core/auth/session';
 import { isNotFound, tmdbIdOf } from '../../shared/tmdb-id';
+import { injectWatchlistAdd } from '../../shared/watchlist-add';
 import { AppHeader } from '../../ui/app-header/app-header';
 import { Button } from '../../ui/button/button';
 import { CastRow } from '../../ui/cast-row/cast-row';
@@ -12,6 +13,8 @@ import { EmptyState } from '../../ui/empty-state/empty-state';
 import { FormAlert } from '../../ui/form-alert/form-alert';
 import { ShowStatus } from '../../ui/show-status/show-status';
 import { PeopleSection } from '../../ui/people-section/people-section';
+import { StatusBadge } from '../../ui/status-badge/status-badge';
+import { StatusButton } from '../../ui/status-button/status-button';
 import { toSeriesDetailView } from './series-detail-view';
 
 @Component({
@@ -26,6 +29,8 @@ import { toSeriesDetailView } from './series-detail-view';
     PeopleSection,
     RouterLink,
     ShowStatus,
+    StatusBadge,
+    StatusButton,
   ],
   template: `
     @if (session.answered()) {
@@ -71,6 +76,18 @@ import { toSeriesDetailView } from './series-detail-view';
                 }
               </div>
             }
+            <div class="md-watchlist">
+              @if (status(); as status) {
+                <app-status-badge [status]="status" />
+              } @else {
+                <app-status-button
+                  kind="watchlist"
+                  [controlled]="true"
+                  [locked]="adding()"
+                  (add)="add()"
+                />
+              }
+            </div>
             @if (view.genres.length) {
               <ul class="md-genres">
                 @for (genre of view.genres; track genre) {
@@ -92,6 +109,7 @@ import { toSeriesDetailView } from './series-detail-view';
 export class SeriesDetail {
   protected readonly session = injectSession();
   private readonly api = inject(SeriesControllerService);
+  private readonly watchlist = injectWatchlistAdd();
   private readonly tmdbId = toSignal(inject(ActivatedRoute).paramMap.pipe(map(tmdbIdOf)), {
     requireSync: true,
   });
@@ -106,4 +124,14 @@ export class SeriesDetail {
     if (this.tmdbId() === undefined) return true;
     return isNotFound(this.series.error());
   });
+  protected readonly adding = this.watchlist.adding;
+  protected readonly status = computed(() =>
+    this.watchlist.added() ? 'watchlist' : this.view()?.watchlist,
+  );
+
+  protected add(): void {
+    const tmdbId = this.tmdbId();
+    if (tmdbId === undefined) return;
+    this.watchlist.add('TV', tmdbId);
+  }
 }
