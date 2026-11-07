@@ -321,6 +321,27 @@ describe('SeriesDetail', () => {
         [...root.querySelectorAll('.md-directors li')].map((li) => li.textContent?.trim()),
       ).toEqual(['Vince Gilligan', 'Peter Gould']);
     });
+
+    const CAST = [
+      { name: 'Bryan Cranston', character: 'Walter White' },
+      { name: 'Aaron Paul', character: 'Jesse Pinkman' },
+    ];
+
+    it('should render one cast card per member with name and character', async () => {
+      const root = await show({ cast: CAST });
+
+      expect(root.querySelector('.md-cast h2')?.textContent).toContain('Casting');
+      const cards = [...root.querySelectorAll('.md-cast app-cast-card')];
+      expect(
+        cards.map((card) => [
+          card.querySelector('.zb-cast-name')?.textContent,
+          card.querySelector('.zb-cast-role')?.textContent,
+        ]),
+      ).toEqual([
+        ['Bryan Cranston', 'Walter White'],
+        ['Aaron Paul', 'Jesse Pinkman'],
+      ]);
+    });
   });
 
   describe('back link', () => {
