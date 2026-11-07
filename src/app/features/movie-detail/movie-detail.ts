@@ -15,9 +15,10 @@ import { ADD_FAILED, WatchlistAdder } from '../../shared/watchlist-adder';
 import { isNotFound, tmdbIdOf } from '../../shared/tmdb-id';
 import { AppHeader } from '../../ui/app-header/app-header';
 import { Button } from '../../ui/button/button';
-import { CastCard } from '../../ui/cast-card/cast-card';
+import { CastRow } from '../../ui/cast-row/cast-row';
 import { EmptyState } from '../../ui/empty-state/empty-state';
 import { FormAlert } from '../../ui/form-alert/form-alert';
+import { PeopleSection } from '../../ui/people-section/people-section';
 import { StatusBadge } from '../../ui/status-badge/status-badge';
 import { StatusButton } from '../../ui/status-button/status-button';
 import { ToastService } from '../../ui/toast/toast.service';
@@ -31,9 +32,10 @@ const ADDED = 'Ajouté à ta watchlist.';
   imports: [
     AppHeader,
     Button,
-    CastCard,
+    CastRow,
     EmptyState,
     FormAlert,
+    PeopleSection,
     RouterLink,
     StatusBadge,
     StatusButton,
@@ -96,32 +98,8 @@ const ADDED = 'Ajouté à ta watchlist.';
             }
           </div>
         </article>
-        @if (view.directors.length) {
-          <section class="md-directors">
-            <h2 class="zb-car-title">Réalisation</h2>
-            <ul class="md-people">
-              @for (director of view.directors; track director) {
-                <li>{{ director }}</li>
-              }
-            </ul>
-          </section>
-        }
-        @if (view.cast.length) {
-          <section class="zb-car md-cast">
-            <div class="zb-car-head">
-              <h2 class="zb-car-title">Casting</h2>
-            </div>
-            <div class="zb-car-track">
-              @for (member of view.cast; track $index) {
-                <app-cast-card
-                  [name]="member.name"
-                  [character]="member.character"
-                  [photoUrl]="member.photoUrl"
-                />
-              }
-            </div>
-          </section>
-        }
+        <app-people-section title="Réalisation" [names]="view.directors" />
+        <app-cast-row [cast]="view.cast" />
       }
     </main>
   `,

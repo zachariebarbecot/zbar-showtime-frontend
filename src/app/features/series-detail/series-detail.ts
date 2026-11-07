@@ -7,16 +7,26 @@ import { injectSession } from '../../core/auth/session';
 import { isNotFound, tmdbIdOf } from '../../shared/tmdb-id';
 import { AppHeader } from '../../ui/app-header/app-header';
 import { Button } from '../../ui/button/button';
-import { CastCard } from '../../ui/cast-card/cast-card';
+import { CastRow } from '../../ui/cast-row/cast-row';
 import { EmptyState } from '../../ui/empty-state/empty-state';
 import { FormAlert } from '../../ui/form-alert/form-alert';
 import { ShowStatus } from '../../ui/show-status/show-status';
+import { PeopleSection } from '../../ui/people-section/people-section';
 import { toSeriesDetailView } from './series-detail-view';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-series-detail',
-  imports: [AppHeader, Button, CastCard, EmptyState, FormAlert, RouterLink, ShowStatus],
+  imports: [
+    AppHeader,
+    Button,
+    CastRow,
+    EmptyState,
+    FormAlert,
+    PeopleSection,
+    RouterLink,
+    ShowStatus,
+  ],
   template: `
     @if (session.answered()) {
       <app-header active="search" [user]="session.user()" (logout)="session.logout()" />
@@ -73,32 +83,8 @@ import { toSeriesDetailView } from './series-detail-view';
             }
           </div>
         </article>
-        @if (view.creators.length) {
-          <section class="md-directors">
-            <h2 class="zb-car-title">Création</h2>
-            <ul class="md-people">
-              @for (creator of view.creators; track creator) {
-                <li>{{ creator }}</li>
-              }
-            </ul>
-          </section>
-        }
-        @if (view.cast.length) {
-          <section class="zb-car md-cast">
-            <div class="zb-car-head">
-              <h2 class="zb-car-title">Casting</h2>
-            </div>
-            <div class="zb-car-track">
-              @for (member of view.cast; track $index) {
-                <app-cast-card
-                  [name]="member.name"
-                  [character]="member.character"
-                  [photoUrl]="member.photoUrl"
-                />
-              }
-            </div>
-          </section>
-        }
+        <app-people-section title="Création" [names]="view.creators" />
+        <app-cast-row [cast]="view.cast" />
       }
     </main>
   `,
