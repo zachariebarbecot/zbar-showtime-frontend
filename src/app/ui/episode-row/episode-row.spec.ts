@@ -3,12 +3,12 @@ import { EpisodeRow } from './episode-row';
 import { query } from '../../testing/query';
 
 describe('EpisodeRow', () => {
-  async function render(seen = false) {
+  async function render(seen = false, runtime: number | null = 51) {
     const fixture = TestBed.createComponent(EpisodeRow);
     fixture.componentRef.setInput('season', 2);
     fixture.componentRef.setInput('episode', 3);
     fixture.componentRef.setInput('title', 'Who Is Alive?');
-    fixture.componentRef.setInput('runtime', 51);
+    fixture.componentRef.setInput('runtime', runtime ?? undefined);
     fixture.componentRef.setInput('seen', seen);
     await fixture.whenStable();
     const root: HTMLElement = fixture.nativeElement;
@@ -21,6 +21,13 @@ describe('EpisodeRow', () => {
     expect(root.textContent).toContain('S02E03');
     expect(root.querySelector('.zb-ep-title')?.textContent).toBe('Who Is Alive?');
     expect(root.textContent).toContain('51 min');
+  });
+
+  it.each([null, 0])('should not show the runtime when it is %s', async (runtime) => {
+    const { root } = await render(false, runtime);
+
+    expect(root.textContent).not.toContain('min');
+    expect(root.querySelectorAll('.zb-meta')).toHaveLength(1);
   });
 
   it('should offer an unchecked checkbox to mark the episode seen', async () => {
