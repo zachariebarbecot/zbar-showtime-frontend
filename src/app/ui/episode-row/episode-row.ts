@@ -15,16 +15,18 @@ import { Icon } from '../icon/icon';
           <div class="zb-meta">{{ runtime() }} min</div>
         }
       </div>
-      <button
-        type="button"
-        role="checkbox"
-        class="zb-check"
-        [attr.aria-checked]="seen()"
-        [attr.aria-label]="(seen() ? 'Vu : ' : 'Marquer vu : ') + code()"
-        (click)="seen.set(!seen())"
-      >
-        <svg appIcon name="seen"></svg>
-      </button>
+      @if (showCheck()) {
+        <button
+          type="button"
+          role="checkbox"
+          class="zb-check"
+          [attr.aria-checked]="seen()"
+          [attr.aria-label]="(seen() ? 'Vu : ' : 'Marquer vu : ') + code()"
+          (click)="seen.set(!seen())"
+        >
+          <svg appIcon name="seen"></svg>
+        </button>
+      }
     </div>
   `,
   host: { style: 'display: contents' },

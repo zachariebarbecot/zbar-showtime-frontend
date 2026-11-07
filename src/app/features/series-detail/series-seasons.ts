@@ -46,6 +46,7 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
                     [episode]="episode.number"
                     [title]="episode.title"
                     [runtime]="episode.runtime"
+                    [showCheck]="false"
                   />
                 }
               } @else {
