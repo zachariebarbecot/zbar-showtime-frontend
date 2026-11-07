@@ -153,4 +153,19 @@ describe('MovieDetail', () => {
       expect(await showTitles('Matrix', 'Matrix')).toBeUndefined();
     });
   });
+
+  describe('back link', () => {
+    it('should go back to the search page', async () => {
+      const { harness, http, root, router } = await open();
+      http.expectOne('/movies/603').flush({ id: 603, title: 'Matrix' });
+      await harness.fixture.whenStable();
+
+      const back = root.querySelector<HTMLAnchorElement>('a.md-back');
+      expect(back?.textContent).toContain('Retour');
+      back?.click();
+      await harness.fixture.whenStable();
+
+      expect(router.url).toBe('/recherche');
+    });
+  });
 });
