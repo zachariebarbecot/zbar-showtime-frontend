@@ -141,6 +141,135 @@ describe('SeriesSeasons', () => {
     });
   });
 
+  describe('episodes', () => {
+    const rows = (root: HTMLElement) => [...root.querySelectorAll('app-episode-row .zb-ep')];
+
+    it('should show a local loading state until the season response is received', async () => {
+      const { fixture, root, http } = await render([{ seasonNumber: 1, name: 'Saison 1' }]);
+
+      expect(root.querySelector('app-season [role="status"]')?.textContent).toContain('Chargement');
+      expect(rows(root)).toHaveLength(0);
+
+      http.expectOne('/series/1396/seasons/1').flush({ seasonNumber: 1, episodes: [] });
+      await fixture.whenStable();
+
+      expect(root.querySelector('app-season [role="status"]')).toBeNull();
+    });
+
+    it('should render an episode row per episode ordered by episode number', async () => {
+      const { fixture, root, http } = await render([{ seasonNumber: 1, name: 'Saison 1' }]);
+
+      http.expectOne('/series/1396/seasons/1').flush({
+        seasonNumber: 1,
+        episodes: [
+          { episodeNumber: 3, name: 'Trois', runtime: 52 },
+          { episodeNumber: 1, name: 'Un', runtime: 47 },
+          { episodeNumber: 2, name: 'Deux', runtime: 50 },
+        ],
+      });
+      await fixture.whenStable();
+
+      expect(
+        rows(root).map((row) => [
+          ...[...row.querySelectorAll('.zb-meta')].map((el) => el.textContent?.trim()),
+          row.querySelector('.zb-ep-title')?.textContent,
+        ]),
+      ).toEqual([
+        ['S01E01', '47 min', 'Un'],
+        ['S01E02', '50 min', 'Deux'],
+        ['S01E03', '52 min', 'Trois'],
+      ]);
+    });
+
+    it('should not render the seen checkbox of the episodes', async () => {
+      const { fixture, root, http } = await render([{ seasonNumber: 1, name: 'Saison 1' }]);
+
+      http.expectOne('/series/1396/seasons/1').flush({
+        seasonNumber: 1,
+        episodes: [{ episodeNumber: 1, name: 'Un', runtime: 47 }],
+      });
+      await fixture.whenStable();
+
+      expect(root.querySelector('app-episode-row .zb-ep')).not.toBeNull();
+      expect(root.querySelector('app-episode-row button')).toBeNull();
+      expect(root.querySelector('app-episode-row [role="checkbox"]')).toBeNull();
+    });
+
+    it.each([[{ seasonNumber: 1, episodes: [] }], [{ seasonNumber: 1 }]])(
+      'should tell the season has no episode for %j',
+      async (response) => {
+        const { fixture, root, http } = await render([{ seasonNumber: 1, name: 'Saison 1' }]);
+
+        http.expectOne('/series/1396/seasons/1').flush(response);
+        await fixture.whenStable();
+
+        expect(root.querySelector('app-season')?.textContent).toContain(
+          'Aucun épisode pour cette saison',
+        );
+        expect(root.querySelector('app-episode-row')).toBeNull();
+      },
+    );
+
+    it('should not tell the season has no episode when it has some', async () => {
+      const { fixture, root, http } = await render([{ seasonNumber: 1, name: 'Saison 1' }]);
+
+      http.expectOne('/series/1396/seasons/1').flush({
+        seasonNumber: 1,
+        episodes: [{ episodeNumber: 1, name: 'Un' }],
+      });
+      await fixture.whenStable();
+
+      expect(root.textContent).not.toContain('Aucun épisode');
+    });
+
+    describe('on error', () => {
+      const SEASONS = [
+        { seasonNumber: 1, name: 'Saison 1' },
+        { seasonNumber: 2, name: 'Saison 2' },
+      ];
+      const retry = (root: HTMLElement) =>
+        [...root.querySelectorAll<HTMLButtonElement>('app-season button')].find((button) =>
+          button.textContent?.includes('Réessayer'),
+        );
+
+      it('should show an error and a retry button in the failed season only', async () => {
+        const { fixture, root, http } = await render(SEASONS);
+
+        http
+          .expectOne('/series/1396/seasons/1')
+          .flush('', { status: 500, statusText: 'Server Error' });
+        await fixture.whenStable();
+
+        const [first, second] = root.querySelectorAll('app-season');
+        expect(first.querySelector('[role="alert"]')).not.toBeNull();
+        expect(first.textContent).toContain('Réessayer');
+        expect(second.querySelector('[role="alert"]')).toBeNull();
+        expect(second.textContent).not.toContain('Réessayer');
+        expect(titles(root)).toEqual(['Saison 1', 'Saison 2']);
+      });
+
+      it('should call the season again once when the user retries, then show the episodes', async () => {
+        const { fixture, root, http } = await render(SEASONS);
+        http
+          .expectOne('/series/1396/seasons/1')
+          .flush('', { status: 500, statusText: 'Server Error' });
+        await fixture.whenStable();
+
+        retry(root)?.click();
+        await fixture.whenStable();
+
+        expect(root.querySelector('app-season [role="alert"]')).toBeNull();
+        http
+          .expectOne('/series/1396/seasons/1')
+          .flush({ seasonNumber: 1, episodes: [{ episodeNumber: 1, name: 'Un', runtime: 47 }] });
+        await fixture.whenStable();
+
+        expect(root.querySelectorAll('app-episode-row')).toHaveLength(1);
+        expect(retry(root)).toBeUndefined();
+      });
+    });
+  });
+
   describe('without seasons', () => {
     it('should render nothing, title included', async () => {
       const { root } = await render([]);
