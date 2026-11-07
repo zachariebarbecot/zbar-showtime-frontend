@@ -42,6 +42,11 @@ const formatDate = (isoDate: string) =>
     timeZone: 'UTC',
   });
 
+const toStill = (stillUrl: string | undefined, seasonHasStill: boolean) => {
+  if (stillUrl) return stillUrl.replace(/\/w\d+\//, '/w300/');
+  return seasonHasStill ? null : undefined;
+};
+
 const toLoaded = ({ overview, episodes = [] }: SeasonDetailResponse): Loaded => {
   const hasStill = episodes.some(({ stillUrl }) => stillUrl);
   return {
@@ -57,11 +62,7 @@ const toLoaded = ({ overview, episodes = [] }: SeasonDetailResponse): Loaded => 
                 runtime,
                 overview,
                 airDate: airDate && formatDate(airDate),
-                still: stillUrl
-                  ? stillUrl.replace(/\/w\d+\//, '/w300/')
-                  : hasStill
-                    ? null
-                    : undefined,
+                still: toStill(stillUrl, hasStill),
               },
             ],
       )
