@@ -79,7 +79,11 @@ import { toMovieDetailView } from './movie-detail-view';
             </div>
             <div class="zb-car-track">
               @for (member of view.cast; track $index) {
-                <app-cast-card [name]="member.name" [character]="member.character" />
+                <app-cast-card
+                  [name]="member.name"
+                  [character]="member.character"
+                  [photoUrl]="member.photoUrl"
+                />
               }
             </div>
           </section>
