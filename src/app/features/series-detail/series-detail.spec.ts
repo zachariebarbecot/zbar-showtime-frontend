@@ -237,8 +237,11 @@ describe('SeriesDetail', () => {
     const tag = (root: HTMLElement) =>
       root.querySelector('app-show-status .zb-tag')?.textContent?.trim();
 
+    it('should show the RETURNING status as « En cours de diffusion »', async () => {
+      expect(tag(await airing({ status: 'RETURNING' }))).toBe('En cours de diffusion');
+    });
+
     it.each([
-      ['RETURNING', 'En cours'],
       ['IN_PRODUCTION', 'En production'],
       ['PLANNED', 'Prévue'],
       ['PILOT', 'Pilote'],
@@ -246,6 +249,20 @@ describe('SeriesDetail', () => {
       ['CANCELED', 'Annulée'],
     ])('should show the %s status as « %s »', async (status, label) => {
       expect(tag(await airing({ status }))).toBe(label);
+    });
+
+    it.each([
+      ['RETURNING', 'zb-tag-live'],
+      ['IN_PRODUCTION', 'zb-tag-soon'],
+      ['PLANNED', 'zb-tag-soon'],
+      ['PILOT', 'zb-tag-soon'],
+      ['ENDED', 'zb-tag-ended'],
+      ['CANCELED', 'zb-tag-canceled'],
+    ])('should mark the %s status with the dot of the %s tone', async (status, tone) => {
+      const root = await airing({ status });
+
+      const dot = root.querySelector('app-show-status .zb-tag.' + tone + ' .zb-tag-dot');
+      expect(dot?.getAttribute('aria-hidden')).toBe('true');
     });
 
     const period = (root: HTMLElement) => root.querySelector('.md-period')?.textContent?.trim();
@@ -293,7 +310,7 @@ describe('SeriesDetail', () => {
       const root = await airing({ status: 'RETURNING', lastAirDate: '2023-11-02' });
 
       expect(root.querySelector('.md-period')).toBeNull();
-      expect(tag(root)).toBe('En cours');
+      expect(tag(root)).toBe('En cours de diffusion');
     });
   });
 
