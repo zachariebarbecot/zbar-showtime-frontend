@@ -130,4 +130,35 @@ describe('SeriesDetail', () => {
       }
     });
   });
+
+  describe('counts', () => {
+    async function meta(series: object) {
+      const opened = await open();
+      opened.http.expectOne('/series/1396').flush({ id: 1396, name: 'Breaking Bad', ...series });
+      await opened.harness.fixture.whenStable();
+      return opened.root.querySelector('.md-meta')?.textContent?.trim();
+    }
+
+    it('should show the season and episode counts in the plural', async () => {
+      expect(await meta({ numberOfSeasons: 5, numberOfEpisodes: 62 })).toBe(
+        '5 saisons · 62 épisodes',
+      );
+    });
+
+    it('should show the season and episode counts in the singular for 1', async () => {
+      expect(await meta({ numberOfSeasons: 1, numberOfEpisodes: 1 })).toBe('1 saison · 1 épisode');
+    });
+
+    it('should show only the season count when the episode count is absent', async () => {
+      expect(await meta({ numberOfSeasons: 5 })).toBe('5 saisons');
+    });
+
+    it('should show only the episode count when the season count is absent', async () => {
+      expect(await meta({ numberOfEpisodes: 62 })).toBe('62 épisodes');
+    });
+
+    it('should render no meta when both counts are absent', async () => {
+      expect(await meta({})).toBeUndefined();
+    });
+  });
 });
