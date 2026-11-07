@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -5,12 +6,14 @@ import { map } from 'rxjs';
 import { MovieControllerService } from '../../api/services/movie-controller.service';
 import { injectSession } from '../../core/auth/session';
 import { AppHeader } from '../../ui/app-header/app-header';
+import { Button } from '../../ui/button/button';
+import { EmptyState } from '../../ui/empty-state/empty-state';
 import { toMovieDetailView } from './movie-detail-view';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-movie-detail',
-  imports: [AppHeader, RouterLink],
+  imports: [AppHeader, Button, EmptyState, RouterLink],
   template: `
     @if (session.answered()) {
       <app-header active="search" [user]="session.user()" (logout)="session.logout()" />
@@ -19,6 +22,10 @@ import { toMovieDetailView } from './movie-detail-view';
       <a class="zb-link md-back" routerLink="/recherche">Retour à la recherche</a>
       @if (movie.isLoading()) {
         <p role="status">Chargement…</p>
+      } @else if (notFound()) {
+        <app-empty-state title="Film introuvable" text="Ce film n'existe pas ou plus.">
+          <app-button routerLink="/recherche">Retour à la recherche</app-button>
+        </app-empty-state>
       } @else if (view(); as view) {
         <article class="md-hero">
           <figure class="md-media">
@@ -67,4 +74,8 @@ export class MovieDetail {
   protected readonly view = computed(() =>
     this.movie.hasValue() ? toMovieDetailView(this.movie.value()) : undefined,
   );
+  protected readonly notFound = computed(() => {
+    const error = this.movie.error();
+    return error instanceof HttpErrorResponse && (error.status === 404 || error.status === 400);
+  });
 }
