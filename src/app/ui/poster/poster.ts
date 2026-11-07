@@ -39,9 +39,6 @@ const STATUSES: Record<PosterStatus, { readonly label: string; readonly icon: Ic
             </span>
           </span>
         }
-        @if (link(); as link) {
-          <a class="zb-poster-link" [routerLink]="link" [attr.aria-label]="title()"></a>
-        }
         <span class="zb-poster-action"><ng-content /></span>
         <span class="zb-poster-caption" [class.zb-poster-caption-scrim]="src()">
           <span class="zb-poster-title">{{ title() }}</span>
@@ -64,6 +61,9 @@ const STATUSES: Record<PosterStatus, { readonly label: string; readonly icon: Ic
           >
             <span [style.width.%]="(100 * progress.seen) / progress.total"></span>
           </span>
+        }
+        @if (link(); as link) {
+          <a class="zb-poster-link" [routerLink]="link" [attr.aria-label]="title()"></a>
         }
       </div>
     </div>
