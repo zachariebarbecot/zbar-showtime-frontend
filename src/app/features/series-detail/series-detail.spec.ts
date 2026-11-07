@@ -296,6 +296,80 @@ describe('SeriesDetail', () => {
     });
   });
 
+  describe('credits', () => {
+    async function show(series: object) {
+      const opened = await open();
+      opened.http.expectOne('/series/1396').flush({ id: 1396, name: 'Breaking Bad', ...series });
+      await opened.harness.fixture.whenStable();
+      return opened.root;
+    }
+
+    it.each([[[]], [undefined]])(
+      'should hide the creators section when creators is %j',
+      async (creators) => {
+        const root = await show({ creators });
+
+        expect(root.querySelector('.md-directors')).toBeNull();
+      },
+    );
+
+    it('should list every creator', async () => {
+      const root = await show({ creators: ['Vince Gilligan', 'Peter Gould'] });
+
+      expect(root.querySelector('.md-directors h2')?.textContent).toContain('Création');
+      expect(
+        [...root.querySelectorAll('.md-directors li')].map((li) => li.textContent?.trim()),
+      ).toEqual(['Vince Gilligan', 'Peter Gould']);
+    });
+
+    const CAST = [
+      { name: 'Bryan Cranston', character: 'Walter White' },
+      { name: 'Aaron Paul', character: 'Jesse Pinkman' },
+    ];
+
+    it('should render one cast card per member with name and character', async () => {
+      const root = await show({ cast: CAST });
+
+      expect(root.querySelector('.md-cast h2')?.textContent).toContain('Casting');
+      const cards = [...root.querySelectorAll('.md-cast app-cast-card')];
+      expect(
+        cards.map((card) => [
+          card.querySelector('.zb-cast-name')?.textContent,
+          card.querySelector('.zb-cast-role')?.textContent,
+        ]),
+      ).toEqual([
+        ['Bryan Cranston', 'Walter White'],
+        ['Aaron Paul', 'Jesse Pinkman'],
+      ]);
+    });
+
+    it.each([[[]], [undefined]])('should hide the cast section when cast is %j', async (cast) => {
+      const root = await show({ cast });
+
+      expect(root.querySelector('.md-cast')).toBeNull();
+    });
+
+    it('should show the photo of a member, the placeholder when there is none', async () => {
+      const root = await show({
+        cast: [
+          {
+            name: 'Bryan Cranston',
+            character: 'Walter White',
+            photoUrl: 'https://image.tmdb.org/t/p/w185/bc.jpg',
+          },
+          { name: 'Aaron Paul', character: 'Jesse Pinkman' },
+        ],
+      });
+
+      const [withPhoto, withoutPhoto] = [...root.querySelectorAll('.md-cast app-cast-card')];
+      expect(withPhoto.querySelector('img')?.getAttribute('src')).toBe(
+        'https://image.tmdb.org/t/p/w185/bc.jpg',
+      );
+      expect(withoutPhoto.querySelector('img')).toBeNull();
+      expect(withoutPhoto.querySelector('.zb-cast-photo')?.textContent?.trim()).toBe('AP');
+    });
+  });
+
   describe('back link', () => {
     it('should go back to the search page', async () => {
       const { harness, http, root, router } = await open();

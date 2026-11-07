@@ -7,15 +7,26 @@ import { injectSession } from '../../core/auth/session';
 import { isNotFound, tmdbIdOf } from '../../shared/tmdb-id';
 import { AppHeader } from '../../ui/app-header/app-header';
 import { Button } from '../../ui/button/button';
+import { CastRow } from '../../ui/cast-row/cast-row';
 import { EmptyState } from '../../ui/empty-state/empty-state';
 import { FormAlert } from '../../ui/form-alert/form-alert';
 import { ShowStatus } from '../../ui/show-status/show-status';
+import { PeopleSection } from '../../ui/people-section/people-section';
 import { toSeriesDetailView } from './series-detail-view';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-series-detail',
-  imports: [AppHeader, Button, EmptyState, FormAlert, RouterLink, ShowStatus],
+  imports: [
+    AppHeader,
+    Button,
+    CastRow,
+    EmptyState,
+    FormAlert,
+    PeopleSection,
+    RouterLink,
+    ShowStatus,
+  ],
   template: `
     @if (session.answered()) {
       <app-header active="search" [user]="session.user()" (logout)="session.logout()" />
@@ -72,6 +83,8 @@ import { toSeriesDetailView } from './series-detail-view';
             }
           </div>
         </article>
+        <app-people-section title="Création" [names]="view.creators" />
+        <app-cast-row [cast]="view.cast" />
       }
     </main>
   `,

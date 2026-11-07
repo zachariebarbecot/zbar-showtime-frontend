@@ -1,12 +1,7 @@
 import { MovieDetailResponse } from '../../api/models/movie-detail-response';
+import { CastMemberView, toCastMemberViews } from '../../shared/cast-member-view';
 import { toBadgeStatus } from '../../shared/watchlist-status';
 import { WatchlistBadgeStatus } from '../../ui/status-badge/status-badge';
-
-export interface CastMemberView {
-  readonly name: string;
-  readonly character: string;
-  readonly photoUrl?: string;
-}
 
 export interface MovieDetailView {
   readonly title?: string;
@@ -42,8 +37,6 @@ export const toMovieDetailView = ({
   genres: genres ?? [],
   overview,
   directors: directors ?? [],
-  cast: (cast ?? []).flatMap(({ name, character, photoUrl }) =>
-    name ? [{ name, character: character ?? '', photoUrl }] : [],
-  ),
+  cast: toCastMemberViews(cast),
   status: toBadgeStatus(watchlistStatus),
 });

@@ -1,5 +1,6 @@
 import { SeriesDetailResponse } from '../../api/models/series-detail-response';
 import { ShowStatusValue, isShowStatus } from '../../ui/show-status/show-status';
+import { CastMemberView, toCastMemberViews } from '../../shared/cast-member-view';
 
 export interface SeriesDetailView {
   readonly name?: string;
@@ -10,6 +11,8 @@ export interface SeriesDetailView {
   readonly period?: string;
   readonly genres: readonly string[];
   readonly overview?: string;
+  readonly creators: readonly string[];
+  readonly cast: readonly CastMemberView[];
 }
 
 const plural = (count: number, word: string) => `${count} ${word}${count > 1 ? 's' : ''}`;
@@ -34,6 +37,8 @@ export const toSeriesDetailView = ({
   status,
   firstAirDate,
   lastAirDate,
+  creators,
+  cast,
 }: SeriesDetailResponse): SeriesDetailView => ({
   name,
   originalName: originalName === name ? undefined : originalName,
@@ -49,4 +54,6 @@ export const toSeriesDetailView = ({
   period: firstAirDate ? toPeriod(status, firstAirDate, lastAirDate) : undefined,
   genres: genres ?? [],
   overview,
+  creators: creators ?? [],
+  cast: toCastMemberViews(cast),
 });
