@@ -240,6 +240,31 @@ describe('SeriesSeasons', () => {
       });
     });
 
+    describe('details', () => {
+      const flushEpisodes = async (episodes: object[]) => {
+        const view = await render([{ seasonNumber: 1, name: 'Saison 1' }]);
+        view.http.expectOne('/series/1396/seasons/1').flush({ seasonNumber: 1, episodes });
+        await view.fixture.whenStable();
+        return view.root;
+      };
+
+      it('should show the overview as TMDB gives it', async () => {
+        const root = await flushEpisodes([
+          { episodeNumber: 1, name: 'Un', overview: 'Walter  apprend sa maladie.' },
+        ]);
+
+        expect(root.querySelector('app-episode-row .zb-ep-overview')?.textContent).toBe(
+          'Walter  apprend sa maladie.',
+        );
+      });
+
+      it.each([[undefined], ['']])('should render no overview for %j', async (overview) => {
+        const root = await flushEpisodes([{ episodeNumber: 1, name: 'Un', overview }]);
+
+        expect(root.querySelector('app-episode-row .zb-ep-overview')).toBeNull();
+      });
+    });
+
     it.each([[{ seasonNumber: 1, episodes: [] }], [{ seasonNumber: 1 }]])(
       'should tell the season has no episode for %j',
       async (response) => {
