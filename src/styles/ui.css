@@ -443,8 +443,17 @@ body {
   top: var(--space-2);
   left: var(--space-2);
 }
+.zb-poster-link {
+  position: absolute;
+  inset: 0;
+}
+.zb-poster-link:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
 .zb-poster-action {
   position: absolute;
+  z-index: 1;
   top: var(--space-2);
   right: var(--space-2);
   opacity: 0;
@@ -1306,15 +1315,4 @@ body {
     max-width: calc(100% - 2 * var(--space-4));
     transform: translateX(-50%);
   }
-}
-.zb-poster-link {
-  position: absolute;
-  inset: 0;
-}
-.zb-poster-link:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: -2px;
-}
-.zb-poster-action {
-  z-index: 1;
 }
