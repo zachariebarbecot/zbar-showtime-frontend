@@ -1,12 +1,12 @@
 import { MovieDetailResponse } from '../../api/models/movie-detail-response';
+import { toBadgeStatus } from '../../shared/watchlist-status';
+import { WatchlistBadgeStatus } from '../../ui/status-badge/status-badge';
 
 export interface CastMemberView {
   readonly name: string;
   readonly character: string;
   readonly photoUrl?: string;
 }
-import { toBadgeStatus } from '../../shared/watchlist-status';
-import { WatchlistBadgeStatus } from '../../ui/status-badge/status-badge';
 
 export interface MovieDetailView {
   readonly title?: string;
