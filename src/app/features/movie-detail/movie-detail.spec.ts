@@ -8,6 +8,7 @@ import { provideApiConfiguration } from '../../api/api-configuration';
 import { routes } from '../../app.routes';
 import { authInterceptor } from '../../core/auth/auth.interceptor';
 import { TOKEN_STORAGE } from '../../core/auth/auth.service';
+import { ToastService } from '../../ui/toast/toast.service';
 import { MovieDetail } from './movie-detail';
 
 const USER = { firstName: 'Camille', lastName: 'Durand', email: 'camille.durand@exemple.fr' };
@@ -295,6 +296,89 @@ describe('MovieDetail', () => {
       );
       expect(withoutPhoto.querySelector('img')).toBeNull();
       expect(withoutPhoto.querySelector('.zb-cast-photo')?.textContent?.trim()).toBe('CM');
+    });
+  });
+
+  describe('watchlist', () => {
+    async function showWithStatus(watchlistStatus?: string) {
+      const opened = await open();
+      opened.http.expectOne('/movies/603').flush({ id: 603, title: 'Matrix', watchlistStatus });
+      await opened.harness.fixture.whenStable();
+      return opened;
+    }
+
+    const badge = (root: HTMLElement) => root.querySelector('.md-info .zb-badge');
+    const addButton = (root: HTMLElement) =>
+      root.querySelector<HTMLButtonElement>('.md-info app-status-button button');
+
+    it.each([
+      ['TO_WATCH', 'Watchlist', 'zb-badge-watchlist'],
+      ['WATCHED', 'Vu', 'zb-badge-seen'],
+      ['WATCHING', 'En cours', 'zb-badge-progress'],
+      ['DROPPED', 'Abandonné', 'zb-badge-dropped'],
+    ])('should show the %s badge and no add button', async (status, label, css) => {
+      const { root } = await showWithStatus(status);
+
+      expect(badge(root)?.textContent?.trim()).toBe(label);
+      expect(badge(root)?.classList).toContain(css);
+      expect(addButton(root)).toBeNull();
+    });
+
+    it('should show no badge and the add button when the status is absent', async () => {
+      const { root } = await showWithStatus();
+
+      expect(badge(root)).toBeNull();
+      expect(addButton(root)).not.toBeNull();
+      expect(root.querySelector('.md-info app-status-button .zb-btn-watchlist')).not.toBeNull();
+    });
+
+    describe('adding', () => {
+      const SUCCESS = 'Ajouté à ta watchlist.';
+      const FAILURE = "L'ajout a échoué. Réessaie dans un instant.";
+
+      async function click() {
+        const shown = await showWithStatus();
+        addButton(shown.root)?.click();
+        await shown.harness.fixture.whenStable();
+        return shown;
+      }
+
+      it('should post once, then show the Watchlist badge and a success toast', async () => {
+        const { harness, http, root } = await click();
+        addButton(root)?.click();
+
+        const requests = http.match('/watchlist/movies');
+        expect(requests).toHaveLength(1);
+        expect(requests[0].request.body).toEqual({ tmdbId: 603 });
+        requests[0].flush(null);
+        await harness.fixture.whenStable();
+
+        expect(badge(root)?.textContent?.trim()).toBe('Watchlist');
+        expect(addButton(root)).toBeNull();
+        expect(TestBed.inject(ToastService).message()).toBe(SUCCESS);
+      });
+
+      it('should treat a 409 as a success', async () => {
+        const { harness, http, root } = await click();
+
+        http.expectOne('/watchlist/movies').flush(null, { status: 409, statusText: 'Conflict' });
+        await harness.fixture.whenStable();
+
+        expect(badge(root)?.textContent?.trim()).toBe('Watchlist');
+        expect(addButton(root)).toBeNull();
+        expect(TestBed.inject(ToastService).message()).toBe(SUCCESS);
+      });
+
+      it('should toast the failure and keep the add button on another error', async () => {
+        const { harness, http, root } = await click();
+
+        http.expectOne('/watchlist/movies').flush(null, { status: 500, statusText: 'Error' });
+        await harness.fixture.whenStable();
+
+        expect(TestBed.inject(ToastService).message()).toBe(FAILURE);
+        expect(badge(root)).toBeNull();
+        expect(addButton(root)).not.toBeNull();
+      });
     });
   });
 });

@@ -1,21 +1,43 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { rxResource, toSignal } from '@angular/core/rxjs-interop';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  signal,
+} from '@angular/core';
+import { rxResource, takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { map } from 'rxjs';
+import { finalize, map } from 'rxjs';
 import { MovieControllerService } from '../../api/services/movie-controller.service';
 import { injectSession } from '../../core/auth/session';
+import { ADD_FAILED, WatchlistAdder } from '../../shared/watchlist-adder';
 import { AppHeader } from '../../ui/app-header/app-header';
 import { Button } from '../../ui/button/button';
 import { CastCard } from '../../ui/cast-card/cast-card';
 import { EmptyState } from '../../ui/empty-state/empty-state';
 import { FormAlert } from '../../ui/form-alert/form-alert';
+import { StatusBadge } from '../../ui/status-badge/status-badge';
+import { StatusButton } from '../../ui/status-button/status-button';
+import { ToastService } from '../../ui/toast/toast.service';
 import { toMovieDetailView } from './movie-detail-view';
+
+const ADDED = 'Ajouté à ta watchlist.';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-movie-detail',
-  imports: [AppHeader, Button, CastCard, EmptyState, FormAlert, RouterLink],
+  imports: [
+    AppHeader,
+    Button,
+    CastCard,
+    EmptyState,
+    FormAlert,
+    RouterLink,
+    StatusBadge,
+    StatusButton,
+  ],
   template: `
     @if (session.answered()) {
       <app-header active="search" [user]="session.user()" (logout)="session.logout()" />
@@ -50,6 +72,18 @@ import { toMovieDetailView } from './movie-detail-view';
             @if (view.meta) {
               <p class="zb-meta md-meta">{{ view.meta }}</p>
             }
+            <div class="md-watchlist">
+              @if (status(); as status) {
+                <app-status-badge [status]="status" />
+              } @else {
+                <app-status-button
+                  kind="watchlist"
+                  [controlled]="true"
+                  [locked]="adding()"
+                  (add)="add()"
+                />
+              }
+            </div>
             @if (view.genres.length) {
               <ul class="md-genres">
                 @for (genre of view.genres; track genre) {
@@ -95,6 +129,9 @@ import { toMovieDetailView } from './movie-detail-view';
 export class MovieDetail {
   protected readonly session = injectSession();
   private readonly api = inject(MovieControllerService);
+  private readonly adder = inject(WatchlistAdder);
+  private readonly toast = inject(ToastService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly tmdbId = toSignal(
     inject(ActivatedRoute).paramMap.pipe(
       map((params) => {
@@ -102,6 +139,7 @@ export class MovieDetail {
         return Number.isInteger(id) && id > 0 ? id : undefined;
       }),
     ),
+    { requireSync: true },
   );
   protected readonly movie = rxResource({
     params: this.tmdbId,
@@ -115,4 +153,26 @@ export class MovieDetail {
     const error = this.movie.error();
     return error instanceof HttpErrorResponse && (error.status === 404 || error.status === 400);
   });
+  private readonly added = signal(false);
+  protected readonly adding = signal(false);
+  protected readonly status = computed(() => (this.added() ? 'watchlist' : this.view()?.status));
+
+  protected add(): void {
+    const tmdbId = this.tmdbId();
+    if (tmdbId === undefined) return;
+    this.adding.set(true);
+    this.adder
+      .add('MOVIE', tmdbId)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.adding.set(false)),
+      )
+      .subscribe({
+        next: () => {
+          this.added.set(true);
+          this.toast.show(ADDED);
+        },
+        error: () => this.toast.show(ADD_FAILED),
+      });
+  }
 }

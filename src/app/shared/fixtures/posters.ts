@@ -1,8 +1,9 @@
-import { PosterEpisode, PosterProgress, PosterStatus } from '../../ui/poster/poster';
+import { PosterEpisode, PosterProgress } from '../../ui/poster/poster';
+import { WatchlistBadgeStatus } from '../../ui/status-badge/status-badge';
 
 export interface PosterFixture {
   readonly title: string;
-  readonly status?: PosterStatus;
+  readonly status?: WatchlistBadgeStatus;
   readonly next?: PosterEpisode;
   readonly progress?: PosterProgress;
 }

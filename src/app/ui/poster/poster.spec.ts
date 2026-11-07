@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { Poster, PosterEpisode, PosterProgress, PosterStatus } from './poster';
+import { WatchlistBadgeStatus } from '../status-badge/status-badge';
+import { Poster, PosterEpisode, PosterProgress } from './poster';
 import { query } from '../../testing/query';
 
 @Component({
@@ -20,7 +21,7 @@ describe('Poster', () => {
     link?: string;
     src?: string;
     meta?: string;
-    status?: PosterStatus;
+    status?: WatchlistBadgeStatus;
     next?: PosterEpisode;
     progress?: PosterProgress;
   }): Promise<HTMLElement> {

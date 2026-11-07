@@ -6,7 +6,6 @@ import {
   linkedSignal,
   signal,
 } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -18,11 +17,10 @@ import {
   finalize,
   map,
   of,
-  throwError,
   startWith,
   switchMap,
 } from 'rxjs';
-import { WatchlistControllerService } from '../../api/services/watchlist-controller.service';
+import { ADD_FAILED, WatchlistAdder } from '../../shared/watchlist-adder';
 import { SearchControllerService } from '../../api/services/search-controller.service';
 import { injectSession } from '../../core/auth/session';
 import { SearchItem, SearchResults, appendItems, toSearchResults } from './search-results';
@@ -38,9 +36,6 @@ import { RadioChips, RadioOption } from '../../ui/radio-chips/radio-chips';
 
 const MIN_LENGTH = 2;
 const DEBOUNCE_MS = 300;
-
-const CONFLICT = 409;
-const ADD_FAILED = "L'ajout a échoué. Réessaie dans un instant.";
 
 const ALL_TYPES = 'ALL';
 
@@ -201,7 +196,7 @@ const FAILED: SearchState = { kind: 'error' };
 export class Search {
   protected readonly session = injectSession();
   private readonly toast = inject(ToastService);
-  private readonly watchlistApi = inject(WatchlistControllerService);
+  private readonly adder = inject(WatchlistAdder);
   private readonly searchApi = inject(SearchControllerService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -252,15 +247,9 @@ export class Search {
 
   protected add(item: SearchItem): void {
     this.pending.update((keys) => new Set(keys).add(item.key));
-    const body = { tmdbId: item.tmdbId };
-    (item.type === 'MOVIE'
-      ? this.watchlistApi.addMovie({ body })
-      : this.watchlistApi.addSeries({ body })
-    )
+    this.adder
+      .add(item.type, item.tmdbId)
       .pipe(
-        catchError((error: HttpErrorResponse) =>
-          error.status === CONFLICT ? of(undefined) : throwError(() => error),
-        ),
         takeUntilDestroyed(this.destroyRef),
         finalize(() => {
           this.pending.update((keys) => new Set([...keys].filter((key) => key !== item.key)));
