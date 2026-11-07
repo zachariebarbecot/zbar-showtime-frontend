@@ -1,5 +1,6 @@
 import { toBadgeStatus } from '../../shared/watchlist-status';
 import { WatchlistBadgeStatus } from '../../ui/status-badge/status-badge';
+import { Season } from '../../api/models/season';
 import { SeriesDetailResponse } from '../../api/models/series-detail-response';
 import { ShowStatusValue, isShowStatus } from '../../ui/show-status/show-status';
 import { CastMemberView, toCastMemberViews } from '../../shared/cast-member-view';
@@ -16,9 +17,10 @@ export interface SeriesDetailView {
   readonly creators: readonly string[];
   readonly cast: readonly CastMemberView[];
   readonly watchlist?: WatchlistBadgeStatus;
+  readonly seasons: readonly Season[];
 }
 
-const plural = (count: number, word: string) => `${count} ${word}${count > 1 ? 's' : ''}`;
+export const plural = (count: number, word: string) => `${count} ${word}${count > 1 ? 's' : ''}`;
 
 const year = (date: string) => date.slice(0, 4);
 
@@ -43,6 +45,7 @@ export const toSeriesDetailView = ({
   creators,
   cast,
   watchlistStatus,
+  seasons,
 }: SeriesDetailResponse): SeriesDetailView => ({
   name,
   originalName: originalName === name ? undefined : originalName,
@@ -61,4 +64,5 @@ export const toSeriesDetailView = ({
   creators: creators ?? [],
   cast: toCastMemberViews(cast),
   watchlist: toBadgeStatus(watchlistStatus),
+  seasons: seasons ?? [],
 });

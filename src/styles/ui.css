@@ -1343,3 +1343,14 @@ body {
     transform: translateX(-50%);
   }
 }
+
+/* Series seasons */
+.md-seasons {
+  margin-top: var(--space-8);
+}
+.md-seasons-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}

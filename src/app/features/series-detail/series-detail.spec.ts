@@ -470,4 +470,35 @@ describe('SeriesDetail', () => {
       expect(router.url).toBe('/recherche');
     });
   });
+
+  describe('seasons', () => {
+    async function showSeasons(seasons?: object[]) {
+      const opened = await open();
+      opened.http.expectOne('/series/1396').flush({ id: 1396, name: 'Breaking Bad', seasons });
+      await opened.harness.fixture.whenStable();
+      return opened.root;
+    }
+
+    it('should show the Saisons section after the hero with a season per entry', async () => {
+      const root = await showSeasons([
+        { seasonNumber: 2, name: 'Saison 2', episodeCount: 13 },
+        { seasonNumber: 1, name: 'Saison 1', episodeCount: 7 },
+      ]);
+
+      expect(root.querySelector('.md-hero ~ app-series-seasons h2')?.textContent).toBe('Saisons');
+      expect(
+        [...root.querySelectorAll('app-season .zb-season-title')].map((el) => el.textContent),
+      ).toEqual(['Saison 1', 'Saison 2']);
+    });
+
+    it.each([[undefined], [[]]])(
+      'should not render the section for seasons %j',
+      async (seasons) => {
+        const root = await showSeasons(seasons);
+
+        expect(root.querySelector('.md-seasons')).toBeNull();
+        expect(root.textContent).not.toContain('Saisons');
+      },
+    );
+  });
 });
