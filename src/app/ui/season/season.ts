@@ -18,9 +18,11 @@ let nextId = 0;
           (click)="expanded.set(!expanded())"
         >
           <svg appIcon name="down"></svg>
-          @if (poster(); as poster) {
-            <span class="zb-season-poster"><img [src]="poster" alt="" loading="lazy" /></span>
-          }
+          <span class="zb-season-poster">
+            @if (poster(); as poster) {
+              <img [src]="poster" alt="" loading="lazy" />
+            }
+          </span>
           <span class="zb-season-label">
             <span class="zb-season-title">{{ title() }}</span>
             <span class="zb-meta zb-season-info">{{ info() }}</span>
