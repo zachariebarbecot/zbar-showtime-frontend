@@ -221,6 +221,53 @@ describe('SeriesSeasons', () => {
 
       expect(root.textContent).not.toContain('Aucun épisode');
     });
+
+    describe('on error', () => {
+      const SEASONS = [
+        { seasonNumber: 1, name: 'Saison 1' },
+        { seasonNumber: 2, name: 'Saison 2' },
+      ];
+      const retry = (root: HTMLElement) =>
+        [...root.querySelectorAll<HTMLButtonElement>('app-season button')].find((button) =>
+          button.textContent?.includes('Réessayer'),
+        );
+
+      it('should show an error and a retry button in the failed season only', async () => {
+        const { fixture, root, http } = await render(SEASONS);
+
+        http
+          .expectOne('/series/1396/seasons/1')
+          .flush('', { status: 500, statusText: 'Server Error' });
+        await fixture.whenStable();
+
+        const [first, second] = root.querySelectorAll('app-season');
+        expect(first.querySelector('[role="alert"]')).not.toBeNull();
+        expect(first.textContent).toContain('Réessayer');
+        expect(second.querySelector('[role="alert"]')).toBeNull();
+        expect(second.textContent).not.toContain('Réessayer');
+        expect(titles(root)).toEqual(['Saison 1', 'Saison 2']);
+      });
+
+      it('should call the season again once when the user retries, then show the episodes', async () => {
+        const { fixture, root, http } = await render(SEASONS);
+        http
+          .expectOne('/series/1396/seasons/1')
+          .flush('', { status: 500, statusText: 'Server Error' });
+        await fixture.whenStable();
+
+        retry(root)?.click();
+        await fixture.whenStable();
+
+        expect(root.querySelector('app-season [role="alert"]')).toBeNull();
+        http
+          .expectOne('/series/1396/seasons/1')
+          .flush({ seasonNumber: 1, episodes: [{ episodeNumber: 1, name: 'Un', runtime: 47 }] });
+        await fixture.whenStable();
+
+        expect(root.querySelectorAll('app-episode-row')).toHaveLength(1);
+        expect(retry(root)).toBeUndefined();
+      });
+    });
   });
 
   describe('without seasons', () => {
