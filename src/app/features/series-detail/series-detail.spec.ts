@@ -43,9 +43,9 @@ describe('SeriesDetail', () => {
     return { harness, http, router: TestBed.inject(Router) };
   }
 
-  async function open(id: number | string = 1396) {
+  async function open() {
     const rendered = await render();
-    await rendered.harness.navigateByUrl(`/serie/${id}`, SeriesDetail);
+    await rendered.harness.navigateByUrl('/serie/1396', SeriesDetail);
     rendered.http.expectOne('/users/me').flush(USER);
     rendered.harness.detectChanges();
     return { ...rendered, root: rendered.harness.routeNativeElement as HTMLElement };
