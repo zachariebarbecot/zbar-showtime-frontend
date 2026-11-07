@@ -298,6 +298,26 @@ describe('SeriesSeasons', () => {
     });
   });
 
+  describe('season overview', () => {
+    const overview = (root: HTMLElement) => root.querySelector('.zb-season-overview');
+
+    it('should show the overview as TMDB gives it, before the episodes', async () => {
+      const { fixture, root, http } = await render([{ seasonNumber: 1, name: 'Saison 1' }]);
+
+      http.expectOne('/series/1396/seasons/1').flush({
+        seasonNumber: 1,
+        overview: 'Walter White se lance.',
+        episodes: [{ episodeNumber: 1, name: 'Pilote' }],
+      });
+      await fixture.whenStable();
+
+      expect(overview(root)?.textContent).toBe('Walter White se lance.');
+      expect(
+        [...root.querySelectorAll('.zb-season-overview, app-episode-row')].map((el) => el.tagName),
+      ).toEqual(['P', 'APP-EPISODE-ROW']);
+    });
+  });
+
   describe('without seasons', () => {
     it('should render nothing, title included', async () => {
       const { root } = await render([]);
