@@ -1,10 +1,18 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { rxResource, toSignal } from '@angular/core/rxjs-interop';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  signal,
+} from '@angular/core';
+import { rxResource, takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { map } from 'rxjs';
+import { finalize, map } from 'rxjs';
 import { SeriesControllerService } from '../../api/services/series-controller.service';
 import { injectSession } from '../../core/auth/session';
 import { isNotFound, tmdbIdOf } from '../../shared/tmdb-id';
+import { ADD_FAILED, WatchlistAdder } from '../../shared/watchlist-adder';
 import { AppHeader } from '../../ui/app-header/app-header';
 import { Button } from '../../ui/button/button';
 import { CastRow } from '../../ui/cast-row/cast-row';
@@ -14,7 +22,10 @@ import { ShowStatus } from '../../ui/show-status/show-status';
 import { PeopleSection } from '../../ui/people-section/people-section';
 import { StatusBadge } from '../../ui/status-badge/status-badge';
 import { StatusButton } from '../../ui/status-button/status-button';
+import { ToastService } from '../../ui/toast/toast.service';
 import { toSeriesDetailView } from './series-detail-view';
+
+const ADDED = 'Ajouté à ta watchlist.';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -76,10 +87,15 @@ import { toSeriesDetailView } from './series-detail-view';
               </div>
             }
             <div class="md-watchlist">
-              @if (view.watchlist; as status) {
+              @if (status(); as status) {
                 <app-status-badge [status]="status" />
               } @else {
-                <app-status-button kind="watchlist" [controlled]="true" />
+                <app-status-button
+                  kind="watchlist"
+                  [controlled]="true"
+                  [locked]="adding()"
+                  (add)="add()"
+                />
               }
             </div>
             @if (view.genres.length) {
@@ -103,6 +119,9 @@ import { toSeriesDetailView } from './series-detail-view';
 export class SeriesDetail {
   protected readonly session = injectSession();
   private readonly api = inject(SeriesControllerService);
+  private readonly adder = inject(WatchlistAdder);
+  private readonly toast = inject(ToastService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly tmdbId = toSignal(inject(ActivatedRoute).paramMap.pipe(map(tmdbIdOf)), {
     requireSync: true,
   });
@@ -117,4 +136,26 @@ export class SeriesDetail {
     if (this.tmdbId() === undefined) return true;
     return isNotFound(this.series.error());
   });
+  private readonly added = signal(false);
+  protected readonly adding = signal(false);
+  protected readonly status = computed(() => (this.added() ? 'watchlist' : this.view()?.watchlist));
+
+  protected add(): void {
+    const tmdbId = this.tmdbId();
+    if (tmdbId === undefined) return;
+    this.adding.set(true);
+    this.adder
+      .add('TV', tmdbId)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.adding.set(false)),
+      )
+      .subscribe({
+        next: () => {
+          this.added.set(true);
+          this.toast.show(ADDED);
+        },
+        error: () => this.toast.show(ADD_FAILED),
+      });
+  }
 }
