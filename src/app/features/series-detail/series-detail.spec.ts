@@ -255,6 +255,29 @@ describe('SeriesDetail', () => {
         expect(period(await airing({ status, firstAirDate: '2019-03-14' }))).toBe('2019 –');
       },
     );
+
+    it.each(['ENDED', 'CANCELED'])(
+      'should show the closed period for the closed status %s',
+      async (status) => {
+        const root = await airing({
+          status,
+          firstAirDate: '2019-03-14',
+          lastAirDate: '2023-11-02',
+        });
+
+        expect(period(root)).toBe('2019–2023');
+      },
+    );
+
+    it('should show a single year when both dates are in the same year', async () => {
+      const root = await airing({
+        status: 'CANCELED',
+        firstAirDate: '2019-03-14',
+        lastAirDate: '2019-12-20',
+      });
+
+      expect(period(root)).toBe('2019');
+    });
   });
 
   describe('back link', () => {
