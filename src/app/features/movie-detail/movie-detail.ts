@@ -61,7 +61,7 @@ export class MovieDetail {
     inject(ActivatedRoute).paramMap.pipe(map((params) => Number(params.get('tmdbId')))),
   );
   protected readonly movie = rxResource({
-    params: computed(() => this.tmdbId()),
+    params: this.tmdbId,
     stream: ({ params: tmdbId }) => this.api.detail1({ tmdbId }),
   });
   protected readonly view = computed(() =>
