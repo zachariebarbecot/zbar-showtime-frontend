@@ -304,6 +304,15 @@ describe('SeriesDetail', () => {
       return opened.root;
     }
 
+    it.each([[[]], [undefined]])(
+      'should hide the creators section when creators is %j',
+      async (creators) => {
+        const root = await show({ creators });
+
+        expect(root.querySelector('.md-directors')).toBeNull();
+      },
+    );
+
     it('should list every creator', async () => {
       const root = await show({ creators: ['Vince Gilligan', 'Peter Gould'] });
 
