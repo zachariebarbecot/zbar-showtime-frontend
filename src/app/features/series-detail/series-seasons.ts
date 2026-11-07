@@ -23,6 +23,7 @@ interface Episode {
   title: string;
   runtime?: number;
   overview?: string;
+  airDate?: string;
   still?: string | null;
 }
 
@@ -33,12 +34,20 @@ interface Loaded {
 
 type EpisodesState = Loaded | 'failed' | undefined;
 
+const formatDate = (isoDate: string) =>
+  new Date(isoDate).toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+
 const toLoaded = ({ overview, episodes = [] }: SeasonDetailResponse): Loaded => {
   const hasStill = episodes.some(({ stillUrl }) => stillUrl);
   return {
     overview,
     episodes: episodes
-      .flatMap(({ episodeNumber, name, runtime, overview, stillUrl }) =>
+      .flatMap(({ episodeNumber, name, runtime, overview, airDate, stillUrl }) =>
         episodeNumber === undefined
           ? []
           : [
@@ -47,6 +56,7 @@ const toLoaded = ({ overview, episodes = [] }: SeasonDetailResponse): Loaded => 
                 title: name ?? '',
                 runtime,
                 overview,
+                airDate: airDate && formatDate(airDate),
                 still: stillUrl
                   ? stillUrl.replace(/\/w\d+\//, '/w300/')
                   : hasStill
@@ -96,6 +106,7 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
                     [runtime]="episode.runtime"
                     [still]="episode.still"
                     [overview]="episode.overview"
+                    [airDate]="episode.airDate"
                     [showCheck]="false"
                   />
                 } @empty {

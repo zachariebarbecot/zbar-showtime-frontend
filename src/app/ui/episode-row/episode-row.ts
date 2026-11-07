@@ -20,8 +20,8 @@ import { Icon } from '../icon/icon';
       }
       <div [class.zb-ep-info]="still() !== undefined">
         <div class="zb-ep-title">{{ title() }}</div>
-        @if (runtime()) {
-          <div class="zb-meta">{{ runtime() }} min</div>
+        @if (meta()) {
+          <div class="zb-meta">{{ meta() }}</div>
         }
         @if (overview()) {
           <p class="zb-ep-overview">{{ overview() }}</p>
@@ -49,9 +49,15 @@ export class EpisodeRow {
   readonly title = input.required<string>();
   readonly runtime = input<number>();
   readonly still = input<string | null>();
+  readonly airDate = input<string>();
   readonly overview = input<string>();
   readonly showCheck = input(true);
   readonly seen = model(false);
 
+  protected readonly meta = computed(() =>
+    [this.runtime() ? `${this.runtime()} min` : undefined, this.airDate()]
+      .filter(Boolean)
+      .join(' · '),
+  );
   protected readonly code = computed(() => episodeCode(this.season(), this.episode()));
 }
