@@ -1,18 +1,11 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  DestroyRef,
-  inject,
-  signal,
-} from '@angular/core';
-import { rxResource, takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { finalize, map } from 'rxjs';
+import { map } from 'rxjs';
 import { MovieControllerService } from '../../api/services/movie-controller.service';
 import { injectSession } from '../../core/auth/session';
-import { ADD_FAILED, WatchlistAdder } from '../../shared/watchlist-adder';
 import { isNotFound, tmdbIdOf } from '../../shared/tmdb-id';
+import { injectWatchlistAdd } from '../../shared/watchlist-add';
 import { AppHeader } from '../../ui/app-header/app-header';
 import { Button } from '../../ui/button/button';
 import { CastRow } from '../../ui/cast-row/cast-row';
@@ -21,10 +14,7 @@ import { FormAlert } from '../../ui/form-alert/form-alert';
 import { PeopleSection } from '../../ui/people-section/people-section';
 import { StatusBadge } from '../../ui/status-badge/status-badge';
 import { StatusButton } from '../../ui/status-button/status-button';
-import { ToastService } from '../../ui/toast/toast.service';
 import { toMovieDetailView } from './movie-detail-view';
-
-const ADDED = 'Ajouté à ta watchlist.';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -107,9 +97,7 @@ const ADDED = 'Ajouté à ta watchlist.';
 export class MovieDetail {
   protected readonly session = injectSession();
   private readonly api = inject(MovieControllerService);
-  private readonly adder = inject(WatchlistAdder);
-  private readonly toast = inject(ToastService);
-  private readonly destroyRef = inject(DestroyRef);
+  private readonly watchlist = injectWatchlistAdd();
   private readonly tmdbId = toSignal(inject(ActivatedRoute).paramMap.pipe(map(tmdbIdOf)), {
     requireSync: true,
   });
@@ -124,26 +112,14 @@ export class MovieDetail {
     if (this.tmdbId() === undefined) return true;
     return isNotFound(this.movie.error());
   });
-  private readonly added = signal(false);
-  protected readonly adding = signal(false);
-  protected readonly status = computed(() => (this.added() ? 'watchlist' : this.view()?.status));
+  protected readonly adding = this.watchlist.adding;
+  protected readonly status = computed(() =>
+    this.watchlist.added() ? 'watchlist' : this.view()?.status,
+  );
 
   protected add(): void {
     const tmdbId = this.tmdbId();
     if (tmdbId === undefined) return;
-    this.adding.set(true);
-    this.adder
-      .add('MOVIE', tmdbId)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.adding.set(false)),
-      )
-      .subscribe({
-        next: () => {
-          this.added.set(true);
-          this.toast.show(ADDED);
-        },
-        error: () => this.toast.show(ADD_FAILED),
-      });
+    this.watchlist.add('MOVIE', tmdbId);
   }
 }
