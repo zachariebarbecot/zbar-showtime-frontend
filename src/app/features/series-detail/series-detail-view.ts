@@ -7,6 +7,7 @@ export interface SeriesDetailView {
   readonly posterUrl?: string;
   readonly meta?: string;
   readonly status?: ShowStatusValue;
+  readonly period?: string;
   readonly genres: readonly string[];
   readonly overview?: string;
 }
@@ -22,6 +23,7 @@ export const toSeriesDetailView = ({
   genres,
   overview,
   status,
+  firstAirDate,
 }: SeriesDetailResponse): SeriesDetailView => ({
   name,
   originalName: originalName === name ? undefined : originalName,
@@ -34,6 +36,7 @@ export const toSeriesDetailView = ({
       .filter(Boolean)
       .join(' · ') || undefined,
   status: isShowStatus(status) ? status : undefined,
+  period: firstAirDate ? `${firstAirDate.slice(0, 4)} –` : undefined,
   genres: genres ?? [],
   overview,
 });

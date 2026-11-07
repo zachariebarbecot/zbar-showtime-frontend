@@ -50,8 +50,15 @@ import { toSeriesDetailView } from './series-detail-view';
             @if (view.meta) {
               <p class="zb-meta md-meta">{{ view.meta }}</p>
             }
-            @if (view.status) {
-              <app-show-status [status]="view.status" />
+            @if (view.status || view.period) {
+              <div class="md-airing">
+                @if (view.status) {
+                  <app-show-status [status]="view.status" />
+                }
+                @if (view.period) {
+                  <span class="zb-meta md-period">{{ view.period }}</span>
+                }
+              </div>
             }
             @if (view.genres.length) {
               <ul class="md-genres">

@@ -1260,6 +1260,12 @@ body {
 .md-meta {
   margin: 0;
 }
+.md-airing {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
 .md-watchlist {
   align-self: flex-start;
 }
