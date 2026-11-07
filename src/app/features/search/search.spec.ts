@@ -478,6 +478,12 @@ describe('Search', () => {
 
       expect(rendered.router.url).toBe('/film/603');
     });
+
+    it('should not link the poster of a series', async () => {
+      const rendered = await searchWith([{ id: 1396, title: 'Breaking Bad', type: 'TV' }]);
+
+      expect(rendered.root.querySelector('.sr-grid a')).toBeNull();
+    });
   });
 
   describe('no result', () => {
