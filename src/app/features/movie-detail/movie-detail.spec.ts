@@ -75,7 +75,7 @@ describe('MovieDetail', () => {
       expect(root.querySelector('[role="status"]')?.textContent).toContain('Chargement');
 
       http.expectOne('/movies/603').flush({ id: 603, title: 'Matrix' });
-      harness.detectChanges();
+      await harness.fixture.whenStable();
 
       expect(root.querySelector('[role="status"]')).toBeNull();
     });
