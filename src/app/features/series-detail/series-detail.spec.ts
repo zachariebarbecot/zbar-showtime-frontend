@@ -174,6 +174,29 @@ describe('SeriesDetail', () => {
     });
   });
 
+  describe('invalid id', () => {
+    it.each(['abc', '0', '-3', '1.5'])(
+      'should show the not found empty state without calling the API for id %s',
+      async (id) => {
+        const { harness, http, root } = await open(id);
+        await harness.fixture.whenStable();
+
+        http.expectNone((request) => request.url.startsWith('/series/'));
+        expect(root.querySelector('.zb-empty-title')?.textContent).toContain('Série introuvable');
+        expect(root.querySelector('[role="status"]')).toBeNull();
+      },
+    );
+
+    it('should show the not found empty state on a 400', async () => {
+      const { harness, http, root } = await open();
+      http.expectOne('/series/1396').flush('', { status: 400, statusText: 'Error' });
+      await harness.fixture.whenStable();
+
+      expect(root.querySelector('.zb-empty-title')?.textContent).toContain('Série introuvable');
+      expect(root.querySelector('.md-hero')).toBeNull();
+    });
+  });
+
   describe('back link', () => {
     it('should go back to the search page', async () => {
       const { harness, http, root, router } = await open();
