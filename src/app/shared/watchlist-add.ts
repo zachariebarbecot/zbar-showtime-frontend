@@ -2,7 +2,7 @@ import { DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { ToastService } from '../ui/toast/toast.service';
-import { ADD_FAILED, WatchlistAdder } from './watchlist-adder';
+import { ADD_FAILED, TitleType, WatchlistAdder } from './watchlist-adder';
 
 const ADDED = 'Ajouté à ta watchlist.';
 
@@ -14,7 +14,7 @@ export function injectWatchlistAdd() {
   const added = signal(false);
   const adding = signal(false);
 
-  const add = (type: 'MOVIE' | 'TV', tmdbId: number): void => {
+  const add = (type: TitleType, tmdbId: number): void => {
     adding.set(true);
     adder
       .add(type, tmdbId)
