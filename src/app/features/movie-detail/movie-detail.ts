@@ -7,6 +7,7 @@ import { MovieControllerService } from '../../api/services/movie-controller.serv
 import { injectSession } from '../../core/auth/session';
 import { AppHeader } from '../../ui/app-header/app-header';
 import { Button } from '../../ui/button/button';
+import { CastCard } from '../../ui/cast-card/cast-card';
 import { EmptyState } from '../../ui/empty-state/empty-state';
 import { FormAlert } from '../../ui/form-alert/form-alert';
 import { toMovieDetailView } from './movie-detail-view';
@@ -14,7 +15,7 @@ import { toMovieDetailView } from './movie-detail-view';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-movie-detail',
-  imports: [AppHeader, Button, EmptyState, FormAlert, RouterLink],
+  imports: [AppHeader, Button, CastCard, EmptyState, FormAlert, RouterLink],
   template: `
     @if (session.answered()) {
       <app-header active="search" [user]="session.user()" (logout)="session.logout()" />
@@ -69,6 +70,18 @@ import { toMovieDetailView } from './movie-detail-view';
                 <li>{{ director }}</li>
               }
             </ul>
+          </section>
+        }
+        @if (view.cast.length) {
+          <section class="zb-car md-cast">
+            <div class="zb-car-head">
+              <h2 class="zb-car-title">Casting</h2>
+            </div>
+            <div class="zb-car-track">
+              @for (member of view.cast; track $index) {
+                <app-cast-card [name]="member.name" [character]="member.character" />
+              }
+            </div>
           </section>
         }
       }
