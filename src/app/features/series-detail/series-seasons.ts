@@ -11,7 +11,9 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Season as SeasonResponse } from '../../api/models/season';
 import { SeriesControllerService } from '../../api/services/series-controller.service';
+import { Button } from '../../ui/button/button';
 import { EpisodeRow } from '../../ui/episode-row/episode-row';
+import { FormAlert } from '../../ui/form-alert/form-alert';
 import { Season } from '../../ui/season/season';
 import { plural } from './series-detail-view';
 
@@ -26,7 +28,7 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-series-seasons',
-  imports: [EpisodeRow, Season],
+  imports: [Button, EpisodeRow, FormAlert, Season],
   template: `
     @if (sorted().length) {
       <section class="md-seasons">
@@ -39,8 +41,14 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
               [expanded]="first"
               (expandedChange)="onExpandedChange($event, season.number)"
             >
-              @if (episodes()[season.number]; as episodes) {
-                @for (episode of episodes; track episode.number) {
+              @let state = episodes()[season.number];
+              @if (state === 'failed') {
+                <app-form-alert message="Impossible de charger les épisodes de cette saison." />
+                <app-button variant="secondary" (click)="retry(season.number)"
+                  >Réessayer</app-button
+                >
+              } @else if (state) {
+                @for (episode of state; track episode.number) {
                   <app-episode-row
                     [season]="season.number"
                     [episode]="episode.number"
@@ -69,7 +77,9 @@ export class SeriesSeasons {
   private readonly destroyRef = inject(DestroyRef);
   private readonly requested = new Set<number>();
 
-  protected readonly episodes = signal<Record<number, readonly Episode[] | undefined>>({});
+  protected readonly episodes = signal<Record<number, readonly Episode[] | 'failed' | undefined>>(
+    {},
+  );
 
   protected readonly sorted = computed(() =>
     this.seasons()
@@ -98,21 +108,33 @@ export class SeriesSeasons {
     if (expanded) this.load(seasonNumber);
   }
 
+  protected retry(seasonNumber: number) {
+    this.episodes.update((all) => ({ ...all, [seasonNumber]: undefined }));
+    this.fetch(seasonNumber);
+  }
+
   private load(seasonNumber: number) {
     if (this.requested.has(seasonNumber)) return;
     this.requested.add(seasonNumber);
+    this.fetch(seasonNumber);
+  }
+
+  private fetch(seasonNumber: number) {
     this.api
       .season({ tmdbId: this.tmdbId(), seasonNumber })
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((season) => {
-        const episodes = (season.episodes ?? [])
-          .flatMap(({ episodeNumber, name, runtime }) =>
-            episodeNumber === undefined
-              ? []
-              : [{ number: episodeNumber, title: name ?? '', runtime }],
-          )
-          .sort((a, b) => a.number - b.number);
-        this.episodes.update((all) => ({ ...all, [seasonNumber]: episodes }));
+      .subscribe({
+        next: (season) => {
+          const episodes = (season.episodes ?? [])
+            .flatMap(({ episodeNumber, name, runtime }) =>
+              episodeNumber === undefined
+                ? []
+                : [{ number: episodeNumber, title: name ?? '', runtime }],
+            )
+            .sort((a, b) => a.number - b.number);
+          this.episodes.update((all) => ({ ...all, [seasonNumber]: episodes }));
+        },
+        error: () => this.episodes.update((all) => ({ ...all, [seasonNumber]: 'failed' })),
       });
   }
 }
