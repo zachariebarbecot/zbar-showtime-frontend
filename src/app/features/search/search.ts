@@ -137,7 +137,7 @@ const FAILED: SearchState = { kind: 'error' };
               [title]="item.title"
               [src]="item.posterUrl"
               [meta]="item.meta"
-              [link]="item.type === 'MOVIE' ? '/film/' + item.tmdbId : undefined"
+              [link]="pagePath(item)"
               [status]="adding(item) ? 'watchlist' : item.status"
             >
               <app-status-button
@@ -240,6 +240,10 @@ export class Search {
   });
 
   private readonly pending = signal<ReadonlySet<string>>(new Set());
+
+  protected pagePath(item: SearchItem): string {
+    return (item.type === 'MOVIE' ? '/film/' : '/serie/') + item.tmdbId;
+  }
 
   protected adding(item: SearchItem): boolean {
     return this.pending().has(item.key);

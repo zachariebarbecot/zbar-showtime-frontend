@@ -4,7 +4,7 @@ import {
   TestRequest,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
-import { provideZonelessChangeDetection } from '@angular/core';
+import { Component, provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -19,6 +19,9 @@ import { Search } from './search';
 const USER = { firstName: 'Camille', lastName: 'Durand', email: 'camille.durand@exemple.fr' };
 
 const validToken = `h.${btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 }))}.s`;
+
+@Component({ template: '' })
+class SeriesStub {}
 
 describe('Search', () => {
   const store = new Map<string, string>();
@@ -44,7 +47,7 @@ describe('Search', () => {
         provideHttpClient(withInterceptors([authInterceptor])),
         provideHttpClientTesting(),
         provideApiConfiguration(''),
-        provideRouter(routes),
+        provideRouter([...routes, { path: 'serie/:tmdbId', component: SeriesStub }]),
         { provide: TOKEN_STORAGE, useValue: storage },
       ],
     });
@@ -454,25 +457,20 @@ describe('Search', () => {
     });
   });
 
+  async function searchWith(results: object[]) {
+    const rendered = await open();
+    vi.useFakeTimers();
+    type(rendered, 'poster');
+    await settle(rendered);
+    rendered.http
+      .expectOne((req) => req.url === '/search')
+      .flush({ page: 1, totalPages: 1, totalResults: results.length, results });
+    rendered.harness.detectChanges();
+    return rendered;
+  }
+
   describe('opening a movie', () => {
     const MOVIE = { id: 603, title: 'Matrix', type: 'MOVIE' };
-
-    async function searchWith(results: object[]) {
-      const rendered = await open();
-      vi.useFakeTimers();
-      type(rendered, 'matrix');
-      await settle(rendered);
-      rendered.http
-        .expectOne((req) => req.url === '/search')
-        .flush({
-          page: 1,
-          totalPages: 1,
-          totalResults: results.length,
-          results,
-        });
-      rendered.harness.detectChanges();
-      return rendered;
-    }
 
     it('should navigate to the movie page when its poster is clicked', async () => {
       const rendered = await searchWith([MOVIE]);
@@ -507,11 +505,42 @@ describe('Search', () => {
 
       expect(query(rendered.root, '.sr-grid a').getAttribute('aria-label')).toBe('Matrix');
     });
+  });
 
-    it('should not link the poster of a series', async () => {
-      const rendered = await searchWith([{ id: 1396, title: 'Breaking Bad', type: 'TV' }]);
+  describe('opening a series', () => {
+    const SERIES = { id: 1396, title: 'Breaking Bad', type: 'TV' };
 
-      expect(rendered.root.querySelector('.sr-grid a')).toBeNull();
+    it('should navigate to the series page when its poster is clicked', async () => {
+      const rendered = await searchWith([SERIES]);
+
+      vi.useRealTimers();
+      query<HTMLAnchorElement>(rendered.root, '.sr-grid a').click();
+      await rendered.harness.fixture.whenStable();
+
+      expect(rendered.router.url).toBe('/serie/1396');
+    });
+
+    it('should add to the watchlist without navigating, the link not wrapping the button', async () => {
+      const rendered = await searchWith([SERIES]);
+
+      expect(rendered.root.querySelector('.sr-grid a')).not.toBeNull();
+      vi.useRealTimers();
+      query<HTMLButtonElement>(rendered.root, '.zb-poster-action button').click();
+      await rendered.harness.fixture.whenStable();
+
+      expect(rendered.http.expectOne('/watchlist/series').request.method).toBe('POST');
+      expect(rendered.router.url).toBe('/recherche');
+      expect(
+        rendered.root
+          .querySelector('.sr-grid a')
+          ?.contains(rendered.root.querySelector('.zb-poster-action')),
+      ).toBe(false);
+    });
+
+    it('should name the poster link after the series title', async () => {
+      const rendered = await searchWith([SERIES]);
+
+      expect(query(rendered.root, '.sr-grid a').getAttribute('aria-label')).toBe('Breaking Bad');
     });
   });
 
