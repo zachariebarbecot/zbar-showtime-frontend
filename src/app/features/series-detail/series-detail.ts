@@ -12,6 +12,8 @@ import { EmptyState } from '../../ui/empty-state/empty-state';
 import { FormAlert } from '../../ui/form-alert/form-alert';
 import { ShowStatus } from '../../ui/show-status/show-status';
 import { PeopleSection } from '../../ui/people-section/people-section';
+import { StatusBadge } from '../../ui/status-badge/status-badge';
+import { StatusButton } from '../../ui/status-button/status-button';
 import { toSeriesDetailView } from './series-detail-view';
 
 @Component({
@@ -26,6 +28,8 @@ import { toSeriesDetailView } from './series-detail-view';
     PeopleSection,
     RouterLink,
     ShowStatus,
+    StatusBadge,
+    StatusButton,
   ],
   template: `
     @if (session.answered()) {
@@ -71,6 +75,13 @@ import { toSeriesDetailView } from './series-detail-view';
                 }
               </div>
             }
+            <div class="md-watchlist">
+              @if (view.watchlist; as status) {
+                <app-status-badge [status]="status" />
+              } @else {
+                <app-status-button kind="watchlist" [controlled]="true" />
+              }
+            </div>
             @if (view.genres.length) {
               <ul class="md-genres">
                 @for (genre of view.genres; track genre) {
