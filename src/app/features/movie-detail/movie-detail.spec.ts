@@ -8,6 +8,9 @@ import { provideApiConfiguration } from '../../api/api-configuration';
 import { routes } from '../../app.routes';
 import { authInterceptor } from '../../core/auth/auth.interceptor';
 import { TOKEN_STORAGE } from '../../core/auth/auth.service';
+import { MovieDetail } from './movie-detail';
+
+const USER = { firstName: 'Camille', lastName: 'Durand', email: 'camille.durand@exemple.fr' };
 
 const validToken = `h.${btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 }))}.s`;
 
@@ -40,6 +43,14 @@ describe('MovieDetail', () => {
     return { harness, http, router: TestBed.inject(Router) };
   }
 
+  async function open(id = 603) {
+    const rendered = await render();
+    await rendered.harness.navigateByUrl(`/film/${id}`, MovieDetail);
+    rendered.http.expectOne('/users/me').flush(USER);
+    await rendered.harness.fixture.whenStable();
+    return { ...rendered, root: rendered.harness.routeNativeElement as HTMLElement };
+  }
+
   describe('access', () => {
     it('should redirect a signed-out visitor to the login page', async () => {
       const { harness, http, router } = await render(false);
@@ -48,6 +59,25 @@ describe('MovieDetail', () => {
 
       expect(router.url).toMatch(/^\/connexion/);
       http.expectNone('/movies/603');
+    });
+  });
+
+  describe('loading', () => {
+    it('should call the movie endpoint once', async () => {
+      const { http } = await open();
+
+      expect(http.match('/movies/603')).toHaveLength(1);
+    });
+
+    it('should show a loading state until the movie answers', async () => {
+      const { harness, http, root } = await open();
+
+      expect(root.querySelector('[role="status"]')?.textContent).toContain('Chargement');
+
+      http.expectOne('/movies/603').flush({ id: 603, title: 'Matrix' });
+      await harness.fixture.whenStable();
+
+      expect(root.querySelector('[role="status"]')).toBeNull();
     });
   });
 });
