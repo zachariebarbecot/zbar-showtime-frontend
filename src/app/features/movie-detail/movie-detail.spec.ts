@@ -223,4 +223,31 @@ describe('MovieDetail', () => {
       expect(router.url).toBe('/recherche');
     });
   });
+
+  describe('credits', () => {
+    async function show(movie: object) {
+      const opened = await open();
+      opened.http.expectOne('/movies/603').flush({ id: 603, title: 'Matrix', ...movie });
+      await opened.harness.fixture.whenStable();
+      return opened.root;
+    }
+
+    it('should list every director', async () => {
+      const root = await show({ directors: ['Lana Wachowski', 'Lilly Wachowski'] });
+
+      expect(root.querySelector('.md-directors h2')?.textContent).toContain('Réalisation');
+      expect(
+        [...root.querySelectorAll('.md-directors li')].map((li) => li.textContent?.trim()),
+      ).toEqual(['Lana Wachowski', 'Lilly Wachowski']);
+    });
+
+    it.each([[[]], [undefined]])(
+      'should hide the directors section when directors is %j',
+      async (directors) => {
+        const root = await show({ directors });
+
+        expect(root.querySelector('.md-directors')).toBeNull();
+      },
+    );
+  });
 });
