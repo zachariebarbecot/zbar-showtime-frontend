@@ -279,7 +279,7 @@ describe('SeriesDetail', () => {
       expect(period(root)).toBe('2019');
     });
 
-    it.each([{}, { status: 'UNKNOWN' }])(
+    it.each([{}, { status: 'UNKNOWN' }, { status: 'toString' }])(
       'should render no tag for the status %j',
       async (series) => {
         const root = await airing(series);
