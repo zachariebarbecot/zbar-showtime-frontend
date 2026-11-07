@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -5,12 +6,14 @@ import { map } from 'rxjs';
 import { SeriesControllerService } from '../../api/services/series-controller.service';
 import { injectSession } from '../../core/auth/session';
 import { AppHeader } from '../../ui/app-header/app-header';
+import { Button } from '../../ui/button/button';
+import { EmptyState } from '../../ui/empty-state/empty-state';
 import { toSeriesDetailView } from './series-detail-view';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-series-detail',
-  imports: [AppHeader, RouterLink],
+  imports: [AppHeader, Button, EmptyState, RouterLink],
   template: `
     @if (session.answered()) {
       <app-header active="search" [user]="session.user()" (logout)="session.logout()" />
@@ -19,6 +22,10 @@ import { toSeriesDetailView } from './series-detail-view';
       <a class="zb-link md-back" routerLink="/recherche">Retour à la recherche</a>
       @if (series.isLoading()) {
         <p role="status">Chargement…</p>
+      } @else if (notFound()) {
+        <app-empty-state title="Série introuvable" text="Cette série n'existe pas ou plus.">
+          <app-button link="/recherche">Retour à la recherche</app-button>
+        </app-empty-state>
       } @else if (view(); as view) {
         <article class="md-hero">
           <figure class="md-media">
@@ -68,4 +75,8 @@ export class SeriesDetail {
   protected readonly view = computed(() =>
     this.series.hasValue() ? toSeriesDetailView(this.series.value()) : undefined,
   );
+  protected readonly notFound = computed(() => {
+    const error = this.series.error();
+    return error instanceof HttpErrorResponse && error.status === 404;
+  });
 }
