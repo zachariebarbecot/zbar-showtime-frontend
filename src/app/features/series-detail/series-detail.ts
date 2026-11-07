@@ -29,7 +29,7 @@ import { toSeriesDetailView } from './series-detail-view';
         </app-empty-state>
       } @else if (series.error()) {
         <app-form-alert message="Impossible de charger la fiche pour le moment." />
-        <app-button variant="secondary">Réessayer</app-button>
+        <app-button variant="secondary" (click)="series.reload()">Réessayer</app-button>
       } @else if (view(); as view) {
         <article class="md-hero">
           <figure class="md-media">
