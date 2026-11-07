@@ -69,6 +69,7 @@ const STATUSES: Record<PosterStatus, { readonly label: string; readonly icon: Ic
 export class Poster {
   readonly title = input.required<string>();
   readonly src = input<string>();
+  readonly link = input<string>();
   readonly meta = input<string>();
   readonly status = input<PosterStatus>();
   readonly next = input<PosterEpisode>();
