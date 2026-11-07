@@ -225,6 +225,29 @@ describe('SeriesDetail', () => {
     });
   });
 
+  describe('airing', () => {
+    async function airing(series: object) {
+      const opened = await open();
+      opened.http.expectOne('/series/1396').flush({ id: 1396, name: 'Breaking Bad', ...series });
+      await opened.harness.fixture.whenStable();
+      return opened.root;
+    }
+
+    const tag = (root: HTMLElement) =>
+      root.querySelector('app-show-status .zb-tag')?.textContent?.trim();
+
+    it.each([
+      ['RETURNING', 'En cours'],
+      ['IN_PRODUCTION', 'En production'],
+      ['PLANNED', 'Prévue'],
+      ['PILOT', 'Pilote'],
+      ['ENDED', 'Terminée'],
+      ['CANCELED', 'Annulée'],
+    ])('should show the %s status as « %s »', async (status, label) => {
+      expect(tag(await airing({ status }))).toBe(label);
+    });
+  });
+
   describe('back link', () => {
     it('should go back to the search page', async () => {
       const { harness, http, root, router } = await open();
