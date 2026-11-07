@@ -1,7 +1,7 @@
 import { Result } from '../../api/models/result';
 import { SearchResponse } from '../../api/models/search-response';
 import { toBadgeStatus } from '../../shared/watchlist-status';
-import { PosterStatus } from '../../ui/poster/poster';
+import { WatchlistBadgeStatus } from '../../ui/status-badge/status-badge';
 
 export interface SearchItem {
   readonly key: string;
@@ -11,7 +11,7 @@ export interface SearchItem {
   readonly posterUrl?: string;
   readonly meta?: string;
   readonly watchlisted: boolean;
-  readonly status?: PosterStatus;
+  readonly status?: WatchlistBadgeStatus;
 }
 
 export interface SearchResults {

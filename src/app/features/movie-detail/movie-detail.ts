@@ -1,11 +1,18 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { rxResource, toSignal } from '@angular/core/rxjs-interop';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  signal,
+} from '@angular/core';
+import { rxResource, takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize, map } from 'rxjs';
 import { MovieControllerService } from '../../api/services/movie-controller.service';
 import { injectSession } from '../../core/auth/session';
-import { WatchlistAdder } from '../../shared/watchlist-adder';
+import { ADD_FAILED, WatchlistAdder } from '../../shared/watchlist-adder';
 import { AppHeader } from '../../ui/app-header/app-header';
 import { Button } from '../../ui/button/button';
 import { CastCard } from '../../ui/cast-card/cast-card';
@@ -17,7 +24,6 @@ import { ToastService } from '../../ui/toast/toast.service';
 import { toMovieDetailView } from './movie-detail-view';
 
 const ADDED = 'Ajouté à ta watchlist.';
-const ADD_FAILED = "L'ajout a échoué. Réessaie dans un instant.";
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -125,6 +131,7 @@ export class MovieDetail {
   private readonly api = inject(MovieControllerService);
   private readonly adder = inject(WatchlistAdder);
   private readonly toast = inject(ToastService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly tmdbId = toSignal(
     inject(ActivatedRoute).paramMap.pipe(
       map((params) => {
@@ -132,6 +139,7 @@ export class MovieDetail {
         return Number.isInteger(id) && id > 0 ? id : undefined;
       }),
     ),
+    { requireSync: true },
   );
   protected readonly movie = rxResource({
     params: this.tmdbId,
@@ -150,10 +158,15 @@ export class MovieDetail {
   protected readonly status = computed(() => (this.added() ? 'watchlist' : this.view()?.status));
 
   protected add(): void {
+    const tmdbId = this.tmdbId();
+    if (tmdbId === undefined) return;
     this.adding.set(true);
     this.adder
-      .add('MOVIE', this.tmdbId()!)
-      .pipe(finalize(() => this.adding.set(false)))
+      .add('MOVIE', tmdbId)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.adding.set(false)),
+      )
       .subscribe({
         next: () => {
           this.added.set(true);

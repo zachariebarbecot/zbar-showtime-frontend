@@ -20,7 +20,7 @@ import {
   startWith,
   switchMap,
 } from 'rxjs';
-import { WatchlistAdder } from '../../shared/watchlist-adder';
+import { ADD_FAILED, WatchlistAdder } from '../../shared/watchlist-adder';
 import { SearchControllerService } from '../../api/services/search-controller.service';
 import { injectSession } from '../../core/auth/session';
 import { SearchItem, SearchResults, appendItems, toSearchResults } from './search-results';
@@ -36,8 +36,6 @@ import { RadioChips, RadioOption } from '../../ui/radio-chips/radio-chips';
 
 const MIN_LENGTH = 2;
 const DEBOUNCE_MS = 300;
-
-const ADD_FAILED = "L'ajout a échoué. Réessaie dans un instant.";
 
 const ALL_TYPES = 'ALL';
 

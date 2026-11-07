@@ -5,6 +5,8 @@ import { WatchlistControllerService } from '../api/services/watchlist-controller
 
 const CONFLICT = 409;
 
+export const ADD_FAILED = "L'ajout a échoué. Réessaie dans un instant.";
+
 @Injectable({ providedIn: 'root' })
 export class WatchlistAdder {
   private readonly api = inject(WatchlistControllerService);

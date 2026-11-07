@@ -3,8 +3,6 @@ import { RouterLink } from '@angular/router';
 import { episodeCode } from '../../shared/episode-code';
 import { StatusBadge, WatchlistBadgeStatus } from '../status-badge/status-badge';
 
-export type PosterStatus = WatchlistBadgeStatus;
-
 export interface PosterEpisode {
   readonly season: number;
   readonly episode: number;
@@ -66,11 +64,11 @@ export class Poster {
   readonly src = input<string>();
   readonly link = input<string>();
   readonly meta = input<string>();
-  readonly status = input<PosterStatus>();
+  readonly status = input<WatchlistBadgeStatus>();
   readonly next = input<PosterEpisode>();
   readonly progress = input<PosterProgress>();
 
-  protected readonly badge = computed<PosterStatus | undefined>(
+  protected readonly badge = computed<WatchlistBadgeStatus | undefined>(
     () => this.status() ?? (this.progress() ? 'progress' : undefined),
   );
   protected readonly code = computed(() => {
