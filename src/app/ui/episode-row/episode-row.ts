@@ -23,6 +23,9 @@ import { Icon } from '../icon/icon';
         @if (runtime()) {
           <div class="zb-meta">{{ runtime() }} min</div>
         }
+        @if (overview()) {
+          <p class="zb-ep-overview">{{ overview() }}</p>
+        }
       </div>
       @if (showCheck()) {
         <button
@@ -46,6 +49,7 @@ export class EpisodeRow {
   readonly title = input.required<string>();
   readonly runtime = input<number>();
   readonly still = input<string | null>();
+  readonly overview = input<string>();
   readonly showCheck = input(true);
   readonly seen = model(false);
 

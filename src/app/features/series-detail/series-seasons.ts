@@ -22,6 +22,7 @@ interface Episode {
   number: number;
   title: string;
   runtime?: number;
+  overview?: string;
   still?: string | null;
 }
 
@@ -37,7 +38,7 @@ const toLoaded = ({ overview, episodes = [] }: SeasonDetailResponse): Loaded => 
   return {
     overview,
     episodes: episodes
-      .flatMap(({ episodeNumber, name, runtime, stillUrl }) =>
+      .flatMap(({ episodeNumber, name, runtime, overview, stillUrl }) =>
         episodeNumber === undefined
           ? []
           : [
@@ -45,6 +46,7 @@ const toLoaded = ({ overview, episodes = [] }: SeasonDetailResponse): Loaded => 
                 number: episodeNumber,
                 title: name ?? '',
                 runtime,
+                overview,
                 still: stillUrl
                   ? stillUrl.replace(/\/w\d+\//, '/w300/')
                   : hasStill
@@ -93,6 +95,7 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
                     [title]="episode.title"
                     [runtime]="episode.runtime"
                     [still]="episode.still"
+                    [overview]="episode.overview"
                     [showCheck]="false"
                   />
                 } @empty {
