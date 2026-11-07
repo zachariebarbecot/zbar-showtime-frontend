@@ -9,12 +9,13 @@ import { AppHeader } from '../../ui/app-header/app-header';
 import { Button } from '../../ui/button/button';
 import { EmptyState } from '../../ui/empty-state/empty-state';
 import { FormAlert } from '../../ui/form-alert/form-alert';
+import { ShowStatus } from '../../ui/show-status/show-status';
 import { toSeriesDetailView } from './series-detail-view';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-series-detail',
-  imports: [AppHeader, Button, EmptyState, FormAlert, RouterLink],
+  imports: [AppHeader, Button, EmptyState, FormAlert, RouterLink, ShowStatus],
   template: `
     @if (session.answered()) {
       <app-header active="search" [user]="session.user()" (logout)="session.logout()" />
@@ -48,6 +49,16 @@ import { toSeriesDetailView } from './series-detail-view';
             }
             @if (view.meta) {
               <p class="zb-meta md-meta">{{ view.meta }}</p>
+            }
+            @if (view.status || view.period) {
+              <div class="md-airing">
+                @if (view.status) {
+                  <app-show-status [status]="view.status" />
+                }
+                @if (view.period) {
+                  <span class="zb-meta md-period">{{ view.period }}</span>
+                }
+              </div>
             }
             @if (view.genres.length) {
               <ul class="md-genres">

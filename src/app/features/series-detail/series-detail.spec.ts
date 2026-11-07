@@ -225,6 +225,77 @@ describe('SeriesDetail', () => {
     });
   });
 
+  describe('airing', () => {
+    async function airing(series: object) {
+      const opened = await open();
+      opened.http.expectOne('/series/1396').flush({ id: 1396, name: 'Breaking Bad', ...series });
+      await opened.harness.fixture.whenStable();
+      return opened.root;
+    }
+
+    const tag = (root: HTMLElement) =>
+      root.querySelector('app-show-status .zb-tag')?.textContent?.trim();
+
+    it.each([
+      ['RETURNING', 'En cours'],
+      ['IN_PRODUCTION', 'En production'],
+      ['PLANNED', 'Prévue'],
+      ['PILOT', 'Pilote'],
+      ['ENDED', 'Terminée'],
+      ['CANCELED', 'Annulée'],
+    ])('should show the %s status as « %s »', async (status, label) => {
+      expect(tag(await airing({ status }))).toBe(label);
+    });
+
+    const period = (root: HTMLElement) => root.querySelector('.md-period')?.textContent?.trim();
+
+    it.each(['RETURNING', 'IN_PRODUCTION', 'PLANNED', 'PILOT'])(
+      'should show an open period for the open status %s',
+      async (status) => {
+        expect(period(await airing({ status, firstAirDate: '2019-03-14' }))).toBe('2019 –');
+      },
+    );
+
+    it.each(['ENDED', 'CANCELED'])(
+      'should show the closed period for the closed status %s',
+      async (status) => {
+        const root = await airing({
+          status,
+          firstAirDate: '2019-03-14',
+          lastAirDate: '2023-11-02',
+        });
+
+        expect(period(root)).toBe('2019–2023');
+      },
+    );
+
+    it('should show a single year when both dates are in the same year', async () => {
+      const root = await airing({
+        status: 'CANCELED',
+        firstAirDate: '2019-03-14',
+        lastAirDate: '2019-12-20',
+      });
+
+      expect(period(root)).toBe('2019');
+    });
+
+    it.each([{}, { status: 'UNKNOWN' }, { status: 'toString' }])(
+      'should render no tag for the status %j',
+      async (series) => {
+        const root = await airing(series);
+
+        expect(root.querySelector('app-show-status')).toBeNull();
+      },
+    );
+
+    it('should render no period when the first air date is absent', async () => {
+      const root = await airing({ status: 'RETURNING', lastAirDate: '2023-11-02' });
+
+      expect(root.querySelector('.md-period')).toBeNull();
+      expect(tag(root)).toBe('En cours');
+    });
+  });
+
   describe('back link', () => {
     it('should go back to the search page', async () => {
       const { harness, http, root, router } = await open();

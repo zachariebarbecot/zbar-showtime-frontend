@@ -1,15 +1,27 @@
 import { SeriesDetailResponse } from '../../api/models/series-detail-response';
+import { ShowStatusValue, isShowStatus } from '../../ui/show-status/show-status';
 
 export interface SeriesDetailView {
   readonly name?: string;
   readonly originalName?: string;
   readonly posterUrl?: string;
   readonly meta?: string;
+  readonly status?: ShowStatusValue;
+  readonly period?: string;
   readonly genres: readonly string[];
   readonly overview?: string;
 }
 
 const plural = (count: number, word: string) => `${count} ${word}${count > 1 ? 's' : ''}`;
+
+const year = (date: string) => date.slice(0, 4);
+
+const toPeriod = (status: string | undefined, firstAirDate: string, lastAirDate?: string) => {
+  const from = year(firstAirDate);
+  if (status !== 'ENDED' && status !== 'CANCELED') return `${from} –`;
+  const to = lastAirDate && year(lastAirDate);
+  return to && to !== from ? `${from}–${to}` : from;
+};
 
 export const toSeriesDetailView = ({
   name,
@@ -19,6 +31,9 @@ export const toSeriesDetailView = ({
   numberOfEpisodes,
   genres,
   overview,
+  status,
+  firstAirDate,
+  lastAirDate,
 }: SeriesDetailResponse): SeriesDetailView => ({
   name,
   originalName: originalName === name ? undefined : originalName,
@@ -30,6 +45,8 @@ export const toSeriesDetailView = ({
     ]
       .filter(Boolean)
       .join(' · ') || undefined,
+  status: isShowStatus(status) ? status : undefined,
+  period: firstAirDate ? toPeriod(status, firstAirDate, lastAirDate) : undefined,
   genres: genres ?? [],
   overview,
 });
