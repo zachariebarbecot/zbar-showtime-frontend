@@ -9,7 +9,7 @@ export type ShowStatusValue =
   | 'CANCELED';
 
 const STATUSES: Record<ShowStatusValue, { readonly label: string; readonly tone: string }> = {
-  RETURNING: { label: 'En cours', tone: 'live' },
+  RETURNING: { label: 'En cours de diffusion', tone: 'live' },
   IN_PRODUCTION: { label: 'En production', tone: 'soon' },
   PLANNED: { label: 'Prévue', tone: 'soon' },
   PILOT: { label: 'Pilote', tone: 'soon' },
