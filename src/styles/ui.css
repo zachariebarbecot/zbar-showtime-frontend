@@ -1200,6 +1200,10 @@ body {
 }
 
 /* Movie detail */
+.md-back {
+  display: inline-block;
+  margin-bottom: var(--space-4);
+}
 .md-hero {
   display: grid;
   grid-template-columns: minmax(0, 22rem) 1fr;

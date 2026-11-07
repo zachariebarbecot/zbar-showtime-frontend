@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 import { MovieControllerService } from '../../api/services/movie-controller.service';
 import { injectSession } from '../../core/auth/session';
@@ -10,12 +10,13 @@ import { toMovieDetailView } from './movie-detail-view';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-movie-detail',
-  imports: [AppHeader],
+  imports: [AppHeader, RouterLink],
   template: `
     @if (session.answered()) {
       <app-header active="search" [user]="session.user()" (logout)="session.logout()" />
     }
     <main class="hm-wrap">
+      <a class="zb-link md-back" routerLink="/recherche">Retour à la recherche</a>
       @if (movie.isLoading()) {
         <p role="status">Chargement…</p>
       } @else if (view(); as view) {
