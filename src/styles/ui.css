@@ -1039,8 +1039,34 @@ body {
 .zb-season-open .zb-season-toggle > svg {
   transform: none;
 }
+.zb-season-label {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
 .zb-season-title {
   font: 600 18px/24px var(--font-sans);
+}
+.zb-season-poster {
+  width: 40px;
+  aspect-ratio: 2 / 3;
+  flex: none;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface-raised);
+}
+.zb-season-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.zb-season-overview {
+  margin: 0;
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  border-bottom: 1px solid var(--line);
+  font: 400 14px/21px var(--font-sans);
+  color: var(--ink-muted);
 }
 .zb-season-bar {
   height: 3px;

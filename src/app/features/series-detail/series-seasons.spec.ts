@@ -270,6 +270,77 @@ describe('SeriesSeasons', () => {
     });
   });
 
+  describe('season poster', () => {
+    const poster = (root: HTMLElement) => root.querySelector('.zb-season-head .zb-season-poster');
+
+    it('should show the 2:3 poster in w92 before the title', async () => {
+      const { root } = await render([
+        {
+          seasonNumber: 1,
+          name: 'Saison 1',
+          posterUrl: 'https://image.tmdb.org/t/p/w500/s1.jpg',
+        },
+      ]);
+
+      expect(poster(root)?.querySelector('img')?.getAttribute('src')).toBe(
+        'https://image.tmdb.org/t/p/w92/s1.jpg',
+      );
+      expect(
+        [...root.querySelectorAll('.zb-season-poster, .zb-season-title')].map((el) => el.className),
+      ).toEqual(['zb-season-poster', 'zb-season-title']);
+    });
+
+    it('should show the empty surface-raised block when the season has no poster', async () => {
+      const { root } = await render([{ seasonNumber: 1, name: 'Saison 1' }]);
+
+      expect(poster(root)).not.toBeNull();
+      expect(poster(root)?.querySelector('img')).toBeNull();
+    });
+  });
+
+  describe('season overview', () => {
+    const overview = (root: HTMLElement) => root.querySelector('.zb-season-overview');
+
+    it('should show the overview as TMDB gives it, before the episodes', async () => {
+      const { fixture, root, http } = await render([{ seasonNumber: 1, name: 'Saison 1' }]);
+
+      http.expectOne('/series/1396/seasons/1').flush({
+        seasonNumber: 1,
+        overview: 'Walter White se lance.',
+        episodes: [{ episodeNumber: 1, name: 'Pilote' }],
+      });
+      await fixture.whenStable();
+
+      expect(overview(root)?.textContent).toBe('Walter White se lance.');
+      expect(
+        [...root.querySelectorAll('.zb-season-overview, app-episode-row')].map((el) => el.tagName),
+      ).toEqual(['P', 'APP-EPISODE-ROW']);
+    });
+
+    it.each([[{ seasonNumber: 1, episodes: [] }], [{ seasonNumber: 1, overview: '' }]])(
+      'should render no overview when the response has none: %j',
+      async (response) => {
+        const { fixture, root, http } = await render([{ seasonNumber: 1, name: 'Saison 1' }]);
+
+        http.expectOne('/series/1396/seasons/1').flush(response);
+        await fixture.whenStable();
+
+        expect(overview(root)).toBeNull();
+      },
+    );
+  });
+
+  describe('season year', () => {
+    it('should show the year of the air date after the episode count', async () => {
+      const { root } = await render([
+        { seasonNumber: 1, episodeCount: 7, airDate: '2008-01-20' },
+        { seasonNumber: 2, airDate: '2009-03-08' },
+      ]);
+
+      expect(infos(root)).toEqual(['7 épisodes · 2008', '2009']);
+    });
+  });
+
   describe('without seasons', () => {
     it('should render nothing, title included', async () => {
       const { root } = await render([]);
