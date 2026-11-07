@@ -197,6 +197,18 @@ describe('SeriesDetail', () => {
     });
   });
 
+  describe('server error', () => {
+    it.each([500, 0])('should show an error message and a retry button on a %i', async (status) => {
+      const { harness, http, root } = await open();
+      http.expectOne('/series/1396').flush('', { status, statusText: 'Error' });
+      await harness.fixture.whenStable();
+
+      expect(root.querySelector('[role="alert"]')).not.toBeNull();
+      expect(root.querySelector('main button')?.textContent).toContain('Réessayer');
+      expect(root.querySelector('.zb-empty-title')).toBeNull();
+    });
+  });
+
   describe('back link', () => {
     it('should go back to the search page', async () => {
       const { harness, http, root, router } = await open();
