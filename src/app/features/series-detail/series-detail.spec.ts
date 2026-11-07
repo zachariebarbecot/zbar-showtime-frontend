@@ -161,4 +161,19 @@ describe('SeriesDetail', () => {
       expect(await meta({})).toBeUndefined();
     });
   });
+
+  describe('back link', () => {
+    it('should go back to the search page', async () => {
+      const { harness, http, root, router } = await open();
+      http.expectOne('/series/1396').flush({ id: 1396, name: 'Breaking Bad' });
+      await harness.fixture.whenStable();
+
+      const back = root.querySelector<HTMLAnchorElement>('a.md-back');
+      expect(back?.textContent).toContain('Retour');
+      back?.click();
+      await harness.fixture.whenStable();
+
+      expect(router.url).toBe('/recherche');
+    });
+  });
 });
