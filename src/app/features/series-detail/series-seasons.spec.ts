@@ -258,6 +258,30 @@ describe('SeriesSeasons', () => {
         );
       });
 
+      it('should show the air date in French in the meta line', async () => {
+        const root = await flushEpisodes([
+          { episodeNumber: 1, name: 'Un', runtime: 47, airDate: '2025-01-17' },
+        ]);
+
+        expect(
+          [...root.querySelectorAll('app-episode-row .zb-meta')].at(-1)?.textContent?.trim(),
+        ).toBe('47 min · 17 janv. 2025');
+      });
+
+      it('should show the date alone when the runtime is missing, and nothing without date', async () => {
+        const root = await flushEpisodes([
+          { episodeNumber: 1, name: 'Un', airDate: '2025-01-17' },
+          { episodeNumber: 2, name: 'Deux' },
+        ]);
+
+        const metas = [...root.querySelectorAll('app-episode-row .zb-meta')];
+        expect(metas.map((el) => el.textContent?.trim())).toEqual([
+          'S01E01',
+          '17 janv. 2025',
+          'S01E02',
+        ]);
+      });
+
       it.each([[undefined], ['']])('should render no overview for %j', async (overview) => {
         const root = await flushEpisodes([{ episodeNumber: 1, name: 'Un', overview }]);
 
