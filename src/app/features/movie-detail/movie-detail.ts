@@ -8,12 +8,13 @@ import { injectSession } from '../../core/auth/session';
 import { AppHeader } from '../../ui/app-header/app-header';
 import { Button } from '../../ui/button/button';
 import { EmptyState } from '../../ui/empty-state/empty-state';
+import { FormAlert } from '../../ui/form-alert/form-alert';
 import { toMovieDetailView } from './movie-detail-view';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-movie-detail',
-  imports: [AppHeader, Button, EmptyState, RouterLink],
+  imports: [AppHeader, Button, EmptyState, FormAlert, RouterLink],
   template: `
     @if (session.answered()) {
       <app-header active="search" [user]="session.user()" (logout)="session.logout()" />
@@ -26,6 +27,9 @@ import { toMovieDetailView } from './movie-detail-view';
         <app-empty-state title="Film introuvable" text="Ce film n'existe pas ou plus.">
           <app-button routerLink="/recherche">Retour à la recherche</app-button>
         </app-empty-state>
+      } @else if (movie.error()) {
+        <app-form-alert message="Impossible de charger la fiche pour le moment." />
+        <app-button variant="secondary" (click)="movie.reload()">Réessayer</app-button>
       } @else if (view(); as view) {
         <article class="md-hero">
           <figure class="md-media">
