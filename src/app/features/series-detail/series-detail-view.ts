@@ -18,7 +18,7 @@ export interface SeriesDetailView {
   readonly watchlist?: WatchlistBadgeStatus;
 }
 
-const plural = (count: number, word: string) => `${count} ${word}${count > 1 ? 's' : ''}`;
+export const plural = (count: number, word: string) => `${count} ${word}${count > 1 ? 's' : ''}`;
 
 const year = (date: string) => date.slice(0, 4);
 
