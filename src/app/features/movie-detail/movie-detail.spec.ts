@@ -47,7 +47,7 @@ describe('MovieDetail', () => {
     const rendered = await render();
     await rendered.harness.navigateByUrl(`/film/${id}`, MovieDetail);
     rendered.http.expectOne('/users/me').flush(USER);
-    await rendered.harness.fixture.whenStable();
+    rendered.harness.detectChanges();
     return { ...rendered, root: rendered.harness.routeNativeElement as HTMLElement };
   }
 
@@ -75,7 +75,7 @@ describe('MovieDetail', () => {
       expect(root.querySelector('[role="status"]')?.textContent).toContain('Chargement');
 
       http.expectOne('/movies/603').flush({ id: 603, title: 'Matrix' });
-      await harness.fixture.whenStable();
+      harness.detectChanges();
 
       expect(root.querySelector('[role="status"]')).toBeNull();
     });
