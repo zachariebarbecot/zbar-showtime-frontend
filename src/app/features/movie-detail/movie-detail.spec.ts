@@ -127,13 +127,16 @@ describe('MovieDetail', () => {
       }
     });
 
-    it('should show only the year when the runtime is absent, and only the runtime when the date is', async () => {
-      const withoutRuntime = await show({ ...MATRIX, runtime: undefined });
-      expect(text(withoutRuntime.root, '.md-meta')).toBe('1999');
-      TestBed.resetTestingModule();
+    it('should show only the year when the runtime is absent', async () => {
+      const { root } = await show({ ...MATRIX, runtime: undefined });
 
-      const withoutDate = await show({ ...MATRIX, releaseDate: undefined });
-      expect(text(withoutDate.root, '.md-meta')).toBe('136 min');
+      expect(text(root, '.md-meta')).toBe('1999');
+    });
+
+    it('should show only the runtime when the date is absent', async () => {
+      const { root } = await show({ ...MATRIX, releaseDate: undefined });
+
+      expect(text(root, '.md-meta')).toBe('136 min');
     });
   });
 
