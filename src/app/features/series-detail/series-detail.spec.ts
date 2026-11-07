@@ -209,6 +209,22 @@ describe('SeriesDetail', () => {
     });
   });
 
+  describe('retry', () => {
+    it('should call the series endpoint again and show the details on success', async () => {
+      const { harness, http, root } = await open();
+      http.expectOne('/series/1396').flush('', { status: 500, statusText: 'Error' });
+      await harness.fixture.whenStable();
+
+      root.querySelector<HTMLButtonElement>('main button')?.click();
+      harness.detectChanges();
+      http.expectOne('/series/1396').flush({ id: 1396, name: 'Breaking Bad' });
+      await harness.fixture.whenStable();
+
+      expect(root.querySelector('h1.md-title')?.textContent?.trim()).toBe('Breaking Bad');
+      expect(root.querySelector('[role="alert"]')).toBeNull();
+    });
+  });
+
   describe('back link', () => {
     it('should go back to the search page', async () => {
       const { harness, http, root, router } = await open();
