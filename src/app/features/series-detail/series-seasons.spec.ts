@@ -119,4 +119,34 @@ describe('SeriesSeasons', () => {
       expect(http.match('/series/1396/seasons/2')).toHaveLength(1);
     });
   });
+
+  describe('collapsing', () => {
+    it('should not load a season again when it is collapsed then expanded', async () => {
+      const { fixture, root, http } = await render([
+        { seasonNumber: 1, name: 'Saison 1' },
+        { seasonNumber: 2, name: 'Saison 2' },
+      ]);
+      const toggle = root.querySelectorAll<HTMLButtonElement>('button.zb-season-toggle')[1];
+      toggle.click();
+      await fixture.whenStable();
+      http.expectOne('/series/1396/seasons/2');
+
+      toggle.click();
+      await fixture.whenStable();
+      toggle.click();
+      await fixture.whenStable();
+
+      expect(toggle.getAttribute('aria-expanded')).toBe('true');
+      http.expectNone('/series/1396/seasons/2');
+    });
+  });
+
+  describe('without seasons', () => {
+    it('should render nothing, title included', async () => {
+      const { root } = await render([]);
+
+      expect(root.querySelector('h2')).toBeNull();
+      expect(root.querySelector('app-season')).toBeNull();
+    });
+  });
 });
