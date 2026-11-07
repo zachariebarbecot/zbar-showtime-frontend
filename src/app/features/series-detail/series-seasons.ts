@@ -32,6 +32,9 @@ export class SeriesSeasons {
   readonly tmdbId = input.required<number>();
   readonly seasons = input.required<readonly SeasonResponse[]>();
 
+  private readonly api = inject(SeriesControllerService);
+  private readonly requested = new Set<number>();
+
   protected readonly sorted = computed(() =>
     this.seasons()
       .flatMap(({ seasonNumber, name, episodeCount }) =>
@@ -47,9 +50,6 @@ export class SeriesSeasons {
       )
       .sort((a, b) => rank(a.number) - rank(b.number)),
   );
-
-  private readonly api = inject(SeriesControllerService);
-  private readonly requested = new Set<number>();
 
   constructor() {
     effect(() => {
