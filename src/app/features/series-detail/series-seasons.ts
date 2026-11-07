@@ -32,7 +32,7 @@ export class SeriesSeasons {
           : [
               {
                 number: seasonNumber,
-                title: name,
+                title: seasonNumber === 0 ? 'Épisodes spéciaux' : name,
                 info: episodeCount ? plural(episodeCount, 'épisode') : undefined,
               },
             ],
