@@ -80,4 +80,60 @@ describe('MovieDetail', () => {
       expect(root.querySelector('[role="status"]')).toBeNull();
     });
   });
+
+  describe('details', () => {
+    const MATRIX = {
+      id: 603,
+      title: 'Matrix',
+      originalTitle: 'The Matrix',
+      posterUrl: 'https://image.tmdb.org/t/p/w500/matrix.jpg',
+      releaseDate: '1999-03-31',
+      runtime: 136,
+      genres: ['Action', 'Science-Fiction'],
+      overview: 'Un hacker découvre la vraie nature de son monde.',
+    };
+
+    async function show(movie: object) {
+      const opened = await open();
+      opened.http.expectOne('/movies/603').flush(movie);
+      await opened.harness.fixture.whenStable();
+      return opened;
+    }
+
+    const text = (root: HTMLElement, selector: string) =>
+      root.querySelector(selector)?.textContent?.trim();
+
+    it('should show the poster, title, year, runtime, genres and overview', async () => {
+      const { root } = await show(MATRIX);
+
+      expect(root.querySelector('img.md-poster')?.getAttribute('src')).toBe(MATRIX.posterUrl);
+      expect(text(root, 'h1.md-title')).toBe('Matrix');
+      expect(text(root, '.md-meta')).toContain('1999');
+      expect(text(root, '.md-meta')).toContain('136 min');
+      expect(
+        [...root.querySelectorAll('.md-genres li')].map((li) => li.textContent?.trim()),
+      ).toEqual(MATRIX.genres);
+      expect(text(root, '.md-overview')).toBe(MATRIX.overview);
+    });
+
+    it('should render nothing for absent fields, with a placeholder for the poster', async () => {
+      const { root } = await show({ id: 603, title: 'Matrix' });
+
+      expect(text(root, 'h1.md-title')).toBe('Matrix');
+      expect(root.querySelector('img.md-poster')).toBeNull();
+      expect(text(root, '.md-poster-empty')).toBe('Matrix');
+      for (const absent of ['.md-original', '.md-meta', '.md-genres', '.md-overview']) {
+        expect(root.querySelector(absent)).toBeNull();
+      }
+    });
+
+    it('should show only the year when the runtime is absent, and only the runtime when the date is', async () => {
+      const withoutRuntime = await show({ ...MATRIX, runtime: undefined });
+      expect(text(withoutRuntime.root, '.md-meta')).toBe('1999');
+      TestBed.resetTestingModule();
+
+      const withoutDate = await show({ ...MATRIX, releaseDate: undefined });
+      expect(text(withoutDate.root, '.md-meta')).toBe('136 min');
+    });
+  });
 });
