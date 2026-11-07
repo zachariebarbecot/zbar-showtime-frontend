@@ -370,6 +370,42 @@ describe('SeriesDetail', () => {
     });
   });
 
+  describe('watchlist', () => {
+    async function showWithStatus(watchlistStatus?: string) {
+      const opened = await open();
+      opened.http
+        .expectOne('/series/1396')
+        .flush({ id: 1396, name: 'Breaking Bad', watchlistStatus });
+      await opened.harness.fixture.whenStable();
+      return opened;
+    }
+
+    const badge = (root: HTMLElement) => root.querySelector('.md-info .zb-badge');
+    const addButton = (root: HTMLElement) =>
+      root.querySelector<HTMLButtonElement>('.md-info app-status-button button');
+
+    it.each([
+      ['TO_WATCH', 'Watchlist', 'zb-badge-watchlist'],
+      ['WATCHED', 'Vu', 'zb-badge-seen'],
+      ['WATCHING', 'En cours', 'zb-badge-progress'],
+      ['DROPPED', 'Abandonné', 'zb-badge-dropped'],
+    ])('should show the %s badge and no add button', async (status, label, css) => {
+      const { root } = await showWithStatus(status);
+
+      expect(badge(root)?.textContent?.trim()).toBe(label);
+      expect(badge(root)?.classList).toContain(css);
+      expect(addButton(root)).toBeNull();
+    });
+
+    it('should show no badge and the add button when the status is absent', async () => {
+      const { root } = await showWithStatus();
+
+      expect(badge(root)).toBeNull();
+      expect(addButton(root)).not.toBeNull();
+      expect(root.querySelector('.md-info app-status-button .zb-btn-watchlist')).not.toBeNull();
+    });
+  });
+
   describe('back link', () => {
     it('should go back to the search page', async () => {
       const { harness, http, root, router } = await open();

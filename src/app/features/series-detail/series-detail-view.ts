@@ -1,3 +1,4 @@
+import { WatchlistBadgeStatus } from '../../ui/status-badge/status-badge';
 import { SeriesDetailResponse } from '../../api/models/series-detail-response';
 import { ShowStatusValue, isShowStatus } from '../../ui/show-status/show-status';
 import { CastMemberView, toCastMemberViews } from '../../shared/cast-member-view';
@@ -13,6 +14,7 @@ export interface SeriesDetailView {
   readonly overview?: string;
   readonly creators: readonly string[];
   readonly cast: readonly CastMemberView[];
+  readonly watchlist?: WatchlistBadgeStatus;
 }
 
 const plural = (count: number, word: string) => `${count} ${word}${count > 1 ? 's' : ''}`;
