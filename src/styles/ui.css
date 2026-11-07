@@ -1407,7 +1407,7 @@ body {
   padding: 1px 6px;
   border-radius: var(--radius-sm);
   background: var(--scrim);
-  color: var(--ink);
+  color: #f4efe8;
   font: 500 11px/16px var(--font-mono);
 }
 .zb-ep-info {
