@@ -278,6 +278,22 @@ describe('SeriesDetail', () => {
 
       expect(period(root)).toBe('2019');
     });
+
+    it.each([{}, { status: 'UNKNOWN' }])(
+      'should render no tag for the status %j',
+      async (series) => {
+        const root = await airing(series);
+
+        expect(root.querySelector('app-show-status')).toBeNull();
+      },
+    );
+
+    it('should render no period when the first air date is absent', async () => {
+      const root = await airing({ status: 'RETURNING', lastAirDate: '2023-11-02' });
+
+      expect(root.querySelector('.md-period')).toBeNull();
+      expect(tag(root)).toBe('En cours');
+    });
   });
 
   describe('back link', () => {
