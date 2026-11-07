@@ -144,6 +144,13 @@ describe('SeriesSeasons', () => {
   describe('episodes', () => {
     const rows = (root: HTMLElement) => [...root.querySelectorAll('app-episode-row .zb-ep')];
 
+    const flushEpisodes = async (episodes: object[]) => {
+      const view = await render([{ seasonNumber: 1, name: 'Saison 1' }]);
+      view.http.expectOne('/series/1396/seasons/1').flush({ seasonNumber: 1, episodes });
+      await view.fixture.whenStable();
+      return view.root;
+    };
+
     it('should show a local loading state until the season response is received', async () => {
       const { fixture, root, http } = await render([{ seasonNumber: 1, name: 'Saison 1' }]);
 
@@ -196,13 +203,6 @@ describe('SeriesSeasons', () => {
     });
 
     describe('still', () => {
-      const flushEpisodes = async (episodes: object[]) => {
-        const view = await render([{ seasonNumber: 1, name: 'Saison 1' }]);
-        view.http.expectOne('/series/1396/seasons/1').flush({ seasonNumber: 1, episodes });
-        await view.fixture.whenStable();
-        return view.root;
-      };
-
       it('should show the still in w300 with the code laid on it', async () => {
         const root = await flushEpisodes([
           {
@@ -241,13 +241,6 @@ describe('SeriesSeasons', () => {
     });
 
     describe('details', () => {
-      const flushEpisodes = async (episodes: object[]) => {
-        const view = await render([{ seasonNumber: 1, name: 'Saison 1' }]);
-        view.http.expectOne('/series/1396/seasons/1').flush({ seasonNumber: 1, episodes });
-        await view.fixture.whenStable();
-        return view.root;
-      };
-
       it('should show the overview as TMDB gives it', async () => {
         const root = await flushEpisodes([
           { episodeNumber: 1, name: 'Un', overview: 'Walter  apprend sa maladie.' },
