@@ -72,6 +72,16 @@ import { toSeriesDetailView } from './series-detail-view';
             }
           </div>
         </article>
+        @if (view.creators.length) {
+          <section class="md-directors">
+            <h2 class="zb-car-title">Création</h2>
+            <ul class="md-people">
+              @for (creator of view.creators; track creator) {
+                <li>{{ creator }}</li>
+              }
+            </ul>
+          </section>
+        }
       }
     </main>
   `,

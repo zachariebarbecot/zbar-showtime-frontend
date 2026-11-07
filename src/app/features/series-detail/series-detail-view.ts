@@ -10,6 +10,7 @@ export interface SeriesDetailView {
   readonly period?: string;
   readonly genres: readonly string[];
   readonly overview?: string;
+  readonly creators: readonly string[];
 }
 
 const plural = (count: number, word: string) => `${count} ${word}${count > 1 ? 's' : ''}`;
@@ -34,6 +35,7 @@ export const toSeriesDetailView = ({
   status,
   firstAirDate,
   lastAirDate,
+  creators,
 }: SeriesDetailResponse): SeriesDetailView => ({
   name,
   originalName: originalName === name ? undefined : originalName,
@@ -49,4 +51,5 @@ export const toSeriesDetailView = ({
   period: firstAirDate ? toPeriod(status, firstAirDate, lastAirDate) : undefined,
   genres: genres ?? [],
   overview,
+  creators: creators ?? [],
 });
