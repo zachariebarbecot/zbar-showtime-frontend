@@ -21,6 +21,7 @@ describe('SeriesSeasons', () => {
     fixture.componentRef.setInput('seasons', seasons);
     await fixture.whenStable();
     return {
+      fixture,
       root: fixture.nativeElement as HTMLElement,
       http: TestBed.inject(HttpTestingController),
     };
@@ -87,6 +88,35 @@ describe('SeriesSeasons', () => {
 
       expect(open(root)).toEqual([true]);
       expect(http.match('/series/1396/seasons/0')).toHaveLength(1);
+    });
+  });
+
+  describe('expanding', () => {
+    const SEASONS = [
+      { seasonNumber: 1, name: 'Saison 1' },
+      { seasonNumber: 2, name: 'Saison 2' },
+    ];
+    const toggles = (root: HTMLElement) =>
+      root.querySelectorAll<HTMLButtonElement>('button.zb-season-toggle');
+
+    it('should load a collapsed season once when the user expands it', async () => {
+      const { fixture, root, http } = await render(SEASONS);
+      http.expectOne('/series/1396/seasons/1');
+
+      toggles(root)[1].click();
+      await fixture.whenStable();
+
+      expect(toggles(root)[1].getAttribute('aria-expanded')).toBe('true');
+      expect(http.match('/series/1396/seasons/2')).toHaveLength(1);
+    });
+
+    it('should not load a season again on repeated clicks while it loads', async () => {
+      const { root, http } = await render(SEASONS);
+      http.expectOne('/series/1396/seasons/1');
+
+      for (let click = 0; click < 5; click++) toggles(root)[1].click();
+
+      expect(http.match('/series/1396/seasons/2')).toHaveLength(1);
     });
   });
 });
