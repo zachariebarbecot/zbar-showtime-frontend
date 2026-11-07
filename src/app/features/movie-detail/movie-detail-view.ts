@@ -19,7 +19,7 @@ export const toMovieDetailView = ({
   overview,
 }: MovieDetailResponse): MovieDetailView => ({
   title,
-  originalTitle,
+  originalTitle: originalTitle === title ? undefined : originalTitle,
   posterUrl,
   meta:
     [releaseDate?.slice(0, 4), runtime ? `${runtime} min` : undefined]
