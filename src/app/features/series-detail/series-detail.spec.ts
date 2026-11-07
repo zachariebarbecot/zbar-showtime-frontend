@@ -43,9 +43,9 @@ describe('SeriesDetail', () => {
     return { harness, http, router: TestBed.inject(Router) };
   }
 
-  async function open() {
+  async function open(id = '1396') {
     const rendered = await render();
-    await rendered.harness.navigateByUrl('/serie/1396', SeriesDetail);
+    await rendered.harness.navigateByUrl(`/serie/${id}`, SeriesDetail);
     rendered.http.expectOne('/users/me').flush(USER);
     rendered.harness.detectChanges();
     return { ...rendered, root: rendered.harness.routeNativeElement as HTMLElement };
@@ -159,6 +159,69 @@ describe('SeriesDetail', () => {
 
     it('should render no meta when both counts are absent', async () => {
       expect(await meta({})).toBeUndefined();
+    });
+  });
+
+  describe('not found', () => {
+    it('should show the not found empty state with a link to the search page on a 404', async () => {
+      const { harness, http, root } = await open();
+      http.expectOne('/series/1396').flush('', { status: 404, statusText: 'Error' });
+      await harness.fixture.whenStable();
+
+      expect(root.querySelector('.zb-empty-title')?.textContent).toContain('Série introuvable');
+      expect(root.querySelector('a[href="/recherche"].zb-button')).not.toBeNull();
+      expect(root.querySelector('.md-hero')).toBeNull();
+    });
+  });
+
+  describe('invalid id', () => {
+    it.each(['abc', '0', '-3', '1.5'])(
+      'should show the not found empty state without calling the API for id %s',
+      async (id) => {
+        const { harness, http, root } = await open(id);
+        await harness.fixture.whenStable();
+
+        http.expectNone((request) => request.url.startsWith('/series/'));
+        expect(root.querySelector('.zb-empty-title')?.textContent).toContain('Série introuvable');
+        expect(root.querySelector('[role="status"]')).toBeNull();
+      },
+    );
+
+    it('should show the not found empty state on a 400', async () => {
+      const { harness, http, root } = await open();
+      http.expectOne('/series/1396').flush('', { status: 400, statusText: 'Error' });
+      await harness.fixture.whenStable();
+
+      expect(root.querySelector('.zb-empty-title')?.textContent).toContain('Série introuvable');
+      expect(root.querySelector('.md-hero')).toBeNull();
+    });
+  });
+
+  describe('server error', () => {
+    it.each([500, 0])('should show an error message and a retry button on a %i', async (status) => {
+      const { harness, http, root } = await open();
+      http.expectOne('/series/1396').flush('', { status, statusText: 'Error' });
+      await harness.fixture.whenStable();
+
+      expect(root.querySelector('[role="alert"]')).not.toBeNull();
+      expect(root.querySelector('main button')?.textContent).toContain('Réessayer');
+      expect(root.querySelector('.zb-empty-title')).toBeNull();
+    });
+  });
+
+  describe('retry', () => {
+    it('should call the series endpoint again and show the details on success', async () => {
+      const { harness, http, root } = await open();
+      http.expectOne('/series/1396').flush('', { status: 500, statusText: 'Error' });
+      await harness.fixture.whenStable();
+
+      root.querySelector<HTMLButtonElement>('main button')?.click();
+      harness.detectChanges();
+      http.expectOne('/series/1396').flush({ id: 1396, name: 'Breaking Bad' });
+      await harness.fixture.whenStable();
+
+      expect(root.querySelector('h1.md-title')?.textContent?.trim()).toBe('Breaking Bad');
+      expect(root.querySelector('[role="alert"]')).toBeNull();
     });
   });
 

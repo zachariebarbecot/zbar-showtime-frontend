@@ -1,4 +1,3 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -13,6 +12,7 @@ import { finalize, map } from 'rxjs';
 import { MovieControllerService } from '../../api/services/movie-controller.service';
 import { injectSession } from '../../core/auth/session';
 import { ADD_FAILED, WatchlistAdder } from '../../shared/watchlist-adder';
+import { isNotFound, tmdbIdOf } from '../../shared/tmdb-id';
 import { AppHeader } from '../../ui/app-header/app-header';
 import { Button } from '../../ui/button/button';
 import { CastCard } from '../../ui/cast-card/cast-card';
@@ -132,15 +132,9 @@ export class MovieDetail {
   private readonly adder = inject(WatchlistAdder);
   private readonly toast = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly tmdbId = toSignal(
-    inject(ActivatedRoute).paramMap.pipe(
-      map((params) => {
-        const id = Number(params.get('tmdbId'));
-        return Number.isInteger(id) && id > 0 ? id : undefined;
-      }),
-    ),
-    { requireSync: true },
-  );
+  private readonly tmdbId = toSignal(inject(ActivatedRoute).paramMap.pipe(map(tmdbIdOf)), {
+    requireSync: true,
+  });
   protected readonly movie = rxResource({
     params: this.tmdbId,
     stream: ({ params: tmdbId }) => this.api.detail1({ tmdbId }),
@@ -150,8 +144,7 @@ export class MovieDetail {
   );
   protected readonly notFound = computed(() => {
     if (this.tmdbId() === undefined) return true;
-    const error = this.movie.error();
-    return error instanceof HttpErrorResponse && (error.status === 404 || error.status === 400);
+    return isNotFound(this.movie.error());
   });
   private readonly added = signal(false);
   protected readonly adding = signal(false);

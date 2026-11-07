@@ -4,13 +4,17 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 import { SeriesControllerService } from '../../api/services/series-controller.service';
 import { injectSession } from '../../core/auth/session';
+import { isNotFound, tmdbIdOf } from '../../shared/tmdb-id';
 import { AppHeader } from '../../ui/app-header/app-header';
+import { Button } from '../../ui/button/button';
+import { EmptyState } from '../../ui/empty-state/empty-state';
+import { FormAlert } from '../../ui/form-alert/form-alert';
 import { toSeriesDetailView } from './series-detail-view';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-series-detail',
-  imports: [AppHeader, RouterLink],
+  imports: [AppHeader, Button, EmptyState, FormAlert, RouterLink],
   template: `
     @if (session.answered()) {
       <app-header active="search" [user]="session.user()" (logout)="session.logout()" />
@@ -19,6 +23,13 @@ import { toSeriesDetailView } from './series-detail-view';
       <a class="zb-link md-back" routerLink="/recherche">Retour à la recherche</a>
       @if (series.isLoading()) {
         <p role="status">Chargement…</p>
+      } @else if (notFound()) {
+        <app-empty-state title="Série introuvable" text="Cette série n'existe pas ou plus.">
+          <app-button link="/recherche">Retour à la recherche</app-button>
+        </app-empty-state>
+      } @else if (series.error()) {
+        <app-form-alert message="Impossible de charger la fiche pour le moment." />
+        <app-button variant="secondary" (click)="series.reload()">Réessayer</app-button>
       } @else if (view(); as view) {
         <article class="md-hero">
           <figure class="md-media">
@@ -57,10 +68,9 @@ import { toSeriesDetailView } from './series-detail-view';
 export class SeriesDetail {
   protected readonly session = injectSession();
   private readonly api = inject(SeriesControllerService);
-  private readonly tmdbId = toSignal(
-    inject(ActivatedRoute).paramMap.pipe(map((params) => Number(params.get('tmdbId')))),
-    { requireSync: true },
-  );
+  private readonly tmdbId = toSignal(inject(ActivatedRoute).paramMap.pipe(map(tmdbIdOf)), {
+    requireSync: true,
+  });
   protected readonly series = rxResource({
     params: this.tmdbId,
     stream: ({ params: tmdbId }) => this.api.detail({ tmdbId }),
@@ -68,4 +78,8 @@ export class SeriesDetail {
   protected readonly view = computed(() =>
     this.series.hasValue() ? toSeriesDetailView(this.series.value()) : undefined,
   );
+  protected readonly notFound = computed(() => {
+    if (this.tmdbId() === undefined) return true;
+    return isNotFound(this.series.error());
+  });
 }
