@@ -1,10 +1,12 @@
 import { SeriesDetailResponse } from '../../api/models/series-detail-response';
+import { ShowStatusValue, isShowStatus } from '../../ui/show-status/show-status';
 
 export interface SeriesDetailView {
   readonly name?: string;
   readonly originalName?: string;
   readonly posterUrl?: string;
   readonly meta?: string;
+  readonly status?: ShowStatusValue;
   readonly genres: readonly string[];
   readonly overview?: string;
 }
@@ -19,6 +21,7 @@ export const toSeriesDetailView = ({
   numberOfEpisodes,
   genres,
   overview,
+  status,
 }: SeriesDetailResponse): SeriesDetailView => ({
   name,
   originalName: originalName === name ? undefined : originalName,
@@ -30,6 +33,7 @@ export const toSeriesDetailView = ({
     ]
       .filter(Boolean)
       .join(' · ') || undefined,
+  status: isShowStatus(status) ? status : undefined,
   genres: genres ?? [],
   overview,
 });
