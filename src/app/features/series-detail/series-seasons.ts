@@ -66,7 +66,9 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
                   >Réessayer</app-button
                 >
               } @else if (state) {
-                <p class="zb-season-overview">{{ state.overview }}</p>
+                @if (state.overview) {
+                  <p class="zb-season-overview">{{ state.overview }}</p>
+                }
                 @for (episode of state.episodes; track episode.number) {
                   <app-episode-row
                     [season]="season.number"
