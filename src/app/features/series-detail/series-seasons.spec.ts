@@ -195,6 +195,32 @@ describe('SeriesSeasons', () => {
       expect(root.querySelector('app-episode-row [role="checkbox"]')).toBeNull();
     });
 
+    describe('still', () => {
+      const flushEpisodes = async (episodes: object[]) => {
+        const view = await render([{ seasonNumber: 1, name: 'Saison 1' }]);
+        view.http.expectOne('/series/1396/seasons/1').flush({ seasonNumber: 1, episodes });
+        await view.fixture.whenStable();
+        return view.root;
+      };
+
+      it('should show the still in w300 with the code laid on it', async () => {
+        const root = await flushEpisodes([
+          {
+            episodeNumber: 3,
+            name: 'Trois',
+            stillUrl: 'https://image.tmdb.org/t/p/w500/still.jpg',
+          },
+        ]);
+
+        const thumb = root.querySelector('app-episode-row .zb-ep-thumb');
+        expect(thumb?.querySelector('img')?.getAttribute('src')).toBe(
+          'https://image.tmdb.org/t/p/w300/still.jpg',
+        );
+        expect(thumb?.querySelector('.zb-ep-code')?.textContent?.trim()).toBe('S01E03');
+        expect(root.querySelector('app-episode-row button')).toBeNull();
+      });
+    });
+
     it.each([[{ seasonNumber: 1, episodes: [] }], [{ seasonNumber: 1 }]])(
       'should tell the season has no episode for %j',
       async (response) => {
