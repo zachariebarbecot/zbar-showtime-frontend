@@ -1,10 +1,10 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 import { SeriesControllerService } from '../../api/services/series-controller.service';
 import { injectSession } from '../../core/auth/session';
+import { isNotFound, tmdbIdOf } from '../../shared/tmdb-id';
 import { AppHeader } from '../../ui/app-header/app-header';
 import { Button } from '../../ui/button/button';
 import { EmptyState } from '../../ui/empty-state/empty-state';
@@ -68,15 +68,9 @@ import { toSeriesDetailView } from './series-detail-view';
 export class SeriesDetail {
   protected readonly session = injectSession();
   private readonly api = inject(SeriesControllerService);
-  private readonly tmdbId = toSignal(
-    inject(ActivatedRoute).paramMap.pipe(
-      map((params) => {
-        const id = Number(params.get('tmdbId'));
-        return Number.isInteger(id) && id > 0 ? id : undefined;
-      }),
-    ),
-    { requireSync: true },
-  );
+  private readonly tmdbId = toSignal(inject(ActivatedRoute).paramMap.pipe(map(tmdbIdOf)), {
+    requireSync: true,
+  });
   protected readonly series = rxResource({
     params: this.tmdbId,
     stream: ({ params: tmdbId }) => this.api.detail({ tmdbId }),
@@ -86,7 +80,6 @@ export class SeriesDetail {
   );
   protected readonly notFound = computed(() => {
     if (this.tmdbId() === undefined) return true;
-    const error = this.series.error();
-    return error instanceof HttpErrorResponse && (error.status === 404 || error.status === 400);
+    return isNotFound(this.series.error());
   });
 }
