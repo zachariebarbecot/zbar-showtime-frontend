@@ -34,6 +34,9 @@ import { toSeriesDetailView } from './series-detail-view';
             @if (view.originalName) {
               <p class="md-original">{{ view.originalName }}</p>
             }
+            @if (view.meta) {
+              <p class="zb-meta md-meta">{{ view.meta }}</p>
+            }
             @if (view.genres.length) {
               <ul class="md-genres">
                 @for (genre of view.genres; track genre) {
