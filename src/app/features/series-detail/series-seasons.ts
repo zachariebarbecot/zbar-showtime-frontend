@@ -102,14 +102,19 @@ export class SeriesSeasons {
 
   protected readonly sorted = computed(() =>
     this.seasons()
-      .flatMap(({ seasonNumber, name, episodeCount, posterUrl }) =>
+      .flatMap(({ seasonNumber, name, episodeCount, airDate, posterUrl }) =>
         seasonNumber === undefined
           ? []
           : [
               {
                 number: seasonNumber,
                 title: seasonNumber === 0 ? 'Épisodes spéciaux' : name,
-                info: episodeCount ? plural(episodeCount, 'épisode') : undefined,
+                info: [
+                  episodeCount ? plural(episodeCount, 'épisode') : undefined,
+                  airDate?.slice(0, 4),
+                ]
+                  .filter(Boolean)
+                  .join(' · '),
                 poster: posterUrl?.replace(/\/w\d+\//, '/w92/'),
               },
             ],
