@@ -183,6 +183,39 @@ describe('ui.css', () => {
   });
 });
 
+describe('movie detail styles', () => {
+  const ui = read('src/styles/ui.css');
+  const block = (selector: string) =>
+    ui.match(
+      new RegExp(String.raw`(?:^|\n)${selector.replace(/[.]/g, '\\.')}\s*\{([^}]*)\}`),
+    )?.[1] ?? '';
+  const all = [...ui.matchAll(/(?:^|\n|\s)(\.md-[^{]*)\{([^}]*)\}/g)].map((m) => m[2]).join('\n');
+
+  it('sets the title in display-xl', () => {
+    expect(block('.md-title')).toContain('font: 800 64px/60px var(--font-display)');
+  });
+
+  it('puts the poster on the poster shadow', () => {
+    expect(block('.md-poster')).toContain('box-shadow: var(--shadow-poster)');
+  });
+
+  it('lays poster and text side by side, stacked below 1024px', () => {
+    expect(block('.md-hero')).toContain('grid-template-columns:');
+    expect(ui).toMatch(
+      /@media \(max-width: 1023px\)\s*\{[^@]*\.md-hero\s*\{[^}]*grid-template-columns: 1fr/,
+    );
+  });
+
+  it('uses no literal color and spacing tokens only', () => {
+    expect(all).not.toBe('');
+    expect(all).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(/i);
+    const spacing = [...all.matchAll(/(?:margin|padding|gap)[\w-]*:\s*([^;]+);/g)].map((m) => m[1]);
+    for (const value of spacing) {
+      expect(value).toMatch(/^(?:(?:var\(--space-\d\)|0|auto)\s*)+$/);
+    }
+  });
+});
+
 describe('global styles and index.html', () => {
   const html = read('src/index.html');
   const global = read('src/styles/global.css');
