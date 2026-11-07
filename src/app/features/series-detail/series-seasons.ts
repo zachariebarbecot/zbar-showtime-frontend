@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Season as SeasonResponse } from '../../api/models/season';
+import { SeasonDetailResponse } from '../../api/models/season-detail-response';
 import { SeriesControllerService } from '../../api/services/series-controller.service';
 import { Button } from '../../ui/button/button';
 import { EpisodeRow } from '../../ui/episode-row/episode-row';
@@ -22,6 +23,15 @@ interface Episode {
   title: string;
   runtime?: number;
 }
+
+type EpisodesState = readonly Episode[] | 'failed' | undefined;
+
+const toEpisodes = ({ episodes = [] }: SeasonDetailResponse): Episode[] =>
+  episodes
+    .flatMap(({ episodeNumber, name, runtime }) =>
+      episodeNumber === undefined ? [] : [{ number: episodeNumber, title: name ?? '', runtime }],
+    )
+    .sort((a, b) => a.number - b.number);
 
 const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNumber);
 
@@ -77,9 +87,7 @@ export class SeriesSeasons {
   private readonly destroyRef = inject(DestroyRef);
   private readonly requested = new Set<number>();
 
-  protected readonly episodes = signal<Record<number, readonly Episode[] | 'failed' | undefined>>(
-    {},
-  );
+  protected readonly episodes = signal<Record<number, EpisodesState>>({});
 
   protected readonly sorted = computed(() =>
     this.seasons()
@@ -109,7 +117,7 @@ export class SeriesSeasons {
   }
 
   protected retry(seasonNumber: number) {
-    this.episodes.update((all) => ({ ...all, [seasonNumber]: undefined }));
+    this.setState(seasonNumber, undefined);
     this.fetch(seasonNumber);
   }
 
@@ -124,17 +132,12 @@ export class SeriesSeasons {
       .season({ tmdbId: this.tmdbId(), seasonNumber })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (season) => {
-          const episodes = (season.episodes ?? [])
-            .flatMap(({ episodeNumber, name, runtime }) =>
-              episodeNumber === undefined
-                ? []
-                : [{ number: episodeNumber, title: name ?? '', runtime }],
-            )
-            .sort((a, b) => a.number - b.number);
-          this.episodes.update((all) => ({ ...all, [seasonNumber]: episodes }));
-        },
-        error: () => this.episodes.update((all) => ({ ...all, [seasonNumber]: 'failed' })),
+        next: (season) => this.setState(seasonNumber, toEpisodes(season)),
+        error: () => this.setState(seasonNumber, 'failed'),
       });
+  }
+
+  private setState(seasonNumber: number, state: EpisodesState) {
+    this.episodes.update((all) => ({ ...all, [seasonNumber]: state }));
   }
 }
