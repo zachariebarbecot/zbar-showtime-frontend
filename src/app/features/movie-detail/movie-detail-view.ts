@@ -7,6 +7,7 @@ export interface MovieDetailView {
   readonly meta?: string;
   readonly genres: readonly string[];
   readonly overview?: string;
+  readonly directors: readonly string[];
 }
 
 export const toMovieDetailView = ({
@@ -17,6 +18,7 @@ export const toMovieDetailView = ({
   runtime,
   genres,
   overview,
+  directors,
 }: MovieDetailResponse): MovieDetailView => ({
   title,
   originalTitle: originalTitle === title ? undefined : originalTitle,
@@ -27,4 +29,5 @@ export const toMovieDetailView = ({
       .join(' · ') || undefined,
   genres: genres ?? [],
   overview,
+  directors: directors ?? [],
 });

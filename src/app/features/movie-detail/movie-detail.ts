@@ -61,6 +61,16 @@ import { toMovieDetailView } from './movie-detail-view';
             }
           </div>
         </article>
+        @if (view.directors.length) {
+          <section class="md-directors">
+            <h2 class="md-section-title">Réalisation</h2>
+            <ul class="md-people">
+              @for (director of view.directors; track director) {
+                <li>{{ director }}</li>
+              }
+            </ul>
+          </section>
+        }
       }
     </main>
   `,
