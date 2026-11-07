@@ -49,7 +49,7 @@ const GENERIC_ERROR = 'Une erreur est survenue. Réessaie dans un instant.';
             <p class="su-lead">
               Ton compte est prêt. Commence par ajouter quelques films ou séries à ta watchlist.
             </p>
-            <app-button size="lg" [routerLink]="done.next">Commencer</app-button>
+            <app-button size="lg" [link]="done.next">Commencer</app-button>
           </section>
         } @else {
           <form class="su-form" novalidate [formGroup]="form" (ngSubmit)="submit()">

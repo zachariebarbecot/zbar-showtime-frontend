@@ -8,7 +8,7 @@ import { Button } from './button';
   template: `
     <app-button variant="secondary" size="lg" block>Annuler</app-button>
     <app-button href="https://example.org">Dehors</app-button>
-    <app-button routerLink="/inscription">Créer un compte</app-button>
+    <app-button link="/inscription">Créer un compte</app-button>
     <app-button type="submit" disabled>Envoyer</app-button>
   `,
 })
@@ -61,7 +61,7 @@ describe('Button', () => {
     expect(link?.classList).toContain('zb-button');
   });
 
-  it('should render an anchor to the route when routerLink is given', async () => {
+  it('should render an anchor to the route when link is given', async () => {
     const root = await render();
 
     const link = root.querySelector('a[href="/inscription"]');

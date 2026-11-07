@@ -43,7 +43,7 @@ describe('MovieDetail', () => {
     return { harness, http, router: TestBed.inject(Router) };
   }
 
-  async function open(id = 603) {
+  async function open(id: number | string = 603) {
     const rendered = await render();
     await rendered.harness.navigateByUrl(`/film/${id}`, MovieDetail);
     rendered.http.expectOne('/users/me').flush(USER);
@@ -154,6 +154,58 @@ describe('MovieDetail', () => {
 
     it('should hide the original title when it equals the title', async () => {
       expect(await showTitles('Matrix', 'Matrix')).toBeUndefined();
+    });
+  });
+
+  describe('not found', () => {
+    it.each(['abc', '0', '-3', '1.5'])(
+      'should show the not found empty state without calling the API for id %s',
+      async (id) => {
+        const { harness, http, root } = await open(id);
+        await harness.fixture.whenStable();
+
+        http.expectNone((request) => request.url.startsWith('/movies/'));
+        expect(root.querySelector('.zb-empty-title')?.textContent).toContain('Film introuvable');
+        expect(root.querySelector('[role="status"]')).toBeNull();
+      },
+    );
+
+    it.each([404, 400])('should show the not found empty state on a %i', async (status) => {
+      const { harness, http, root } = await open();
+      http.expectOne('/movies/603').flush('', { status, statusText: 'Error' });
+      await harness.fixture.whenStable();
+
+      expect(root.querySelector('.zb-empty-title')?.textContent).toContain('Film introuvable');
+      expect(root.querySelector('a[href="/recherche"].zb-button')).not.toBeNull();
+      expect(root.querySelector('.md-hero')).toBeNull();
+    });
+  });
+
+  describe('server error', () => {
+    it.each([500, 0])('should show an error message and a retry button on a %i', async (status) => {
+      const { harness, http, root } = await open();
+      http.expectOne('/movies/603').flush('', { status, statusText: 'Error' });
+      await harness.fixture.whenStable();
+
+      expect(root.querySelector('[role="alert"]')).not.toBeNull();
+      expect(root.querySelector('main button')?.textContent).toContain('Réessayer');
+      expect(root.querySelector('.zb-empty-title')).toBeNull();
+    });
+  });
+
+  describe('retry', () => {
+    it('should call the movie endpoint again and show the details on success', async () => {
+      const { harness, http, root } = await open();
+      http.expectOne('/movies/603').flush('', { status: 500, statusText: 'Error' });
+      await harness.fixture.whenStable();
+
+      root.querySelector<HTMLButtonElement>('main button')?.click();
+      harness.detectChanges();
+      http.expectOne('/movies/603').flush({ id: 603, title: 'Matrix' });
+      await harness.fixture.whenStable();
+
+      expect(root.querySelector('h1.md-title')?.textContent?.trim()).toBe('Matrix');
+      expect(root.querySelector('[role="alert"]')).toBeNull();
     });
   });
 
