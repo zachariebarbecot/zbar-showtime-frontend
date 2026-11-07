@@ -16,7 +16,11 @@ import { query } from '../../testing/query';
 import { ToastService } from '../../ui/toast/toast.service';
 import { Search } from './search';
 
-const USER = { firstName: 'Camille', lastName: 'Durand', email: 'camille.durand@exemple.fr' };
+const USER = {
+  firstName: 'Camille',
+  lastName: 'Durand',
+  email: 'camille.durand@exemple.fr',
+};
 
 const validToken = `h.${btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 }))}.s`;
 
@@ -58,10 +62,19 @@ describe('Search', () => {
     const page = await rendered.harness.navigateByUrl('/recherche', Search);
     rendered.http.expectOne('/users/me').flush(USER);
     await rendered.harness.fixture.whenStable();
-    return { ...rendered, page, root: rendered.harness.routeNativeElement as HTMLElement };
+    return {
+      ...rendered,
+      page,
+      root: rendered.harness.routeNativeElement as HTMLElement,
+    };
   }
 
-  const EMPTY_RESPONSE = { page: 1, results: [], totalPages: 1, totalResults: 0 };
+  const EMPTY_RESPONSE = {
+    page: 1,
+    results: [],
+    totalPages: 1,
+    totalResults: 0,
+  };
 
   function type(rendered: Awaited<ReturnType<typeof open>>, value: string) {
     const input = query<HTMLInputElement>(rendered.root, 'main input');
@@ -319,7 +332,12 @@ describe('Search', () => {
           releaseDate: '2021-09-15',
           posterUrl: 'https://img.exemple.fr/dune.jpg',
         },
-        { id: 2, title: 'Dune: Prophecy', type: 'TV', releaseDate: '2024-11-17' },
+        {
+          id: 2,
+          title: 'Dune: Prophecy',
+          type: 'TV',
+          releaseDate: '2024-11-17',
+        },
         { id: 3, title: 'Dune, le film', type: 'MOVIE' },
         { title: 'Sans identifiant', type: 'MOVIE', releaseDate: '2000-01-01' },
         { id: 5, type: 'TV', releaseDate: '2000-01-01' },
@@ -401,7 +419,12 @@ describe('Search', () => {
         ...RESULTS,
         results: [
           { id: 1, title: 'Dune', type: 'MOVIE', watchlistStatus: 'WATCHED' },
-          { id: 1, title: 'Dune, la série', type: 'TV', watchlistStatus: 'DROPPED' },
+          {
+            id: 1,
+            title: 'Dune, la série',
+            type: 'TV',
+            watchlistStatus: 'DROPPED',
+          },
         ],
       });
 
@@ -464,7 +487,12 @@ describe('Search', () => {
       await settle(rendered);
       rendered.http
         .expectOne((req) => req.url === '/search')
-        .flush({ page: 1, totalPages: 1, totalResults: results.length, results });
+        .flush({
+          page: 1,
+          totalPages: 1,
+          totalResults: results.length,
+          results,
+        });
       rendered.harness.detectChanges();
       return rendered;
     }
@@ -477,6 +505,29 @@ describe('Search', () => {
       await rendered.harness.fixture.whenStable();
 
       expect(rendered.router.url).toBe('/film/603');
+    });
+
+    it('should add to the watchlist without navigating, the link not wrapping the button', async () => {
+      const rendered = await searchWith([MOVIE]);
+
+      vi.useRealTimers();
+      query<HTMLButtonElement>(rendered.root, '.zb-poster-action button').click();
+      await rendered.harness.fixture.whenStable();
+
+      expect(rendered.http.expectOne('/watchlist/movies').request.method).toBe('POST');
+      expect(rendered.router.url).toBe('/recherche');
+      expect(rendered.root.querySelector('.sr-grid a button')).toBeNull();
+      expect(
+        rendered.root
+          .querySelector('.sr-grid a')
+          ?.contains(rendered.root.querySelector('.zb-poster-action')),
+      ).toBe(false);
+    });
+
+    it('should name the poster link after the movie title', async () => {
+      const rendered = await searchWith([MOVIE]);
+
+      expect(query(rendered.root, '.sr-grid a').getAttribute('aria-label')).toBe('Matrix');
     });
 
     it('should not link the poster of a series', async () => {
@@ -661,7 +712,12 @@ describe('Search', () => {
         .expectOne((req) => req.url === '/search')
         .flush(
           page(2, 3, [
-            { id: 2, title: 'Dune 2', type: 'MOVIE', watchlistStatus: 'WATCHING' },
+            {
+              id: 2,
+              title: 'Dune 2',
+              type: 'MOVIE',
+              watchlistStatus: 'WATCHING',
+            },
             { id: 3, title: 'Dune 3', type: 'MOVIE' },
           ]),
         );
