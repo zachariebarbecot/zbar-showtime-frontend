@@ -136,4 +136,21 @@ describe('MovieDetail', () => {
       expect(text(withoutDate.root, '.md-meta')).toBe('136 min');
     });
   });
+
+  describe('original title', () => {
+    async function showTitles(title: string, originalTitle?: string) {
+      const opened = await open();
+      opened.http.expectOne('/movies/603').flush({ id: 603, title, originalTitle });
+      await opened.harness.fixture.whenStable();
+      return opened.root.querySelector('.md-original')?.textContent?.trim();
+    }
+
+    it('should show the original title when it differs from the title', async () => {
+      expect(await showTitles('Matrix', 'The Matrix')).toBe('The Matrix');
+    });
+
+    it('should hide the original title when it equals the title', async () => {
+      expect(await showTitles('Matrix', 'Matrix')).toBeUndefined();
+    });
+  });
 });
