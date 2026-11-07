@@ -140,4 +140,12 @@ describe('Poster', () => {
 
     expect(query(poster, '.zb-poster-frame a').getAttribute('href')).toBe('/film/603');
   });
+
+  it('should stack the link over the caption by drawing it last in the frame', async () => {
+    const poster = await render({ title: 'Matrix', link: '/film/603' });
+
+    expect(query(poster, '.zb-poster-frame').lastElementChild?.matches('a.zb-poster-link')).toBe(
+      true,
+    );
+  });
 });
