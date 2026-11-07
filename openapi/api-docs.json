@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "zbar-showtime-backend",
-    "version": "f6f7356"
+    "version": "v0"
   },
   "servers": [
     {
@@ -459,6 +459,59 @@
       }
     },
     "/watchlist/series/{tmdbId}": {
+      "delete": {
+        "tags": [
+          "watchlist-controller"
+        ],
+        "summary": "Remove a series from the watchlist of the token owner",
+        "operationId": "removeSeries",
+        "parameters": [
+          {
+            "name": "tmdbId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      },
       "patch": {
         "tags": [
           "watchlist-controller"
@@ -531,6 +584,59 @@
       }
     },
     "/watchlist/movies/{tmdbId}": {
+      "delete": {
+        "tags": [
+          "watchlist-controller"
+        ],
+        "summary": "Remove a movie from the watchlist of the token owner",
+        "operationId": "removeMovie",
+        "parameters": [
+          {
+            "name": "tmdbId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      },
       "patch": {
         "tags": [
           "watchlist-controller"
@@ -565,6 +671,139 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/WatchlistMovieResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series/{tmdbId}": {
+      "get": {
+        "tags": [
+          "series-controller"
+        ],
+        "summary": "Get the detail of a series",
+        "operationId": "detail",
+        "parameters": [
+          {
+            "name": "tmdbId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series/{tmdbId}/seasons/{seasonNumber}": {
+      "get": {
+        "tags": [
+          "series-controller"
+        ],
+        "summary": "Get the episodes of a season",
+        "operationId": "season",
+        "parameters": [
+          {
+            "name": "tmdbId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "seasonNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeasonDetailResponse"
                 }
               }
             }
@@ -644,6 +883,68 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/movies/{tmdbId}": {
+      "get": {
+        "tags": [
+          "movie-controller"
+        ],
+        "summary": "Get the detail of a movie",
+        "operationId": "detail_1",
+        "parameters": [
+          {
+            "name": "tmdbId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovieDetailResponse"
                 }
               }
             }
@@ -867,6 +1168,192 @@
           }
         }
       },
+      "Cast": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "character": {
+            "type": "string"
+          },
+          "photoUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "Crew": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "jobs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Season": {
+        "type": "object",
+        "properties": {
+          "seasonNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "episodeCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "airDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "posterUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "SeriesDetailResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "originalName": {
+            "type": "string"
+          },
+          "posterUrl": {
+            "type": "string"
+          },
+          "firstAirDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "lastAirDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "genres": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "overview": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "RETURNING",
+              "ENDED",
+              "CANCELED",
+              "IN_PRODUCTION",
+              "PLANNED",
+              "PILOT"
+            ]
+          },
+          "numberOfSeasons": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfEpisodes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "creators": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "crew": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Crew"
+            }
+          },
+          "cast": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Cast"
+            }
+          },
+          "seasons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Season"
+            }
+          },
+          "watchlistStatus": {
+            "type": "string"
+          }
+        }
+      },
+      "EpisodeResponse": {
+        "type": "object",
+        "properties": {
+          "episodeNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "overview": {
+            "type": "string"
+          },
+          "runtime": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "airDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "stillUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "SeasonDetailResponse": {
+        "type": "object",
+        "properties": {
+          "seasonNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "overview": {
+            "type": "string"
+          },
+          "airDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "posterUrl": {
+            "type": "string"
+          },
+          "episodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EpisodeResponse"
+            }
+          }
+        }
+      },
       "Result": {
         "type": "object",
         "properties": {
@@ -916,6 +1403,73 @@
             "items": {
               "$ref": "#/components/schemas/Result"
             }
+          }
+        }
+      },
+      "MovieDetailResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "originalTitle": {
+            "type": "string"
+          },
+          "posterUrl": {
+            "type": "string"
+          },
+          "releaseDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "runtime": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "genres": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "overview": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "RUMORED",
+              "PLANNED",
+              "IN_PRODUCTION",
+              "POST_PRODUCTION",
+              "RELEASED",
+              "CANCELED"
+            ]
+          },
+          "directors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "crew": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Crew"
+            }
+          },
+          "cast": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Cast"
+            }
+          },
+          "watchlistStatus": {
+            "type": "string"
           }
         }
       },
