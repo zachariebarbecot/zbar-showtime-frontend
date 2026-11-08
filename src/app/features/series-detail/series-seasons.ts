@@ -6,7 +6,6 @@ import {
   effect,
   inject,
   input,
-  output,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -148,7 +147,6 @@ export class SeriesSeasons {
   readonly tmdbId = input.required<number>();
   readonly seasons = input.required<readonly SeasonResponse[]>();
   readonly watchlisted = input(false);
-  readonly watchedChange = output<1 | -1>();
 
   private readonly api = inject(SeriesControllerService);
   private readonly watchlistApi = inject(WatchlistControllerService);
@@ -207,7 +205,6 @@ export class SeriesSeasons {
       .subscribe({
         next: () => {
           this.patch(seasonNumber, episodeNumber, { locked: false });
-          this.watchedChange.emit(watched ? 1 : -1);
         },
         error: () => {
           this.patch(seasonNumber, episodeNumber, { watched: !watched, locked: false });

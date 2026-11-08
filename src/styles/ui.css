@@ -1346,11 +1346,13 @@ body {
 .md-meta {
   margin: 0;
 }
-.md-airing {
+.md-meta-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
+  font: 500 13px/18px var(--font-mono);
+  color: var(--ink-muted);
 }
 .md-watchlist {
   align-self: flex-start;
