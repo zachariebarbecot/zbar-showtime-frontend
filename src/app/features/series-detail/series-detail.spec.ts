@@ -474,6 +474,9 @@ describe('SeriesDetail', () => {
   });
 
   describe('progress', () => {
+    const EPISODE_1 = '/watchlist/series/1396/seasons/1/episodes/1/watched';
+    const EPISODE_2 = '/watchlist/series/1396/seasons/1/episodes/2/watched';
+
     async function showProgress(series: object = { watchlistStatus: 'WATCHING' }) {
       const opened = await open();
       opened.http.expectOne('/series/1396').flush({
@@ -513,6 +516,43 @@ describe('SeriesDetail', () => {
       const { meta } = await showProgress({ watchlistStatus: undefined, ...series });
 
       expect(meta()).toBe('62 épisodes');
+    });
+
+    it('should increase the count when marking an episode succeeds', async () => {
+      const { http, checks, meta, harness } = await showProgress();
+
+      checks()[1].click();
+      await harness.fixture.whenStable();
+      expect(meta()).toBe('62 épisodes · 3 / 62 épisodes vus');
+      http.expectOne(EPISODE_2).flush(null);
+      await harness.fixture.whenStable();
+
+      expect(meta()).toBe('62 épisodes · 4 / 62 épisodes vus');
+    });
+
+    it('should decrease the count when unmarking an episode succeeds', async () => {
+      const { http, checks, meta, harness } = await showProgress();
+
+      checks()[0].click();
+      await harness.fixture.whenStable();
+      http.expectOne(EPISODE_1).flush(null);
+      await harness.fixture.whenStable();
+
+      expect(meta()).toBe('62 épisodes · 2 / 62 épisodes vus');
+    });
+
+    it.each([
+      [1, EPISODE_2],
+      [0, EPISODE_1],
+    ])('should keep the count when the update of episode %i fails', async (index, url) => {
+      const { http, checks, meta, harness } = await showProgress();
+
+      checks()[index].click();
+      await harness.fixture.whenStable();
+      http.expectOne(url).flush(null, { status: 500, statusText: 'Error' });
+      await harness.fixture.whenStable();
+
+      expect(meta()).toBe('62 épisodes · 3 / 62 épisodes vus');
     });
   });
 
