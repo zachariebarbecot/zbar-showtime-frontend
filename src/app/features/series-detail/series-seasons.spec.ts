@@ -688,6 +688,22 @@ describe('SeriesSeasons', () => {
       { episodeNumber: 4, airDate: '2999-01-01', watched: false },
     ];
 
+    describe('accessible name', () => {
+      it('should name the season and the action', async () => {
+        const { root } = await renderSeason(MIXED);
+
+        expect(button(root)?.getAttribute('aria-label')).toBe('Marquer vu : Saison 1');
+      });
+
+      it('should name the season and the state once every aired episode is watched', async () => {
+        const { root } = await renderSeason([
+          { episodeNumber: 1, airDate: '2020-01-01', watched: true },
+        ]);
+
+        expect(button(root)?.getAttribute('aria-label')).toBe('Vu : Saison 1');
+      });
+    });
+
     describe('marking the season', () => {
       it('should send a POST for each aired episode not watched, and no other request', async () => {
         const { fixture, root, http } = await renderSeason(MIXED);
