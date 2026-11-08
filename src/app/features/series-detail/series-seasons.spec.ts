@@ -752,6 +752,40 @@ describe('SeriesSeasons', () => {
       });
     });
 
+    describe('season operation in progress', () => {
+      it('should lock the button and the episodes concerned until every call is done', async () => {
+        const { fixture, root, http } = await renderSeason(MIXED);
+        expect(button(root)?.getAttribute('aria-disabled')).toBeNull();
+
+        button(root)?.click();
+        await fixture.whenStable();
+
+        expect(button(root)?.getAttribute('aria-disabled')).toBe('true');
+        expect(checks(root).map((check) => check.disabled)).toEqual([false, true, true]);
+
+        http.expectOne(watchedUrl(2)).flush(null, CREATED);
+        await fixture.whenStable();
+        expect(button(root)?.getAttribute('aria-disabled')).toBe('true');
+
+        http.expectOne(watchedUrl(3)).flush(null, CREATED);
+        await fixture.whenStable();
+        expect(button(root)?.getAttribute('aria-disabled')).toBeNull();
+        expect(checks(root).map((check) => check.disabled)).toEqual([false, false, false]);
+      });
+
+      it('should send nothing more when the button is clicked again meanwhile', async () => {
+        const { fixture, root, http } = await renderSeason(MIXED);
+        button(root)?.click();
+        await fixture.whenStable();
+        http.match(({ url }) => url.endsWith('/watched'));
+
+        button(root)?.click();
+        await fixture.whenStable();
+
+        http.expectNone(({ url }) => url.endsWith('/watched'));
+      });
+    });
+
     describe('partial failure', () => {
       const TEN = Array.from({ length: 10 }, (_, index) => ({
         episodeNumber: index + 1,
