@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
@@ -109,6 +109,7 @@ import { toSeriesDetailView } from './series-detail-view';
             [tmdbId]="tmdbId"
             [seasons]="view.seasons"
             [watchlisted]="status() !== undefined"
+            (watchedChange)="watched.update((count) => count + $event)"
           />
         }
       }
@@ -137,12 +138,13 @@ export class SeriesDetail {
   protected readonly status = computed(() =>
     this.watchlist.added() ? 'watchlist' : this.view()?.watchlist,
   );
+  protected readonly watched = linkedSignal(() => this.view()?.watchedEpisodes ?? 0);
   protected readonly meta = computed(() => {
     const view = this.view();
     const total = view?.totalEpisodes;
     const progress =
       this.status() !== undefined && total
-        ? `${view?.watchedEpisodes} / ${total} épisodes vus`
+        ? `${this.watched()} / ${total} épisodes vus`
         : undefined;
     return [view?.meta, progress].filter(Boolean).join(' · ');
   });
