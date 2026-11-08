@@ -17,6 +17,7 @@ import { Button } from '../../ui/button/button';
 import { EpisodeRow } from '../../ui/episode-row/episode-row';
 import { FormAlert } from '../../ui/form-alert/form-alert';
 import { Season } from '../../ui/season/season';
+import { StatusButton } from '../../ui/status-button/status-button';
 import { plural } from './series-detail-view';
 
 interface Episode {
@@ -87,7 +88,7 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-series-seasons',
-  imports: [Button, EpisodeRow, FormAlert, Season],
+  imports: [Button, EpisodeRow, FormAlert, Season, StatusButton],
   template: `
     @if (sorted().length) {
       <section class="md-seasons">
@@ -104,6 +105,15 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
               [expanded]="first"
               (expandedChange)="onExpandedChange($event, season.number)"
             >
+              @if (watchlisted()) {
+                <app-status-button
+                  seasonAction
+                  kind="seen"
+                  size="sm"
+                  [controlled]="true"
+                  (add)="markSeason(season.number)"
+                />
+              }
               @let state = episodes()[season.number];
               @if (state === 'failed') {
                 <app-form-alert message="Impossible de charger les épisodes de cette saison." />
@@ -198,6 +208,14 @@ export class SeriesSeasons {
       seen: state.episodes.filter(({ watched }) => watched).length,
       total: state.episodes.length,
     };
+  }
+
+  protected markSeason(seasonNumber: number) {
+    const state = this.episodes()[seasonNumber];
+    if (!state || state === 'failed') return;
+    for (const { number, aired, watched } of state.episodes) {
+      if (aired && !watched) this.toggle(seasonNumber, number, true);
+    }
   }
 
   protected retry(seasonNumber: number) {
