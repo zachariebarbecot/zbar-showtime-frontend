@@ -69,4 +69,17 @@ describe('EpisodeRow', () => {
     await fixture.whenStable();
     expect(check.getAttribute('aria-checked')).toBe('false');
   });
+
+  it('should disable the checkbox while the row is locked', async () => {
+    const { fixture, check } = await render();
+    expect(check.disabled).toBe(false);
+
+    fixture.componentRef.setInput('locked', true);
+    await fixture.whenStable();
+    expect(check.disabled).toBe(true);
+
+    fixture.componentRef.setInput('locked', false);
+    await fixture.whenStable();
+    expect(check.disabled).toBe(false);
+  });
 });

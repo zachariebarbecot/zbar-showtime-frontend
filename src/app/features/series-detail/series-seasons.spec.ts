@@ -7,7 +7,7 @@ import { provideApiConfiguration } from '../../api/api-configuration';
 import { SeriesSeasons } from './series-seasons';
 
 describe('SeriesSeasons', () => {
-  async function render(seasons?: readonly Season[]) {
+  async function render(seasons?: readonly Season[], watchlisted = false) {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
@@ -19,6 +19,7 @@ describe('SeriesSeasons', () => {
     const fixture = TestBed.createComponent(SeriesSeasons);
     fixture.componentRef.setInput('tmdbId', 1396);
     fixture.componentRef.setInput('seasons', seasons);
+    fixture.componentRef.setInput('watchlisted', watchlisted);
     await fixture.whenStable();
     return {
       fixture,
@@ -353,6 +354,166 @@ describe('SeriesSeasons', () => {
 
         expect(root.querySelectorAll('app-episode-row')).toHaveLength(1);
         expect(retry(root)).toBeUndefined();
+      });
+    });
+  });
+
+  describe('watched', () => {
+    const SEASONS = [{ seasonNumber: 1, name: 'Saison 1' }];
+    const EPISODES = [
+      { episodeNumber: 1, name: 'Un', watched: true },
+      { episodeNumber: 2, name: 'Deux', watched: false },
+      { episodeNumber: 3, name: 'Trois' },
+    ];
+
+    async function renderWatchlisted(watchlisted = true) {
+      const view = await render(SEASONS, watchlisted);
+      view.http.expectOne('/series/1396/seasons/1').flush({ seasonNumber: 1, episodes: EPISODES });
+      await view.fixture.whenStable();
+      return view;
+    }
+
+    const checks = (root: HTMLElement) => [
+      ...root.querySelectorAll<HTMLButtonElement>('app-episode-row [role="checkbox"]'),
+    ];
+
+    describe('check state', () => {
+      it('should check the episodes watched and leave the others unchecked', async () => {
+        const { root } = await renderWatchlisted();
+
+        expect(checks(root).map((check) => check.getAttribute('aria-checked'))).toEqual([
+          'true',
+          'false',
+          'false',
+        ]);
+      });
+
+      it('should show no checkbox when the series is not in the watchlist', async () => {
+        const { root } = await renderWatchlisted(false);
+
+        expect(root.querySelectorAll('app-episode-row')).toHaveLength(3);
+        expect(checks(root)).toHaveLength(0);
+      });
+
+      it('should show the checkboxes once the series joins the watchlist, without reload', async () => {
+        const { fixture, root, http } = await renderWatchlisted(false);
+
+        fixture.componentRef.setInput('watchlisted', true);
+        await fixture.whenStable();
+
+        expect(checks(root).map((check) => check.getAttribute('aria-checked'))).toEqual([
+          'true',
+          'false',
+          'false',
+        ]);
+        http.expectNone(() => true);
+      });
+    });
+
+    describe('failure', () => {
+      const ALERT = "Impossible de mettre à jour l'épisode. Réessaie dans un instant.";
+      const EPISODE_1 = '/watchlist/series/1396/seasons/1/episodes/1/watched';
+      const EPISODE_2 = '/watchlist/series/1396/seasons/1/episodes/2/watched';
+      const alert = (root: HTMLElement) => root.querySelector('app-season [role="alert"]');
+
+      it.each([404, 400, 500])(
+        'should put a failed POST (%s) back, unlock the row and alert on the season',
+        async (status) => {
+          const { fixture, root, http } = await renderWatchlisted();
+          checks(root)[1].click();
+          await fixture.whenStable();
+
+          http.expectOne(EPISODE_2).flush(null, { status, statusText: 'Error' });
+          await fixture.whenStable();
+
+          expect(checks(root)[1].getAttribute('aria-checked')).toBe('false');
+          expect(checks(root)[1].disabled).toBe(false);
+          expect(alert(root)?.textContent).toContain(ALERT);
+        },
+      );
+
+      it.each([404, 400, 500])(
+        'should put a failed DELETE (%s) back, unlock the row and alert on the season',
+        async (status) => {
+          const { fixture, root, http } = await renderWatchlisted();
+          checks(root)[0].click();
+          await fixture.whenStable();
+
+          http.expectOne(EPISODE_1).flush(null, { status, statusText: 'Error' });
+          await fixture.whenStable();
+
+          expect(checks(root)[0].getAttribute('aria-checked')).toBe('true');
+          expect(checks(root)[0].disabled).toBe(false);
+          expect(alert(root)?.textContent).toContain(ALERT);
+        },
+      );
+
+      it('should clear the alert when a later update starts', async () => {
+        const { fixture, root, http } = await renderWatchlisted();
+        checks(root)[1].click();
+        await fixture.whenStable();
+        http.expectOne(EPISODE_2).flush(null, { status: 500, statusText: 'Error' });
+        await fixture.whenStable();
+
+        checks(root)[1].click();
+        await fixture.whenStable();
+
+        expect(alert(root)).toBeNull();
+      });
+    });
+
+    describe('unmarking', () => {
+      const EPISODE_1 = '/watchlist/series/1396/seasons/1/episodes/1/watched';
+
+      it('should uncheck the box at once, lock the row and send a DELETE', async () => {
+        const { fixture, root, http } = await renderWatchlisted();
+
+        checks(root)[0].click();
+        await fixture.whenStable();
+
+        expect(checks(root)[0].getAttribute('aria-checked')).toBe('false');
+        expect(checks(root)[0].disabled).toBe(true);
+        expect(http.expectOne(EPISODE_1).request.method).toBe('DELETE');
+      });
+
+      it('should unlock the row and keep the box unchecked once the DELETE succeeds', async () => {
+        const { fixture, root, http } = await renderWatchlisted();
+        checks(root)[0].click();
+        await fixture.whenStable();
+
+        http.expectOne(EPISODE_1).flush(null, { status: 204, statusText: 'No Content' });
+        await fixture.whenStable();
+
+        expect(checks(root)[0].getAttribute('aria-checked')).toBe('false');
+        expect(checks(root)[0].disabled).toBe(false);
+      });
+    });
+
+    describe('marking', () => {
+      const EPISODE_2 = '/watchlist/series/1396/seasons/1/episodes/2/watched';
+
+      it('should check the box at once, lock the row and send a POST', async () => {
+        const { fixture, root, http } = await renderWatchlisted();
+
+        checks(root)[1].click();
+        await fixture.whenStable();
+
+        expect(checks(root)[1].getAttribute('aria-checked')).toBe('true');
+        expect(checks(root)[1].disabled).toBe(true);
+        expect(checks(root)[0].disabled).toBe(false);
+        expect(http.expectOne(EPISODE_2).request.method).toBe('POST');
+      });
+
+      it('should unlock the row and keep the box checked once the POST succeeds', async () => {
+        const { fixture, root, http } = await renderWatchlisted();
+        checks(root)[1].click();
+        await fixture.whenStable();
+
+        http.expectOne(EPISODE_2).flush(null, { status: 201, statusText: 'Created' });
+        await fixture.whenStable();
+
+        expect(checks(root)[1].getAttribute('aria-checked')).toBe('true');
+        expect(checks(root)[1].disabled).toBe(false);
       });
     });
   });

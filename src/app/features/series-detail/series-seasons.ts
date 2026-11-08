@@ -11,6 +11,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Season as SeasonResponse } from '../../api/models/season';
 import { SeasonDetailResponse } from '../../api/models/season-detail-response';
+import { WatchlistControllerService } from '../../api/services/watchlist-controller.service';
 import { SeriesControllerService } from '../../api/services/series-controller.service';
 import { Button } from '../../ui/button/button';
 import { EpisodeRow } from '../../ui/episode-row/episode-row';
@@ -25,9 +26,12 @@ interface Episode {
   overview?: string;
   airDate?: string;
   still?: string | null;
+  watched: boolean;
+  locked: boolean;
 }
 
 interface Loaded {
+  updateFailed: boolean;
   overview?: string;
   episodes: readonly Episode[];
 }
@@ -53,8 +57,9 @@ const toLoaded = ({ overview, episodes = [] }: SeasonDetailResponse): Loaded => 
   const hasStill = episodes.some(({ stillUrl }) => stillUrl);
   return {
     overview,
+    updateFailed: false,
     episodes: episodes
-      .flatMap(({ episodeNumber, name, runtime, overview, airDate, stillUrl }) =>
+      .flatMap(({ episodeNumber, name, runtime, overview, airDate, stillUrl, watched }) =>
         episodeNumber === undefined
           ? []
           : [
@@ -65,6 +70,8 @@ const toLoaded = ({ overview, episodes = [] }: SeasonDetailResponse): Loaded => 
                 overview,
                 airDate: airDate && formatDate(airDate),
                 still: toStill(stillUrl, hasStill),
+                watched: watched ?? false,
+                locked: false,
               },
             ],
       )
@@ -101,6 +108,11 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
                 @if (state.overview) {
                   <p class="zb-season-overview">{{ state.overview }}</p>
                 }
+                @if (state.updateFailed) {
+                  <app-form-alert
+                    message="Impossible de mettre à jour l'épisode. Réessaie dans un instant."
+                  />
+                }
                 @for (episode of state.episodes; track episode.number) {
                   <app-episode-row
                     [season]="season.number"
@@ -110,7 +122,10 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
                     [still]="episode.still"
                     [overview]="episode.overview"
                     [airDate]="episode.airDate"
-                    [showCheck]="false"
+                    [showCheck]="watchlisted()"
+                    [seen]="episode.watched"
+                    [locked]="episode.locked"
+                    (seenChange)="toggle(season.number, episode.number, $event)"
                   />
                 } @empty {
                   <p>Aucun épisode pour cette saison</p>
@@ -128,8 +143,10 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
 export class SeriesSeasons {
   readonly tmdbId = input.required<number>();
   readonly seasons = input.required<readonly SeasonResponse[]>();
+  readonly watchlisted = input(false);
 
   private readonly api = inject(SeriesControllerService);
+  private readonly watchlistApi = inject(WatchlistControllerService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly requested = new Set<number>();
 
@@ -171,6 +188,48 @@ export class SeriesSeasons {
   protected retry(seasonNumber: number) {
     this.setState(seasonNumber, undefined);
     this.fetch(seasonNumber);
+  }
+
+  protected toggle(seasonNumber: number, episodeNumber: number, watched: boolean) {
+    this.patchSeason(seasonNumber, { updateFailed: false });
+    this.patch(seasonNumber, episodeNumber, { watched, locked: true });
+    const params = { tmdbId: this.tmdbId(), seasonNumber, episodeNumber };
+    (watched
+      ? this.watchlistApi.markEpisodeWatched(params)
+      : this.watchlistApi.unmarkEpisodeWatched(params)
+    )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => this.patch(seasonNumber, episodeNumber, { locked: false }),
+        error: () => {
+          this.patch(seasonNumber, episodeNumber, { watched: !watched, locked: false });
+          this.patchSeason(seasonNumber, { updateFailed: true });
+        },
+      });
+  }
+
+  private patch(seasonNumber: number, episodeNumber: number, change: Partial<Episode>) {
+    this.episodes.update((all) => {
+      const state = all[seasonNumber];
+      if (!state || state === 'failed') return all;
+      return {
+        ...all,
+        [seasonNumber]: {
+          ...state,
+          episodes: state.episodes.map((episode) =>
+            episode.number === episodeNumber ? { ...episode, ...change } : episode,
+          ),
+        },
+      };
+    });
+  }
+
+  private patchSeason(seasonNumber: number, change: Partial<Loaded>) {
+    this.episodes.update((all) => {
+      const state = all[seasonNumber];
+      if (!state || state === 'failed') return all;
+      return { ...all, [seasonNumber]: { ...state, ...change } };
+    });
   }
 
   private load(seasonNumber: number) {

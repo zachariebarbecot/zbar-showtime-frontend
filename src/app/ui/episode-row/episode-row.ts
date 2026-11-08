@@ -32,6 +32,7 @@ import { Icon } from '../icon/icon';
           type="button"
           role="checkbox"
           class="zb-check"
+          [disabled]="locked()"
           [attr.aria-checked]="seen()"
           [attr.aria-label]="(seen() ? 'Vu : ' : 'Marquer vu : ') + code()"
           (click)="seen.set(!seen())"
@@ -52,6 +53,7 @@ export class EpisodeRow {
   readonly airDate = input<string>();
   readonly overview = input<string>();
   readonly showCheck = input(true);
+  readonly locked = input(false);
   readonly seen = model(false);
 
   protected readonly meta = computed(() =>

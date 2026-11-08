@@ -105,7 +105,11 @@ import { toSeriesDetailView } from './series-detail-view';
         <app-people-section title="Création" [names]="view.creators" />
         <app-cast-row [cast]="view.cast" />
         @if (tmdbId(); as tmdbId) {
-          <app-series-seasons [tmdbId]="tmdbId" [seasons]="view.seasons" />
+          <app-series-seasons
+            [tmdbId]="tmdbId"
+            [seasons]="view.seasons"
+            [watchlisted]="status() !== undefined"
+          />
         }
       }
     </main>
