@@ -517,5 +517,52 @@ describe('SeriesDetail', () => {
         expect(root.textContent).not.toContain('Saisons');
       },
     );
+
+    describe('episode checkboxes', () => {
+      async function showEpisodes(watchlistStatus?: string) {
+        const opened = await open();
+        opened.http.expectOne('/series/1396').flush({
+          id: 1396,
+          name: 'Breaking Bad',
+          watchlistStatus,
+          seasons: [{ seasonNumber: 1, name: 'Saison 1' }],
+        });
+        await opened.harness.fixture.whenStable();
+        opened.http.expectOne('/series/1396/seasons/1').flush({
+          seasonNumber: 1,
+          episodes: [{ episodeNumber: 1, name: 'Pilote', watched: true }],
+        });
+        await opened.harness.fixture.whenStable();
+        return opened;
+      }
+
+      const checkbox = (root: HTMLElement) =>
+        root.querySelector('app-episode-row [role="checkbox"]');
+
+      it('should show the checkboxes of a series in the watchlist', async () => {
+        const { root } = await showEpisodes('WATCHING');
+
+        expect(checkbox(root)?.getAttribute('aria-checked')).toBe('true');
+      });
+
+      it('should show no checkbox, nor call, for a series out of the watchlist', async () => {
+        const { root, http } = await showEpisodes();
+
+        expect(checkbox(root)).toBeNull();
+        http.verify();
+      });
+
+      it('should show the checkboxes once the series is added, without reload', async () => {
+        const { harness, http, root } = await showEpisodes();
+
+        root.querySelector<HTMLButtonElement>('.md-info app-status-button button')?.click();
+        await harness.fixture.whenStable();
+        http.expectOne('/watchlist/series').flush(null);
+        await harness.fixture.whenStable();
+
+        expect(checkbox(root)).not.toBeNull();
+        http.verify();
+      });
+    });
   });
 });
