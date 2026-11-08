@@ -680,8 +680,6 @@ describe('SeriesSeasons', () => {
     ];
     const checked = (root: HTMLElement) =>
       checks(root).map((check) => check.getAttribute('aria-checked') === 'true');
-    const requests = (http: HttpTestingController) =>
-      http.match(({ url }) => url.endsWith('/watched')).map(({ request }) => request);
 
     const MIXED = [
       { episodeNumber: 1, airDate: '2020-01-01', watched: true },
@@ -714,6 +712,43 @@ describe('SeriesSeasons', () => {
         await fixture.whenStable();
 
         expect(checked(root)).toEqual([true, true, true]);
+      });
+    });
+
+    describe('unmarking the season', () => {
+      const ALL_SEEN = [
+        { episodeNumber: 1, airDate: '2020-01-01', watched: true },
+        { episodeNumber: 2, airDate: '2020-01-01', watched: true },
+        { episodeNumber: 3, airDate: '2999-01-01', watched: false },
+      ];
+
+      it('should be active when every aired episode is watched', async () => {
+        const { root } = await renderSeason(ALL_SEEN);
+
+        expect(button(root)?.getAttribute('aria-pressed')).toBe('true');
+        expect(button(root)?.textContent?.trim()).toBe('Vu');
+      });
+
+      it('should not be active while an aired episode is not watched', async () => {
+        const { root } = await renderSeason(MIXED);
+
+        expect(button(root)?.getAttribute('aria-pressed')).toBe('false');
+      });
+
+      it('should send a DELETE for each watched episode and uncheck them', async () => {
+        const { fixture, root, http } = await renderSeason(ALL_SEEN);
+
+        button(root)?.click();
+        await fixture.whenStable();
+        const sent = http.match(({ url }) => url.endsWith('/watched'));
+        for (const call of sent) call.flush(null, { status: 204, statusText: 'No Content' });
+        await fixture.whenStable();
+
+        expect(sent.map(({ request }) => [request.method, request.url])).toEqual([
+          ['DELETE', watchedUrl(1)],
+          ['DELETE', watchedUrl(2)],
+        ]);
+        expect(checked(root).slice(0, 2)).toEqual([false, false]);
       });
     });
 
