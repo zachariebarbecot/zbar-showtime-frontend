@@ -473,6 +473,49 @@ describe('SeriesDetail', () => {
     });
   });
 
+  describe('progress', () => {
+    async function showProgress(series: object = { watchlistStatus: 'WATCHING' }) {
+      const opened = await open();
+      opened.http.expectOne('/series/1396').flush({
+        id: 1396,
+        name: 'Breaking Bad',
+        numberOfEpisodes: 62,
+        watchedEpisodes: 3,
+        totalEpisodes: 62,
+        seasons: [{ seasonNumber: 1, name: 'Saison 1' }],
+        ...series,
+      });
+      await opened.harness.fixture.whenStable();
+      opened.http.expectOne('/series/1396/seasons/1').flush({
+        seasonNumber: 1,
+        episodes: [
+          { episodeNumber: 1, name: 'Pilote', watched: true },
+          { episodeNumber: 2, name: 'Suite', watched: false },
+        ],
+      });
+      await opened.harness.fixture.whenStable();
+      const checks = () =>
+        opened.root.querySelectorAll<HTMLElement>('app-episode-row [role="checkbox"]');
+      const meta = () => opened.root.querySelector('.md-meta')?.textContent?.trim();
+      return { ...opened, checks, meta };
+    }
+
+    it('should show the watched count after the episode count for a series in the watchlist', async () => {
+      const { meta } = await showProgress();
+
+      expect(meta()).toBe('62 épisodes · 3 / 62 épisodes vus');
+    });
+
+    it.each([
+      ['out of the watchlist', {}],
+      ['without episodes', { watchlistStatus: 'WATCHING', totalEpisodes: 0 }],
+    ])('should not show the progress for a series %s', async (_, series) => {
+      const { meta } = await showProgress({ watchlistStatus: undefined, ...series });
+
+      expect(meta()).toBe('62 épisodes');
+    });
+  });
+
   describe('back link', () => {
     it('should go back to the search page', async () => {
       const { harness, http, root, router } = await open();
