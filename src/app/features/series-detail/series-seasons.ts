@@ -26,6 +26,7 @@ interface Episode {
   runtime?: number;
   overview?: string;
   airDate?: string;
+  aired: boolean;
   still?: string | null;
   watched: boolean;
   locked: boolean;
@@ -55,6 +56,7 @@ const toStill = (stillUrl: string | undefined, seasonHasStill: boolean) => {
 };
 
 const toLoaded = ({ overview, episodes = [] }: SeasonDetailResponse): Loaded => {
+  const today = new Date().toISOString().slice(0, 10);
   const hasStill = episodes.some(({ stillUrl }) => stillUrl);
   return {
     overview,
@@ -70,6 +72,7 @@ const toLoaded = ({ overview, episodes = [] }: SeasonDetailResponse): Loaded => 
                 runtime,
                 overview,
                 airDate: airDate && formatDate(airDate),
+                aired: !!airDate && airDate <= today,
                 still: toStill(stillUrl, hasStill),
                 watched: watched ?? false,
                 locked: false,
@@ -123,7 +126,7 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
                     [still]="episode.still"
                     [overview]="episode.overview"
                     [airDate]="episode.airDate"
-                    [showCheck]="watchlisted()"
+                    [showCheck]="watchlisted() && episode.aired"
                     [seen]="episode.watched"
                     [locked]="episode.locked"
                     (seenChange)="toggle(season.number, episode.number, $event)"

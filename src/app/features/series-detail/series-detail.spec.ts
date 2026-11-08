@@ -492,8 +492,8 @@ describe('SeriesDetail', () => {
       opened.http.expectOne('/series/1396/seasons/1').flush({
         seasonNumber: 1,
         episodes: [
-          { episodeNumber: 1, name: 'Pilote', watched: true },
-          { episodeNumber: 2, name: 'Suite', watched: false },
+          { episodeNumber: 1, name: 'Pilote', watched: true, airDate: '2008-01-20' },
+          { episodeNumber: 2, name: 'Suite', watched: false, airDate: '2008-01-27' },
         ],
       });
       await opened.harness.fixture.whenStable();
@@ -613,7 +613,7 @@ describe('SeriesDetail', () => {
         await opened.harness.fixture.whenStable();
         opened.http.expectOne('/series/1396/seasons/1').flush({
           seasonNumber: 1,
-          episodes: [{ episodeNumber: 1, name: 'Pilote', watched: true }],
+          episodes: [{ episodeNumber: 1, name: 'Pilote', watched: true, airDate: '2008-01-20' }],
         });
         await opened.harness.fixture.whenStable();
         return opened;

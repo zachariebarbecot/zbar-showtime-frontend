@@ -807,6 +807,10 @@ body {
   border-color: var(--seen);
   color: var(--on-seen);
 }
+.zb-check:disabled {
+  opacity: 0.45;
+  cursor: wait;
+}
 .zb-check svg {
   width: 16px;
   height: 16px;

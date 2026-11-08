@@ -361,9 +361,9 @@ describe('SeriesSeasons', () => {
   describe('watched', () => {
     const SEASONS = [{ seasonNumber: 1, name: 'Saison 1' }];
     const EPISODES = [
-      { episodeNumber: 1, name: 'Un', watched: true },
-      { episodeNumber: 2, name: 'Deux', watched: false },
-      { episodeNumber: 3, name: 'Trois' },
+      { episodeNumber: 1, name: 'Un', watched: true, airDate: '2025-01-17' },
+      { episodeNumber: 2, name: 'Deux', watched: false, airDate: '2025-01-24' },
+      { episodeNumber: 3, name: 'Trois', airDate: '2025-01-31' },
     ];
 
     async function renderWatchlisted(watchlisted = true) {
@@ -407,6 +407,46 @@ describe('SeriesSeasons', () => {
           'false',
         ]);
         http.expectNone(() => true);
+      });
+    });
+
+    describe('airing', () => {
+      const TODAY = '2026-11-08';
+
+      afterEach(() => vi.useRealTimers());
+
+      async function renderAt(episodes: object[]) {
+        vi.useFakeTimers({
+          toFake: ['Date'],
+          now: new Date(`${TODAY}T10:00:00Z`),
+        });
+        const view = await render(SEASONS, true);
+        view.http.expectOne('/series/1396/seasons/1').flush({ seasonNumber: 1, episodes });
+        await view.fixture.whenStable();
+        return view.root;
+      }
+
+      it('should show the date and no checkbox for an episode not aired yet', async () => {
+        const root = await renderAt([{ episodeNumber: 1, name: 'Futur', airDate: '2026-11-09' }]);
+
+        expect(checks(root)).toHaveLength(0);
+        expect(root.textContent).toContain('9 nov. 2026');
+      });
+
+      it('should show no checkbox for an episode without air date', async () => {
+        const root = await renderAt([{ episodeNumber: 1, name: 'Sans date' }]);
+
+        expect(root.querySelectorAll('app-episode-row')).toHaveLength(1);
+        expect(checks(root)).toHaveLength(0);
+      });
+
+      it('should show the checkbox for an episode aired today or before', async () => {
+        const root = await renderAt([
+          { episodeNumber: 1, name: 'Aujourdhui', airDate: TODAY },
+          { episodeNumber: 2, name: 'Hier', airDate: '2026-11-07' },
+        ]);
+
+        expect(checks(root)).toHaveLength(2);
       });
     });
 
