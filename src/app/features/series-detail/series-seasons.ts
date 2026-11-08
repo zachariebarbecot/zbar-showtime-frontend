@@ -105,7 +105,7 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
               [expanded]="first"
               (expandedChange)="onExpandedChange($event, season.number)"
             >
-              @if (watchlisted()) {
+              @if (watchlisted() && airedEpisodes(season.number).length) {
                 <app-status-button
                   seasonAction
                   kind="seen"
@@ -212,6 +212,12 @@ export class SeriesSeasons {
     };
   }
 
+  protected airedEpisodes(seasonNumber: number) {
+    const state = this.episodes()[seasonNumber];
+    if (!state || state === 'failed') return [];
+    return state.episodes.filter(({ aired }) => aired);
+  }
+
   protected allSeen(seasonNumber: number) {
     return this.airedEpisodes(seasonNumber).every(({ watched }) => watched);
   }
@@ -250,12 +256,6 @@ export class SeriesSeasons {
           this.patchSeason(seasonNumber, { updateFailed: true });
         },
       });
-  }
-
-  private airedEpisodes(seasonNumber: number) {
-    const state = this.episodes()[seasonNumber];
-    if (!state || state === 'failed') return [];
-    return state.episodes.filter(({ aired }) => aired);
   }
 
   private patch(seasonNumber: number, episodeNumber: number, change: Partial<Episode>) {
