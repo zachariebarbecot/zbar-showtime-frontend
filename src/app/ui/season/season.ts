@@ -28,13 +28,13 @@ let nextId = 0;
             <span class="zb-meta zb-season-info">{{ info() }}</span>
           </span>
         </button>
-        @if (progress() !== null) {
+        @if (percent() !== null) {
           <span class="zb-meta">{{ seen() }}/{{ total() }}</span>
         }
       </div>
-      @if (progress() !== null) {
+      @if (percent() !== null) {
         <div class="zb-season-bar" aria-hidden="true">
-          <span [style.width.%]="progress()"></span>
+          <span [style.width.%]="percent()"></span>
         </div>
       }
       <div class="zb-season-body" [id]="bodyId" [hidden]="!expanded()">
@@ -52,7 +52,7 @@ export class Season {
   readonly total = input<number | null>(null);
   readonly expanded = model(false);
 
-  protected readonly progress = computed(() => {
+  protected readonly percent = computed(() => {
     const [seen, total] = [this.seen(), this.total()];
     if (seen === null || total === null) return null;
     return total ? (seen / total) * 100 : 0;
