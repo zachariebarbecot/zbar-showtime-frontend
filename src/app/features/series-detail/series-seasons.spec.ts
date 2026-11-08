@@ -7,7 +7,7 @@ import { provideApiConfiguration } from '../../api/api-configuration';
 import { SeriesSeasons } from './series-seasons';
 
 describe('SeriesSeasons', () => {
-  async function render(seasons?: readonly Season[]) {
+  async function render(seasons?: readonly Season[], watchlisted = false) {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
@@ -19,6 +19,7 @@ describe('SeriesSeasons', () => {
     const fixture = TestBed.createComponent(SeriesSeasons);
     fixture.componentRef.setInput('tmdbId', 1396);
     fixture.componentRef.setInput('seasons', seasons);
+    fixture.componentRef.setInput('watchlisted', watchlisted);
     await fixture.whenStable();
     return {
       fixture,
@@ -353,6 +354,59 @@ describe('SeriesSeasons', () => {
 
         expect(root.querySelectorAll('app-episode-row')).toHaveLength(1);
         expect(retry(root)).toBeUndefined();
+      });
+    });
+  });
+
+  describe('watched', () => {
+    const SEASONS = [{ seasonNumber: 1, name: 'Saison 1' }];
+    const EPISODES = [
+      { episodeNumber: 1, name: 'Un', watched: true },
+      { episodeNumber: 2, name: 'Deux', watched: false },
+      { episodeNumber: 3, name: 'Trois' },
+    ];
+
+    async function renderWatchlisted(watchlisted = true) {
+      const view = await render(SEASONS, watchlisted);
+      view.http.expectOne('/series/1396/seasons/1').flush({ seasonNumber: 1, episodes: EPISODES });
+      await view.fixture.whenStable();
+      return view;
+    }
+
+    const checks = (root: HTMLElement) => [
+      ...root.querySelectorAll<HTMLButtonElement>('app-episode-row [role="checkbox"]'),
+    ];
+
+    describe('check state', () => {
+      it('should check the episodes watched and leave the others unchecked', async () => {
+        const { root } = await renderWatchlisted();
+
+        expect(checks(root).map((check) => check.getAttribute('aria-checked'))).toEqual([
+          'true',
+          'false',
+          'false',
+        ]);
+      });
+
+      it('should show no checkbox when the series is not in the watchlist', async () => {
+        const { root } = await renderWatchlisted(false);
+
+        expect(root.querySelectorAll('app-episode-row')).toHaveLength(3);
+        expect(checks(root)).toHaveLength(0);
+      });
+
+      it('should show the checkboxes once the series joins the watchlist, without reload', async () => {
+        const { fixture, root, http } = await renderWatchlisted(false);
+
+        fixture.componentRef.setInput('watchlisted', true);
+        await fixture.whenStable();
+
+        expect(checks(root).map((check) => check.getAttribute('aria-checked'))).toEqual([
+          'true',
+          'false',
+          'false',
+        ]);
+        http.expectNone(() => true);
       });
     });
   });

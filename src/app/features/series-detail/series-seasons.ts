@@ -128,6 +128,7 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
 export class SeriesSeasons {
   readonly tmdbId = input.required<number>();
   readonly seasons = input.required<readonly SeasonResponse[]>();
+  readonly watchlisted = input(false);
 
   private readonly api = inject(SeriesControllerService);
   private readonly destroyRef = inject(DestroyRef);
