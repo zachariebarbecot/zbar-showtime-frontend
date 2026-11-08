@@ -25,6 +25,7 @@ interface Episode {
   overview?: string;
   airDate?: string;
   still?: string | null;
+  watched: boolean;
 }
 
 interface Loaded {
@@ -54,7 +55,7 @@ const toLoaded = ({ overview, episodes = [] }: SeasonDetailResponse): Loaded => 
   return {
     overview,
     episodes: episodes
-      .flatMap(({ episodeNumber, name, runtime, overview, airDate, stillUrl }) =>
+      .flatMap(({ episodeNumber, name, runtime, overview, airDate, stillUrl, watched }) =>
         episodeNumber === undefined
           ? []
           : [
@@ -65,6 +66,7 @@ const toLoaded = ({ overview, episodes = [] }: SeasonDetailResponse): Loaded => 
                 overview,
                 airDate: airDate && formatDate(airDate),
                 still: toStill(stillUrl, hasStill),
+                watched: watched ?? false,
               },
             ],
       )
@@ -110,7 +112,8 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
                     [still]="episode.still"
                     [overview]="episode.overview"
                     [airDate]="episode.airDate"
-                    [showCheck]="false"
+                    [showCheck]="watchlisted()"
+                    [seen]="episode.watched"
                   />
                 } @empty {
                   <p>Aucun épisode pour cette saison</p>
