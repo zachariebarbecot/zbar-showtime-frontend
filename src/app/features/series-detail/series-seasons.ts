@@ -96,6 +96,8 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
         <div class="md-seasons-list">
           @for (season of sorted(); track season.number; let first = $first) {
             @let progress = progressOf(season.number);
+            @let aired = airedEpisodes(season.number);
+            @let allSeen = isAllSeen(aired);
             <app-season
               [title]="season.title"
               [info]="season.info"
@@ -105,15 +107,15 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
               [expanded]="first"
               (expandedChange)="onExpandedChange($event, season.number)"
             >
-              @if (watchlisted() && airedEpisodes(season.number).length) {
+              @if (watchlisted() && aired.length) {
                 <app-status-button
                   seasonAction
                   kind="seen"
                   size="sm"
                   [controlled]="true"
-                  [active]="allSeen(season.number)"
-                  [ariaLabel]="(allSeen(season.number) ? 'Vu : ' : 'Marquer vu : ') + season.title"
-                  [locked]="isUpdating(season.number)"
+                  [active]="allSeen"
+                  [ariaLabel]="(allSeen ? 'Vu : ' : 'Marquer vu : ') + season.title"
+                  [locked]="isUpdating(aired)"
                   (add)="markSeason(season.number)"
                 />
               }
@@ -204,9 +206,14 @@ export class SeriesSeasons {
     if (expanded) this.load(seasonNumber);
   }
 
-  protected progressOf(seasonNumber: number) {
+  private loaded(seasonNumber: number) {
     const state = this.episodes()[seasonNumber];
-    if (!this.watchlisted() || !state || state === 'failed') return undefined;
+    return state === 'failed' ? undefined : state;
+  }
+
+  protected progressOf(seasonNumber: number) {
+    const state = this.loaded(seasonNumber);
+    if (!this.watchlisted() || !state) return undefined;
     return {
       seen: state.episodes.filter(({ watched }) => watched).length,
       total: state.episodes.length,
@@ -214,22 +221,21 @@ export class SeriesSeasons {
   }
 
   protected airedEpisodes(seasonNumber: number) {
-    const state = this.episodes()[seasonNumber];
-    if (!state || state === 'failed') return [];
-    return state.episodes.filter(({ aired }) => aired);
+    return this.loaded(seasonNumber)?.episodes.filter(({ aired }) => aired) ?? [];
   }
 
-  protected allSeen(seasonNumber: number) {
-    return this.airedEpisodes(seasonNumber).every(({ watched }) => watched);
+  protected isAllSeen(aired: readonly Episode[]) {
+    return aired.every(({ watched }) => watched);
   }
 
-  protected isUpdating(seasonNumber: number) {
-    return this.airedEpisodes(seasonNumber).some(({ locked }) => locked);
+  protected isUpdating(aired: readonly Episode[]) {
+    return aired.some(({ locked }) => locked);
   }
 
   protected markSeason(seasonNumber: number) {
-    const target = !this.allSeen(seasonNumber);
-    for (const { number, watched } of this.airedEpisodes(seasonNumber)) {
+    const aired = this.airedEpisodes(seasonNumber);
+    const target = !this.isAllSeen(aired);
+    for (const { number, watched } of aired) {
       if (watched !== target) this.toggle(seasonNumber, number, target);
     }
   }
