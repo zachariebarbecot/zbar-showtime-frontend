@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, model } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, model } from '@angular/core';
 import { Icon } from '../icon/icon';
 
 let nextId = 0;
@@ -28,7 +28,15 @@ let nextId = 0;
             <span class="zb-meta zb-season-info">{{ info() }}</span>
           </span>
         </button>
+        @if (percent() !== null) {
+          <span class="zb-meta">{{ seen() }}/{{ total() }}</span>
+        }
       </div>
+      @if (percent() !== null) {
+        <div class="zb-season-bar" aria-hidden="true">
+          <span [style.width.%]="percent()"></span>
+        </div>
+      }
       <div class="zb-season-body" [id]="bodyId" [hidden]="!expanded()">
         <ng-content />
       </div>
@@ -40,7 +48,15 @@ export class Season {
   readonly title = input<string>();
   readonly info = input<string>();
   readonly poster = input<string>();
+  readonly seen = input<number | null>(null);
+  readonly total = input<number | null>(null);
   readonly expanded = model(false);
+
+  protected readonly percent = computed(() => {
+    const [seen, total] = [this.seen(), this.total()];
+    if (seen === null || total === null) return null;
+    return total ? (seen / total) * 100 : 0;
+  });
 
   protected readonly bodyId = `app-season-body-${nextId++}`;
 }

@@ -94,10 +94,13 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
         <h2 class="zb-car-title">Saisons</h2>
         <div class="md-seasons-list">
           @for (season of sorted(); track season.number; let first = $first) {
+            @let progress = progressOf(season.number);
             <app-season
               [title]="season.title"
               [info]="season.info"
               [poster]="season.poster"
+              [seen]="progress?.seen ?? null"
+              [total]="progress?.total ?? null"
               [expanded]="first"
               (expandedChange)="onExpandedChange($event, season.number)"
             >
@@ -186,6 +189,15 @@ export class SeriesSeasons {
 
   protected onExpandedChange(expanded: boolean, seasonNumber: number) {
     if (expanded) this.load(seasonNumber);
+  }
+
+  protected progressOf(seasonNumber: number) {
+    const state = this.episodes()[seasonNumber];
+    if (!this.watchlisted() || !state || state === 'failed') return undefined;
+    return {
+      seen: state.episodes.filter(({ watched }) => watched).length,
+      total: state.episodes.length,
+    };
   }
 
   protected retry(seasonNumber: number) {
