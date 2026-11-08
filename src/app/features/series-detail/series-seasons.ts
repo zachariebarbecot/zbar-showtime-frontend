@@ -112,6 +112,7 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
                   size="sm"
                   [controlled]="true"
                   [active]="allSeen(season.number)"
+                  [ariaLabel]="(allSeen(season.number) ? 'Vu : ' : 'Marquer vu : ') + season.title"
                   [locked]="isUpdating(season.number)"
                   (add)="markSeason(season.number)"
                 />
