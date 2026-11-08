@@ -14,6 +14,15 @@ class Host {
   expanded = false;
 }
 
+@Component({
+  imports: [Season],
+  template: `<app-season title="Saison 1" [seen]="seen" [total]="total" />`,
+})
+class ProgressHost {
+  seen?: number;
+  total?: number;
+}
+
 describe('Season', () => {
   async function render(expanded: boolean) {
     const fixture = TestBed.createComponent(Host);
@@ -78,5 +87,45 @@ describe('Season', () => {
     expect(fixture.componentInstance.expanded).toBe(false);
     expect(toggle()?.getAttribute('aria-expanded')).toBe('false');
     expect(body()?.hidden).toBe(true);
+  });
+
+  describe('progress', () => {
+    async function renderProgress(seen?: number, total?: number) {
+      const fixture = TestBed.createComponent(ProgressHost);
+      fixture.componentInstance.seen = seen;
+      fixture.componentInstance.total = total;
+      await fixture.whenStable();
+      const root: HTMLElement = fixture.nativeElement;
+      return {
+        head: root.querySelector('.zb-season-head') as HTMLElement,
+        counter: root.querySelector<HTMLElement>('.zb-season-head > .zb-meta'),
+        bar: root.querySelector<HTMLElement>('.zb-season-bar'),
+      };
+    }
+
+    it('should show the counter after the toggle and the bar under the head, filled to the ratio', async () => {
+      const { head, counter, bar } = await renderProgress(4, 10);
+
+      expect(counter?.textContent?.trim()).toBe('4/10');
+      expect(counter?.previousElementSibling).toBe(head.querySelector('.zb-season-toggle'));
+      expect(head.querySelector('.zb-season-toggle')?.contains(counter)).toBe(false);
+      expect(bar?.previousElementSibling).toBe(head);
+      expect(bar?.getAttribute('aria-hidden')).toBe('true');
+      expect(bar?.querySelector<HTMLElement>('span')?.style.width).toBe('40%');
+    });
+
+    it('should fill the bar to 0 % for a season without episode', async () => {
+      const { counter, bar } = await renderProgress(0, 0);
+
+      expect(counter?.textContent?.trim()).toBe('0/0');
+      expect(bar?.querySelector<HTMLElement>('span')?.style.width).toBe('0%');
+    });
+
+    it('should show neither counter nor bar without progress', async () => {
+      const { counter, bar } = await renderProgress();
+
+      expect(counter).toBeNull();
+      expect(bar).toBeNull();
+    });
   });
 });

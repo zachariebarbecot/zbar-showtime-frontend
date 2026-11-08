@@ -558,6 +558,109 @@ describe('SeriesSeasons', () => {
     });
   });
 
+  describe('season progress', () => {
+    const SEASONS = [
+      { seasonNumber: 1, name: 'Saison 1' },
+      { seasonNumber: 2, name: 'Saison 2' },
+    ];
+    const EPISODES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((episodeNumber) => ({
+      episodeNumber,
+      watched: episodeNumber <= 4,
+      airDate: '2025-01-17',
+    }));
+    const EPISODE_5 = '/watchlist/series/1396/seasons/1/episodes/5/watched';
+
+    async function renderProgress(watchlisted = true) {
+      const view = await render(SEASONS, watchlisted);
+      view.http.expectOne('/series/1396/seasons/1').flush({ seasonNumber: 1, episodes: EPISODES });
+      await view.fixture.whenStable();
+      return view;
+    }
+
+    const counters = (root: HTMLElement) =>
+      [...root.querySelectorAll('app-season .zb-season-head > .zb-meta')].map((el) =>
+        el.textContent?.trim(),
+      );
+    const widths = (root: HTMLElement) =>
+      [...root.querySelectorAll<HTMLElement>('app-season .zb-season-bar > span')].map(
+        (el) => el.style.width,
+      );
+    const checks = (root: HTMLElement) => [
+      ...root.querySelectorAll<HTMLButtonElement>('app-episode-row [role="checkbox"]'),
+    ];
+
+    it('should show the watched count and the bar of a loaded season', async () => {
+      const { root } = await renderProgress();
+
+      expect(counters(root)).toEqual(['4/10']);
+      expect(widths(root)).toEqual(['40%']);
+    });
+
+    it('should update the counter and the bar when an episode is marked', async () => {
+      const { fixture, root, http } = await renderProgress();
+
+      checks(root)[4].click();
+      await fixture.whenStable();
+      http.expectOne(EPISODE_5).flush(null, { status: 201, statusText: 'Created' });
+      await fixture.whenStable();
+
+      expect(counters(root)).toEqual(['5/10']);
+      expect(widths(root)).toEqual(['50%']);
+    });
+
+    it('should update the counter and the bar when an episode is unmarked', async () => {
+      const { fixture, root, http } = await renderProgress();
+
+      checks(root)[0].click();
+      await fixture.whenStable();
+      http
+        .expectOne('/watchlist/series/1396/seasons/1/episodes/1/watched')
+        .flush(null, { status: 204, statusText: 'No Content' });
+      await fixture.whenStable();
+
+      expect(counters(root)).toEqual(['3/10']);
+      expect(widths(root)).toEqual(['30%']);
+    });
+
+    it('should bring the counter and the bar back when the update fails', async () => {
+      const { fixture, root, http } = await renderProgress();
+
+      checks(root)[4].click();
+      await fixture.whenStable();
+      http.expectOne(EPISODE_5).flush(null, { status: 500, statusText: 'Error' });
+      await fixture.whenStable();
+
+      expect(counters(root)).toEqual(['4/10']);
+      expect(widths(root)).toEqual(['40%']);
+    });
+
+    it('should show no counter nor bar for a season not loaded yet', async () => {
+      const { root } = await renderProgress();
+
+      expect(root.querySelectorAll('app-season')).toHaveLength(2);
+      expect(counters(root)).toHaveLength(1);
+      expect(widths(root)).toHaveLength(1);
+    });
+
+    it('should show no counter nor bar when the series is not in the watchlist', async () => {
+      const { root } = await renderProgress(false);
+
+      expect(counters(root)).toEqual([]);
+      expect(widths(root)).toEqual([]);
+    });
+
+    it('should show them once the series joins the watchlist, without reload', async () => {
+      const { fixture, root, http } = await renderProgress(false);
+
+      fixture.componentRef.setInput('watchlisted', true);
+      await fixture.whenStable();
+
+      expect(counters(root)).toEqual(['4/10']);
+      expect(widths(root)).toEqual(['40%']);
+      http.expectNone(() => true);
+    });
+  });
+
   describe('season poster', () => {
     const poster = (root: HTMLElement) => root.querySelector('.zb-season-head .zb-season-poster');
 

@@ -40,6 +40,8 @@ export class Season {
   readonly title = input<string>();
   readonly info = input<string>();
   readonly poster = input<string>();
+  readonly seen = input<number>();
+  readonly total = input<number>();
   readonly expanded = model(false);
 
   protected readonly bodyId = `app-season-body-${nextId++}`;
