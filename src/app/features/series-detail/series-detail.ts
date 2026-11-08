@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
@@ -16,7 +16,7 @@ import { PeopleSection } from '../../ui/people-section/people-section';
 import { StatusBadge } from '../../ui/status-badge/status-badge';
 import { StatusButton } from '../../ui/status-button/status-button';
 import { SeriesSeasons } from './series-seasons';
-import { toSeriesDetailView, withProgress } from './series-detail-view';
+import { toSeriesDetailView } from './series-detail-view';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -65,16 +65,19 @@ import { toSeriesDetailView, withProgress } from './series-detail-view';
             @if (view.originalName) {
               <p class="md-original">{{ view.originalName }}</p>
             }
-            @if (meta()) {
-              <p class="zb-meta md-meta">{{ meta() }}</p>
-            }
-            @if (view.status || view.period) {
-              <div class="md-airing">
+            @if (view.year || view.counts || view.genres.length || view.status) {
+              <div class="md-meta md-meta-row">
+                @if (view.year) {
+                  <span>{{ view.year }}</span>
+                }
+                @if (view.counts) {
+                  <span>{{ view.counts }}</span>
+                }
+                @if (view.genres.length) {
+                  <span>{{ view.genres.join(', ') }}</span>
+                }
                 @if (view.status) {
                   <app-show-status [status]="view.status" />
-                }
-                @if (view.period) {
-                  <span class="zb-meta md-period">{{ view.period }}</span>
                 }
               </div>
             }
@@ -90,13 +93,6 @@ import { toSeriesDetailView, withProgress } from './series-detail-view';
                 />
               }
             </div>
-            @if (view.genres.length) {
-              <ul class="md-genres">
-                @for (genre of view.genres; track genre) {
-                  <li class="zb-tag">{{ genre }}</li>
-                }
-              </ul>
-            }
             @if (view.overview) {
               <p class="md-overview">{{ view.overview }}</p>
             }
@@ -109,7 +105,6 @@ import { toSeriesDetailView, withProgress } from './series-detail-view';
             [tmdbId]="tmdbId"
             [seasons]="view.seasons"
             [watchlisted]="status() !== undefined"
-            (watchedChange)="watched.update((count) => count + $event)"
           />
         }
       }
@@ -138,16 +133,6 @@ export class SeriesDetail {
   protected readonly status = computed(() =>
     this.watchlist.added() ? 'watchlist' : this.view()?.watchlist,
   );
-  protected readonly watched = linkedSignal(() => this.view()?.watchedEpisodes ?? 0);
-  protected readonly meta = computed(() => {
-    const view = this.view();
-    return withProgress(
-      view?.meta,
-      this.watched(),
-      view?.totalEpisodes ?? 0,
-      this.status() !== undefined,
-    );
-  });
 
   protected add(): void {
     const tmdbId = this.tmdbId();

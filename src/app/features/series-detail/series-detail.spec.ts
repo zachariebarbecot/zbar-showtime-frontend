@@ -102,15 +102,12 @@ describe('SeriesDetail', () => {
     const text = (root: HTMLElement, selector: string) =>
       root.querySelector(selector)?.textContent?.trim();
 
-    it('should show the poster, name, original name, genres and overview', async () => {
+    it('should show the poster, name, original name and overview', async () => {
       const { root } = await show(BREAKING_BAD);
 
       expect(root.querySelector('img.md-poster')?.getAttribute('src')).toBe(BREAKING_BAD.posterUrl);
       expect(text(root, 'h1.md-title')).toBe('Breaking Bad');
       expect(text(root, '.md-original')).toBe('Breaking Bad VO');
-      expect(
-        [...root.querySelectorAll('.md-genres li')].map((li) => li.textContent?.trim()),
-      ).toEqual(BREAKING_BAD.genres);
       expect(text(root, '.md-overview')).toBe(BREAKING_BAD.overview);
     });
 
@@ -126,40 +123,98 @@ describe('SeriesDetail', () => {
       expect(text(root, 'h1.md-title')).toBe('Breaking Bad');
       expect(root.querySelector('img.md-poster')).toBeNull();
       expect(text(root, '.md-poster-empty')).toBe('Breaking Bad');
-      for (const absent of ['.md-original', '.md-genres', '.md-overview']) {
+      for (const absent of ['.md-original', '.md-overview']) {
         expect(root.querySelector(absent)).toBeNull();
       }
     });
   });
 
-  describe('counts', () => {
-    async function meta(series: object) {
+  describe('meta line', () => {
+    const FULL = {
+      numberOfSeasons: 5,
+      numberOfEpisodes: 62,
+      genres: ['Drame', 'Crime'],
+      status: 'ENDED',
+      firstAirDate: '2008-01-20',
+      lastAirDate: '2013-09-29',
+    };
+
+    async function show(series: object) {
       const opened = await open();
       opened.http.expectOne('/series/1396').flush({ id: 1396, name: 'Breaking Bad', ...series });
       await opened.harness.fixture.whenStable();
-      return opened.root.querySelector('.md-meta')?.textContent?.trim();
+      return opened.root;
     }
 
-    it('should show the season and episode counts in the plural', async () => {
-      expect(await meta({ numberOfSeasons: 5, numberOfEpisodes: 62 })).toBe(
+    const items = (root: HTMLElement) =>
+      [...root.querySelectorAll('.md-meta > *')].map((item) => item.textContent?.trim());
+
+    it('should show the year, the counts, the genres and the status as distinct items in order', async () => {
+      expect(items(await show(FULL))).toEqual([
+        '2008',
         '5 saisons · 62 épisodes',
-      );
+        'Drame, Crime',
+        'Terminée',
+      ]);
     });
 
-    it('should show the season and episode counts in the singular for 1', async () => {
-      expect(await meta({ numberOfSeasons: 1, numberOfEpisodes: 1 })).toBe('1 saison · 1 épisode');
+    it('should show the counts in the singular for 1', async () => {
+      const root = await show({ numberOfSeasons: 1, numberOfEpisodes: 1 });
+
+      expect(items(root)).toEqual(['1 saison · 1 épisode']);
     });
 
     it('should show only the season count when the episode count is absent', async () => {
-      expect(await meta({ numberOfSeasons: 5 })).toBe('5 saisons');
+      expect(items(await show({ numberOfSeasons: 5 }))).toEqual(['5 saisons']);
     });
 
     it('should show only the episode count when the season count is absent', async () => {
-      expect(await meta({ numberOfEpisodes: 62 })).toBe('62 épisodes');
+      expect(items(await show({ numberOfEpisodes: 62 }))).toEqual(['62 épisodes']);
     });
 
-    it('should render no meta when both counts are absent', async () => {
-      expect(await meta({})).toBeUndefined();
+    it('should leave out the genres when there is none', async () => {
+      const root = await show({ ...FULL, genres: [] });
+
+      expect(items(root)).toEqual(['2008', '5 saisons · 62 épisodes', 'Terminée']);
+    });
+
+    it('should leave out the year when the first air date is absent', async () => {
+      const root = await show({ ...FULL, firstAirDate: undefined });
+
+      expect(items(root)).toEqual(['5 saisons · 62 épisodes', 'Drame, Crime', 'Terminée']);
+    });
+
+    it.each([{}, { status: 'UNKNOWN' }, { status: 'toString' }])(
+      'should leave out the status %j',
+      async (series) => {
+        const root = await show({ ...FULL, status: undefined, ...series });
+
+        expect(root.querySelector('app-show-status')).toBeNull();
+        expect(items(root)).toEqual(['2008', '5 saisons · 62 épisodes', 'Drame, Crime']);
+      },
+    );
+
+    it('should render no meta line when every item is absent', async () => {
+      expect((await show({})).querySelector('.md-meta')).toBeNull();
+    });
+
+    it('should not show the watched progress in the header', async () => {
+      const root = await show({
+        ...FULL,
+        watchlistStatus: 'WATCHING',
+        watchedEpisodes: 3,
+        totalEpisodes: 62,
+      });
+
+      expect(root.querySelector('.md-info')?.textContent).not.toContain('vus');
+    });
+
+    it('should show neither a rating, nor the airing block, nor the genre tags', async () => {
+      const root = await show(FULL);
+
+      for (const removed of ['.md-airing', '.md-period', '.md-genres', '.md-rating']) {
+        expect(root.querySelector(removed)).toBeNull();
+      }
     });
   });
 
@@ -263,54 +318,6 @@ describe('SeriesDetail', () => {
 
       const dot = root.querySelector('app-show-status .zb-tag.' + tone + ' .zb-tag-dot');
       expect(dot?.getAttribute('aria-hidden')).toBe('true');
-    });
-
-    const period = (root: HTMLElement) => root.querySelector('.md-period')?.textContent?.trim();
-
-    it.each(['RETURNING', 'IN_PRODUCTION', 'PLANNED', 'PILOT'])(
-      'should show an open period for the open status %s',
-      async (status) => {
-        expect(period(await airing({ status, firstAirDate: '2019-03-14' }))).toBe('2019 –');
-      },
-    );
-
-    it.each(['ENDED', 'CANCELED'])(
-      'should show the closed period for the closed status %s',
-      async (status) => {
-        const root = await airing({
-          status,
-          firstAirDate: '2019-03-14',
-          lastAirDate: '2023-11-02',
-        });
-
-        expect(period(root)).toBe('2019–2023');
-      },
-    );
-
-    it('should show a single year when both dates are in the same year', async () => {
-      const root = await airing({
-        status: 'CANCELED',
-        firstAirDate: '2019-03-14',
-        lastAirDate: '2019-12-20',
-      });
-
-      expect(period(root)).toBe('2019');
-    });
-
-    it.each([{}, { status: 'UNKNOWN' }, { status: 'toString' }])(
-      'should render no tag for the status %j',
-      async (series) => {
-        const root = await airing(series);
-
-        expect(root.querySelector('app-show-status')).toBeNull();
-      },
-    );
-
-    it('should render no period when the first air date is absent', async () => {
-      const root = await airing({ status: 'RETURNING', lastAirDate: '2023-11-02' });
-
-      expect(root.querySelector('.md-period')).toBeNull();
-      expect(tag(root)).toBe('En cours de diffusion');
     });
   });
 
@@ -470,89 +477,6 @@ describe('SeriesDetail', () => {
         expect(badge(root)).toBeNull();
         expect(addButton(root)).not.toBeNull();
       });
-    });
-  });
-
-  describe('progress', () => {
-    const EPISODE_1 = '/watchlist/series/1396/seasons/1/episodes/1/watched';
-    const EPISODE_2 = '/watchlist/series/1396/seasons/1/episodes/2/watched';
-
-    async function showProgress(series: object = { watchlistStatus: 'WATCHING' }) {
-      const opened = await open();
-      opened.http.expectOne('/series/1396').flush({
-        id: 1396,
-        name: 'Breaking Bad',
-        numberOfEpisodes: 62,
-        watchedEpisodes: 3,
-        totalEpisodes: 62,
-        seasons: [{ seasonNumber: 1, name: 'Saison 1' }],
-        ...series,
-      });
-      await opened.harness.fixture.whenStable();
-      opened.http.expectOne('/series/1396/seasons/1').flush({
-        seasonNumber: 1,
-        episodes: [
-          { episodeNumber: 1, name: 'Pilote', watched: true, airDate: '2008-01-20' },
-          { episodeNumber: 2, name: 'Suite', watched: false, airDate: '2008-01-27' },
-        ],
-      });
-      await opened.harness.fixture.whenStable();
-      const checks = () =>
-        opened.root.querySelectorAll<HTMLElement>('app-episode-row [role="checkbox"]');
-      const meta = () => opened.root.querySelector('.md-meta')?.textContent?.trim();
-      return { ...opened, checks, meta };
-    }
-
-    it('should show the watched count after the episode count for a series in the watchlist', async () => {
-      const { meta } = await showProgress();
-
-      expect(meta()).toBe('62 épisodes · 3 / 62 épisodes vus');
-    });
-
-    it.each([
-      ['out of the watchlist', {}],
-      ['without episodes', { watchlistStatus: 'WATCHING', totalEpisodes: 0 }],
-    ])('should not show the progress for a series %s', async (_, series) => {
-      const { meta } = await showProgress({ watchlistStatus: undefined, ...series });
-
-      expect(meta()).toBe('62 épisodes');
-    });
-
-    it('should increase the count when marking an episode succeeds', async () => {
-      const { http, checks, meta, harness } = await showProgress();
-
-      checks()[1].click();
-      await harness.fixture.whenStable();
-      expect(meta()).toBe('62 épisodes · 3 / 62 épisodes vus');
-      http.expectOne(EPISODE_2).flush(null);
-      await harness.fixture.whenStable();
-
-      expect(meta()).toBe('62 épisodes · 4 / 62 épisodes vus');
-    });
-
-    it('should decrease the count when unmarking an episode succeeds', async () => {
-      const { http, checks, meta, harness } = await showProgress();
-
-      checks()[0].click();
-      await harness.fixture.whenStable();
-      http.expectOne(EPISODE_1).flush(null);
-      await harness.fixture.whenStable();
-
-      expect(meta()).toBe('62 épisodes · 2 / 62 épisodes vus');
-    });
-
-    it.each([
-      [1, EPISODE_2],
-      [0, EPISODE_1],
-    ])('should keep the count when the update of episode %i fails', async (index, url) => {
-      const { http, checks, meta, harness } = await showProgress();
-
-      checks()[index].click();
-      await harness.fixture.whenStable();
-      http.expectOne(url).flush(null, { status: 500, statusText: 'Error' });
-      await harness.fixture.whenStable();
-
-      expect(meta()).toBe('62 épisodes · 3 / 62 épisodes vus');
     });
   });
 
