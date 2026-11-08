@@ -661,6 +661,96 @@ describe('SeriesSeasons', () => {
     });
   });
 
+  describe('season watched button', () => {
+    const watchedUrl = (episode: number) =>
+      `/watchlist/series/1396/seasons/1/episodes/${episode}/watched`;
+    const CREATED = { status: 201, statusText: 'Created' };
+
+    async function renderSeason(episodes: object[], watchlisted = true) {
+      const view = await render([{ seasonNumber: 1, name: 'Saison 1' }], watchlisted);
+      view.http.expectOne('/series/1396/seasons/1').flush({ seasonNumber: 1, episodes });
+      await view.fixture.whenStable();
+      return view;
+    }
+
+    const button = (root: HTMLElement) =>
+      root.querySelector<HTMLButtonElement>('app-season .zb-season-head .zb-btn-seen');
+    const checks = (root: HTMLElement) => [
+      ...root.querySelectorAll<HTMLButtonElement>('app-episode-row [role="checkbox"]'),
+    ];
+    const checked = (root: HTMLElement) =>
+      checks(root).map((check) => check.getAttribute('aria-checked') === 'true');
+    const requests = (http: HttpTestingController) =>
+      http.match(({ url }) => url.endsWith('/watched')).map(({ request }) => request);
+
+    const MIXED = [
+      { episodeNumber: 1, airDate: '2020-01-01', watched: true },
+      { episodeNumber: 2, airDate: '2020-01-01', watched: false },
+      { episodeNumber: 3, airDate: '2020-01-01', watched: false },
+      { episodeNumber: 4, airDate: '2999-01-01', watched: false },
+    ];
+
+    describe('marking the season', () => {
+      it('should send a POST for each aired episode not watched, and no other request', async () => {
+        const { fixture, root, http } = await renderSeason(MIXED);
+
+        button(root)?.click();
+        await fixture.whenStable();
+
+        const sent = http.match(({ url }) => url.endsWith('/watched'));
+        expect(sent.map(({ request }) => [request.method, request.url])).toEqual([
+          ['POST', watchedUrl(2)],
+          ['POST', watchedUrl(3)],
+        ]);
+      });
+
+      it('should check the episodes marked', async () => {
+        const { fixture, root, http } = await renderSeason(MIXED);
+
+        button(root)?.click();
+        await fixture.whenStable();
+        http.expectOne(watchedUrl(2)).flush(null, CREATED);
+        http.expectOne(watchedUrl(3)).flush(null, CREATED);
+        await fixture.whenStable();
+
+        expect(checked(root)).toEqual([true, true, true]);
+      });
+    });
+
+    describe('partial failure', () => {
+      const TEN = Array.from({ length: 10 }, (_, index) => ({
+        episodeNumber: index + 1,
+        airDate: '2020-01-01',
+        watched: false,
+      }));
+
+      it('should keep the 8 calls that succeeded and bring back the 2 that failed', async () => {
+        const { fixture, root, http } = await renderSeason(TEN);
+        button(root)?.click();
+        await fixture.whenStable();
+
+        for (const { episodeNumber } of TEN) {
+          const call = http.expectOne(watchedUrl(episodeNumber));
+          if (episodeNumber === 3 || episodeNumber === 7) {
+            call.flush(null, { status: 500, statusText: 'Error' });
+          } else {
+            call.flush(null, CREATED);
+          }
+        }
+        await fixture.whenStable();
+
+        expect(checked(root)).toEqual(
+          TEN.map(({ episodeNumber }) => ![3, 7].includes(episodeNumber)),
+        );
+        expect(root.querySelector('.zb-season-head > .zb-meta')?.textContent?.trim()).toBe('8/10');
+        expect(root.querySelector<HTMLElement>('.zb-season-bar > span')?.style.width).toBe('80%');
+        expect(root.querySelector('app-form-alert')?.textContent).toContain(
+          "Impossible de mettre à jour l'épisode",
+        );
+      });
+    });
+  });
+
   describe('season poster', () => {
     const poster = (root: HTMLElement) => root.querySelector('.zb-season-head .zb-season-poster');
 
