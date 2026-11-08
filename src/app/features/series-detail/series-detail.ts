@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
@@ -16,7 +16,7 @@ import { PeopleSection } from '../../ui/people-section/people-section';
 import { StatusBadge } from '../../ui/status-badge/status-badge';
 import { StatusButton } from '../../ui/status-button/status-button';
 import { SeriesSeasons } from './series-seasons';
-import { toSeriesDetailView } from './series-detail-view';
+import { toSeriesDetailView, withProgress } from './series-detail-view';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -65,8 +65,8 @@ import { toSeriesDetailView } from './series-detail-view';
             @if (view.originalName) {
               <p class="md-original">{{ view.originalName }}</p>
             }
-            @if (view.meta) {
-              <p class="zb-meta md-meta">{{ view.meta }}</p>
+            @if (meta()) {
+              <p class="zb-meta md-meta">{{ meta() }}</p>
             }
             @if (view.status || view.period) {
               <div class="md-airing">
@@ -109,6 +109,7 @@ import { toSeriesDetailView } from './series-detail-view';
             [tmdbId]="tmdbId"
             [seasons]="view.seasons"
             [watchlisted]="status() !== undefined"
+            (watchedChange)="watched.update((count) => count + $event)"
           />
         }
       }
@@ -137,6 +138,16 @@ export class SeriesDetail {
   protected readonly status = computed(() =>
     this.watchlist.added() ? 'watchlist' : this.view()?.watchlist,
   );
+  protected readonly watched = linkedSignal(() => this.view()?.watchedEpisodes ?? 0);
+  protected readonly meta = computed(() => {
+    const view = this.view();
+    return withProgress(
+      view?.meta,
+      this.watched(),
+      view?.totalEpisodes ?? 0,
+      this.status() !== undefined,
+    );
+  });
 
   protected add(): void {
     const tmdbId = this.tmdbId();

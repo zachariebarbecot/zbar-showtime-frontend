@@ -18,9 +18,21 @@ export interface SeriesDetailView {
   readonly cast: readonly CastMemberView[];
   readonly watchlist?: WatchlistBadgeStatus;
   readonly seasons: readonly Season[];
+  readonly watchedEpisodes: number;
+  readonly totalEpisodes: number;
 }
 
 export const plural = (count: number, word: string) => `${count} ${word}${count > 1 ? 's' : ''}`;
+
+export const withProgress = (
+  meta: string | undefined,
+  watched: number,
+  total: number,
+  watchlisted: boolean,
+) =>
+  [meta, watchlisted && total > 0 ? `${watched} / ${total} épisodes vus` : undefined]
+    .filter(Boolean)
+    .join(' · ');
 
 const year = (date: string) => date.slice(0, 4);
 
@@ -46,6 +58,8 @@ export const toSeriesDetailView = ({
   cast,
   watchlistStatus,
   seasons,
+  watchedEpisodes,
+  totalEpisodes,
 }: SeriesDetailResponse): SeriesDetailView => ({
   name,
   originalName: originalName === name ? undefined : originalName,
@@ -65,4 +79,6 @@ export const toSeriesDetailView = ({
   cast: toCastMemberViews(cast),
   watchlist: toBadgeStatus(watchlistStatus),
   seasons: seasons ?? [],
+  watchedEpisodes: watchedEpisodes ?? 0,
+  totalEpisodes: totalEpisodes ?? 0,
 });
