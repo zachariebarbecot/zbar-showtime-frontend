@@ -17,6 +17,7 @@ import { Button } from '../../ui/button/button';
 import { EpisodeRow } from '../../ui/episode-row/episode-row';
 import { FormAlert } from '../../ui/form-alert/form-alert';
 import { Season } from '../../ui/season/season';
+import { StatusButton } from '../../ui/status-button/status-button';
 import { plural } from './series-detail-view';
 
 interface Episode {
@@ -87,7 +88,7 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-series-seasons',
-  imports: [Button, EpisodeRow, FormAlert, Season],
+  imports: [Button, EpisodeRow, FormAlert, Season, StatusButton],
   template: `
     @if (sorted().length) {
       <section class="md-seasons">
@@ -95,6 +96,8 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
         <div class="md-seasons-list">
           @for (season of sorted(); track season.number; let first = $first) {
             @let progress = progressOf(season.number);
+            @let aired = airedEpisodes(season.number);
+            @let allSeen = isAllSeen(aired);
             <app-season
               [title]="season.title"
               [info]="season.info"
@@ -104,6 +107,18 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
               [expanded]="first"
               (expandedChange)="onExpandedChange($event, season.number)"
             >
+              @if (watchlisted() && aired.length) {
+                <app-status-button
+                  seasonAction
+                  kind="seen"
+                  size="sm"
+                  [controlled]="true"
+                  [active]="allSeen"
+                  [ariaLabel]="(allSeen ? 'Vu : ' : 'Marquer vu : ') + season.title"
+                  [locked]="isUpdating(aired)"
+                  (add)="markSeason(season.number)"
+                />
+              }
               @let state = episodes()[season.number];
               @if (state === 'failed') {
                 <app-form-alert message="Impossible de charger les épisodes de cette saison." />
@@ -191,13 +206,38 @@ export class SeriesSeasons {
     if (expanded) this.load(seasonNumber);
   }
 
-  protected progressOf(seasonNumber: number) {
+  private loaded(seasonNumber: number) {
     const state = this.episodes()[seasonNumber];
-    if (!this.watchlisted() || !state || state === 'failed') return undefined;
+    return state === 'failed' ? undefined : state;
+  }
+
+  protected progressOf(seasonNumber: number) {
+    const state = this.loaded(seasonNumber);
+    if (!this.watchlisted() || !state) return undefined;
     return {
       seen: state.episodes.filter(({ watched }) => watched).length,
       total: state.episodes.length,
     };
+  }
+
+  protected airedEpisodes(seasonNumber: number) {
+    return this.loaded(seasonNumber)?.episodes.filter(({ aired }) => aired) ?? [];
+  }
+
+  protected isAllSeen(aired: readonly Episode[]) {
+    return aired.every(({ watched }) => watched);
+  }
+
+  protected isUpdating(aired: readonly Episode[]) {
+    return aired.some(({ locked }) => locked);
+  }
+
+  protected markSeason(seasonNumber: number) {
+    const aired = this.airedEpisodes(seasonNumber);
+    const target = !this.isAllSeen(aired);
+    for (const { number, watched } of aired) {
+      if (watched !== target) this.toggle(seasonNumber, number, target);
+    }
   }
 
   protected retry(seasonNumber: number) {

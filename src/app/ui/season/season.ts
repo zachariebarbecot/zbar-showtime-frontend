@@ -31,6 +31,7 @@ let nextId = 0;
         @if (percent() !== null) {
           <span class="zb-meta">{{ seen() }}/{{ total() }}</span>
         }
+        <ng-content select="[seasonAction]" />
       </div>
       @if (percent() !== null) {
         <div class="zb-season-bar" aria-hidden="true">
