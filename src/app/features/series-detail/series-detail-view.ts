@@ -24,6 +24,16 @@ export interface SeriesDetailView {
 
 export const plural = (count: number, word: string) => `${count} ${word}${count > 1 ? 's' : ''}`;
 
+export const withProgress = (
+  meta: string | undefined,
+  watched: number,
+  total: number,
+  watchlisted: boolean,
+) =>
+  [meta, watchlisted && total > 0 ? `${watched} / ${total} épisodes vus` : undefined]
+    .filter(Boolean)
+    .join(' · ');
+
 const year = (date: string) => date.slice(0, 4);
 
 const toPeriod = (status: string | undefined, firstAirDate: string, lastAirDate?: string) => {

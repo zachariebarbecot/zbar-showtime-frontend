@@ -16,7 +16,7 @@ import { PeopleSection } from '../../ui/people-section/people-section';
 import { StatusBadge } from '../../ui/status-badge/status-badge';
 import { StatusButton } from '../../ui/status-button/status-button';
 import { SeriesSeasons } from './series-seasons';
-import { toSeriesDetailView } from './series-detail-view';
+import { toSeriesDetailView, withProgress } from './series-detail-view';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -141,12 +141,12 @@ export class SeriesDetail {
   protected readonly watched = linkedSignal(() => this.view()?.watchedEpisodes ?? 0);
   protected readonly meta = computed(() => {
     const view = this.view();
-    const total = view?.totalEpisodes;
-    const progress =
-      this.status() !== undefined && total
-        ? `${this.watched()} / ${total} épisodes vus`
-        : undefined;
-    return [view?.meta, progress].filter(Boolean).join(' · ');
+    return withProgress(
+      view?.meta,
+      this.watched(),
+      view?.totalEpisodes ?? 0,
+      this.status() !== undefined,
+    );
   });
 
   protected add(): void {
