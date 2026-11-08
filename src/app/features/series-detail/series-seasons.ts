@@ -111,6 +111,7 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
                   kind="seen"
                   size="sm"
                   [controlled]="true"
+                  [active]="allSeen(season.number)"
                   (add)="markSeason(season.number)"
                 />
               }
@@ -210,11 +211,14 @@ export class SeriesSeasons {
     };
   }
 
+  protected allSeen(seasonNumber: number) {
+    return this.airedEpisodes(seasonNumber).every(({ watched }) => watched);
+  }
+
   protected markSeason(seasonNumber: number) {
-    const state = this.episodes()[seasonNumber];
-    if (!state || state === 'failed') return;
-    for (const { number, aired, watched } of state.episodes) {
-      if (aired && !watched) this.toggle(seasonNumber, number, true);
+    const target = !this.allSeen(seasonNumber);
+    for (const { number, watched } of this.airedEpisodes(seasonNumber)) {
+      if (watched !== target) this.toggle(seasonNumber, number, target);
     }
   }
 
@@ -241,6 +245,12 @@ export class SeriesSeasons {
           this.patchSeason(seasonNumber, { updateFailed: true });
         },
       });
+  }
+
+  private airedEpisodes(seasonNumber: number) {
+    const state = this.episodes()[seasonNumber];
+    if (!state || state === 'failed') return [];
+    return state.episodes.filter(({ aired }) => aired);
   }
 
   private patch(seasonNumber: number, episodeNumber: number, change: Partial<Episode>) {
