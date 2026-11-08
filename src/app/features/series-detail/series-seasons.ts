@@ -30,7 +30,10 @@ interface Episode {
   locked: boolean;
 }
 
+const UPDATE_FAILED = "Impossible de mettre à jour l'épisode. Réessaie dans un instant.";
+
 interface Loaded {
+  updateFailed: boolean;
   overview?: string;
   episodes: readonly Episode[];
 }
@@ -56,6 +59,7 @@ const toLoaded = ({ overview, episodes = [] }: SeasonDetailResponse): Loaded => 
   const hasStill = episodes.some(({ stillUrl }) => stillUrl);
   return {
     overview,
+    updateFailed: false,
     episodes: episodes
       .flatMap(({ episodeNumber, name, runtime, overview, airDate, stillUrl, watched }) =>
         episodeNumber === undefined
@@ -106,6 +110,9 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
                 @if (state.overview) {
                   <p class="zb-season-overview">{{ state.overview }}</p>
                 }
+                @if (state.updateFailed) {
+                  <app-form-alert [message]="updateFailed" />
+                }
                 @for (episode of state.episodes; track episode.number) {
                   <app-episode-row
                     [season]="season.number"
@@ -143,6 +150,7 @@ export class SeriesSeasons {
   private readonly destroyRef = inject(DestroyRef);
   private readonly requested = new Set<number>();
 
+  protected readonly updateFailed = UPDATE_FAILED;
   protected readonly episodes = signal<Record<number, EpisodesState>>({});
 
   protected readonly sorted = computed(() =>
@@ -184,17 +192,26 @@ export class SeriesSeasons {
   }
 
   protected toggle(seasonNumber: number, episodeNumber: number, watched: boolean) {
-    this.patch(seasonNumber, episodeNumber, { watched, locked: true });
+    this.patch(seasonNumber, episodeNumber, { watched, locked: true }, false);
     const params = { tmdbId: this.tmdbId(), seasonNumber, episodeNumber };
     (watched
       ? this.watchlistApi.markEpisodeWatched(params)
       : this.watchlistApi.unmarkEpisodeWatched(params)
     )
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.patch(seasonNumber, episodeNumber, { locked: false }));
+      .subscribe({
+        next: () => this.patch(seasonNumber, episodeNumber, { locked: false }),
+        error: () =>
+          this.patch(seasonNumber, episodeNumber, { watched: !watched, locked: false }, true),
+      });
   }
 
-  private patch(seasonNumber: number, episodeNumber: number, change: Partial<Episode>) {
+  private patch(
+    seasonNumber: number,
+    episodeNumber: number,
+    change: Partial<Episode>,
+    updateFailed?: boolean,
+  ) {
     this.episodes.update((all) => {
       const state = all[seasonNumber];
       if (!state || state === 'failed') return all;
@@ -202,6 +219,7 @@ export class SeriesSeasons {
         ...all,
         [seasonNumber]: {
           ...state,
+          updateFailed: updateFailed ?? state.updateFailed,
           episodes: state.episodes.map((episode) =>
             episode.number === episodeNumber ? { ...episode, ...change } : episode,
           ),
