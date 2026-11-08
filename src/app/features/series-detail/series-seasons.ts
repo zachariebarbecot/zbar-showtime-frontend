@@ -112,6 +112,7 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
                   size="sm"
                   [controlled]="true"
                   [active]="allSeen(season.number)"
+                  [locked]="isUpdating(season.number)"
                   (add)="markSeason(season.number)"
                 />
               }
@@ -213,6 +214,10 @@ export class SeriesSeasons {
 
   protected allSeen(seasonNumber: number) {
     return this.airedEpisodes(seasonNumber).every(({ watched }) => watched);
+  }
+
+  protected isUpdating(seasonNumber: number) {
+    return this.airedEpisodes(seasonNumber).some(({ locked }) => locked);
   }
 
   protected markSeason(seasonNumber: number) {
