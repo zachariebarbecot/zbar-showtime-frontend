@@ -118,7 +118,7 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
                     [showCheck]="watchlisted()"
                     [seen]="episode.watched"
                     [locked]="episode.locked"
-                    (seenChange)="mark(season.number, episode.number)"
+                    (seenChange)="toggle(season.number, episode.number, $event)"
                   />
                 } @empty {
                   <p>Aucun épisode pour cette saison</p>
@@ -183,10 +183,13 @@ export class SeriesSeasons {
     this.fetch(seasonNumber);
   }
 
-  protected mark(seasonNumber: number, episodeNumber: number) {
-    this.patch(seasonNumber, episodeNumber, { watched: true, locked: true });
-    this.watchlistApi
-      .markEpisodeWatched({ tmdbId: this.tmdbId(), seasonNumber, episodeNumber })
+  protected toggle(seasonNumber: number, episodeNumber: number, watched: boolean) {
+    this.patch(seasonNumber, episodeNumber, { watched, locked: true });
+    const params = { tmdbId: this.tmdbId(), seasonNumber, episodeNumber };
+    (watched
+      ? this.watchlistApi.markEpisodeWatched(params)
+      : this.watchlistApi.unmarkEpisodeWatched(params)
+    )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.patch(seasonNumber, episodeNumber, { locked: false }));
   }
