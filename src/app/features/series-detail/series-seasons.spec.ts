@@ -410,6 +410,33 @@ describe('SeriesSeasons', () => {
       });
     });
 
+    describe('unmarking', () => {
+      const EPISODE_1 = '/watchlist/series/1396/seasons/1/episodes/1/watched';
+
+      it('should uncheck the box at once, lock the row and send a DELETE', async () => {
+        const { fixture, root, http } = await renderWatchlisted();
+
+        checks(root)[0].click();
+        await fixture.whenStable();
+
+        expect(checks(root)[0].getAttribute('aria-checked')).toBe('false');
+        expect(checks(root)[0].disabled).toBe(true);
+        expect(http.expectOne(EPISODE_1).request.method).toBe('DELETE');
+      });
+
+      it('should unlock the row and keep the box unchecked once the DELETE succeeds', async () => {
+        const { fixture, root, http } = await renderWatchlisted();
+        checks(root)[0].click();
+        await fixture.whenStable();
+
+        http.expectOne(EPISODE_1).flush(null, { status: 204, statusText: 'No Content' });
+        await fixture.whenStable();
+
+        expect(checks(root)[0].getAttribute('aria-checked')).toBe('false');
+        expect(checks(root)[0].disabled).toBe(false);
+      });
+    });
+
     describe('marking', () => {
       const EPISODE_2 = '/watchlist/series/1396/seasons/1/episodes/2/watched';
 
