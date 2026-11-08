@@ -65,8 +65,8 @@ import { toSeriesDetailView } from './series-detail-view';
             @if (view.originalName) {
               <p class="md-original">{{ view.originalName }}</p>
             }
-            @if (view.meta) {
-              <p class="zb-meta md-meta">{{ view.meta }}</p>
+            @if (meta()) {
+              <p class="zb-meta md-meta">{{ meta() }}</p>
             }
             @if (view.status || view.period) {
               <div class="md-airing">
@@ -137,6 +137,15 @@ export class SeriesDetail {
   protected readonly status = computed(() =>
     this.watchlist.added() ? 'watchlist' : this.view()?.watchlist,
   );
+  protected readonly meta = computed(() => {
+    const view = this.view();
+    const total = view?.totalEpisodes;
+    const progress =
+      this.status() !== undefined && total
+        ? `${view?.watchedEpisodes} / ${total} épisodes vus`
+        : undefined;
+    return [view?.meta, progress].filter(Boolean).join(' · ');
+  });
 
   protected add(): void {
     const tmdbId = this.tmdbId();

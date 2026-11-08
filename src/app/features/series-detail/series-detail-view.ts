@@ -18,6 +18,8 @@ export interface SeriesDetailView {
   readonly cast: readonly CastMemberView[];
   readonly watchlist?: WatchlistBadgeStatus;
   readonly seasons: readonly Season[];
+  readonly watchedEpisodes: number;
+  readonly totalEpisodes: number;
 }
 
 export const plural = (count: number, word: string) => `${count} ${word}${count > 1 ? 's' : ''}`;
@@ -46,6 +48,8 @@ export const toSeriesDetailView = ({
   cast,
   watchlistStatus,
   seasons,
+  watchedEpisodes,
+  totalEpisodes,
 }: SeriesDetailResponse): SeriesDetailView => ({
   name,
   originalName: originalName === name ? undefined : originalName,
@@ -65,4 +69,6 @@ export const toSeriesDetailView = ({
   cast: toCastMemberViews(cast),
   watchlist: toBadgeStatus(watchlistStatus),
   seasons: seasons ?? [],
+  watchedEpisodes: watchedEpisodes ?? 0,
+  totalEpisodes: totalEpisodes ?? 0,
 });
