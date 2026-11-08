@@ -11,6 +11,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Season as SeasonResponse } from '../../api/models/season';
 import { SeasonDetailResponse } from '../../api/models/season-detail-response';
+import { WatchlistControllerService } from '../../api/services/watchlist-controller.service';
 import { SeriesControllerService } from '../../api/services/series-controller.service';
 import { Button } from '../../ui/button/button';
 import { EpisodeRow } from '../../ui/episode-row/episode-row';
@@ -26,6 +27,7 @@ interface Episode {
   airDate?: string;
   still?: string | null;
   watched: boolean;
+  locked: boolean;
 }
 
 interface Loaded {
@@ -67,6 +69,7 @@ const toLoaded = ({ overview, episodes = [] }: SeasonDetailResponse): Loaded => 
                 airDate: airDate && formatDate(airDate),
                 still: toStill(stillUrl, hasStill),
                 watched: watched ?? false,
+                locked: false,
               },
             ],
       )
@@ -114,6 +117,8 @@ const rank = (seasonNumber: number) => (seasonNumber === 0 ? Infinity : seasonNu
                     [airDate]="episode.airDate"
                     [showCheck]="watchlisted()"
                     [seen]="episode.watched"
+                    [locked]="episode.locked"
+                    (seenChange)="mark(season.number, episode.number)"
                   />
                 } @empty {
                   <p>Aucun épisode pour cette saison</p>
@@ -134,6 +139,7 @@ export class SeriesSeasons {
   readonly watchlisted = input(false);
 
   private readonly api = inject(SeriesControllerService);
+  private readonly watchlistApi = inject(WatchlistControllerService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly requested = new Set<number>();
 
@@ -175,6 +181,30 @@ export class SeriesSeasons {
   protected retry(seasonNumber: number) {
     this.setState(seasonNumber, undefined);
     this.fetch(seasonNumber);
+  }
+
+  protected mark(seasonNumber: number, episodeNumber: number) {
+    this.patch(seasonNumber, episodeNumber, { watched: true, locked: true });
+    this.watchlistApi
+      .markEpisodeWatched({ tmdbId: this.tmdbId(), seasonNumber, episodeNumber })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.patch(seasonNumber, episodeNumber, { locked: false }));
+  }
+
+  private patch(seasonNumber: number, episodeNumber: number, change: Partial<Episode>) {
+    this.episodes.update((all) => {
+      const state = all[seasonNumber];
+      if (!state || state === 'failed') return all;
+      return {
+        ...all,
+        [seasonNumber]: {
+          ...state,
+          episodes: state.episodes.map((episode) =>
+            episode.number === episodeNumber ? { ...episode, ...change } : episode,
+          ),
+        },
+      };
+    });
   }
 
   private load(seasonNumber: number) {

@@ -32,6 +32,7 @@ import { Icon } from '../icon/icon';
           type="button"
           role="checkbox"
           class="zb-check"
+          [disabled]="locked()"
           [attr.aria-checked]="seen()"
           [attr.aria-label]="(seen() ? 'Vu : ' : 'Marquer vu : ') + code()"
           (click)="seen.set(!seen())"
