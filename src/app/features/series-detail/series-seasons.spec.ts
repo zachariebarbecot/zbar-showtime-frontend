@@ -409,6 +409,34 @@ describe('SeriesSeasons', () => {
         http.expectNone(() => true);
       });
     });
+
+    describe('marking', () => {
+      const EPISODE_2 = '/watchlist/series/1396/seasons/1/episodes/2/watched';
+
+      it('should check the box at once, lock the row and send a POST', async () => {
+        const { fixture, root, http } = await renderWatchlisted();
+
+        checks(root)[1].click();
+        await fixture.whenStable();
+
+        expect(checks(root)[1].getAttribute('aria-checked')).toBe('true');
+        expect(checks(root)[1].disabled).toBe(true);
+        expect(checks(root)[0].disabled).toBe(false);
+        expect(http.expectOne(EPISODE_2).request.method).toBe('POST');
+      });
+
+      it('should unlock the row and keep the box checked once the POST succeeds', async () => {
+        const { fixture, root, http } = await renderWatchlisted();
+        checks(root)[1].click();
+        await fixture.whenStable();
+
+        http.expectOne(EPISODE_2).flush(null, { status: 201, statusText: 'Created' });
+        await fixture.whenStable();
+
+        expect(checks(root)[1].getAttribute('aria-checked')).toBe('true');
+        expect(checks(root)[1].disabled).toBe(false);
+      });
+    });
   });
 
   describe('season poster', () => {

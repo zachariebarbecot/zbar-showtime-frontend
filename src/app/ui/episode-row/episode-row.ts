@@ -52,6 +52,7 @@ export class EpisodeRow {
   readonly airDate = input<string>();
   readonly overview = input<string>();
   readonly showCheck = input(true);
+  readonly locked = input(false);
   readonly seen = model(false);
 
   protected readonly meta = computed(() =>
