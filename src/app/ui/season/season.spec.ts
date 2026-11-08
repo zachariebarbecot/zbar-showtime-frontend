@@ -19,8 +19,8 @@ class Host {
   template: `<app-season title="Saison 1" [seen]="seen" [total]="total" />`,
 })
 class ProgressHost {
-  seen?: number;
-  total?: number;
+  seen: number | null = null;
+  total: number | null = null;
 }
 
 describe('Season', () => {
@@ -90,7 +90,7 @@ describe('Season', () => {
   });
 
   describe('progress', () => {
-    async function renderProgress(seen?: number, total?: number) {
+    async function renderProgress(seen: number | null = null, total: number | null = null) {
       const fixture = TestBed.createComponent(ProgressHost);
       fixture.componentInstance.seen = seen;
       fixture.componentInstance.total = total;
