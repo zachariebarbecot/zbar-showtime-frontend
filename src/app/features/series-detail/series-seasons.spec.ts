@@ -410,6 +410,58 @@ describe('SeriesSeasons', () => {
       });
     });
 
+    describe('failure', () => {
+      const ALERT = "Impossible de mettre à jour l'épisode. Réessaie dans un instant.";
+      const EPISODE_1 = '/watchlist/series/1396/seasons/1/episodes/1/watched';
+      const EPISODE_2 = '/watchlist/series/1396/seasons/1/episodes/2/watched';
+      const alert = (root: HTMLElement) => root.querySelector('app-season [role="alert"]');
+
+      it.each([404, 400, 500])(
+        'should put a failed POST (%s) back, unlock the row and alert on the season',
+        async (status) => {
+          const { fixture, root, http } = await renderWatchlisted();
+          checks(root)[1].click();
+          await fixture.whenStable();
+
+          http.expectOne(EPISODE_2).flush(null, { status, statusText: 'Error' });
+          await fixture.whenStable();
+
+          expect(checks(root)[1].getAttribute('aria-checked')).toBe('false');
+          expect(checks(root)[1].disabled).toBe(false);
+          expect(alert(root)?.textContent).toContain(ALERT);
+        },
+      );
+
+      it.each([404, 400, 500])(
+        'should put a failed DELETE (%s) back, unlock the row and alert on the season',
+        async (status) => {
+          const { fixture, root, http } = await renderWatchlisted();
+          checks(root)[0].click();
+          await fixture.whenStable();
+
+          http.expectOne(EPISODE_1).flush(null, { status, statusText: 'Error' });
+          await fixture.whenStable();
+
+          expect(checks(root)[0].getAttribute('aria-checked')).toBe('true');
+          expect(checks(root)[0].disabled).toBe(false);
+          expect(alert(root)?.textContent).toContain(ALERT);
+        },
+      );
+
+      it('should clear the alert when a later update starts', async () => {
+        const { fixture, root, http } = await renderWatchlisted();
+        checks(root)[1].click();
+        await fixture.whenStable();
+        http.expectOne(EPISODE_2).flush(null, { status: 500, statusText: 'Error' });
+        await fixture.whenStable();
+
+        checks(root)[1].click();
+        await fixture.whenStable();
+
+        expect(alert(root)).toBeNull();
+      });
+    });
+
     describe('unmarking', () => {
       const EPISODE_1 = '/watchlist/series/1396/seasons/1/episodes/1/watched';
 
