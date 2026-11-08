@@ -786,6 +786,48 @@ describe('SeriesSeasons', () => {
       });
     });
 
+    describe('hidden button', () => {
+      const buttons = (root: HTMLElement) => root.querySelectorAll('app-season .zb-btn-seen');
+
+      it('should be absent for a season not loaded yet', async () => {
+        const { root, http } = await render(
+          [
+            { seasonNumber: 1, name: 'Saison 1' },
+            { seasonNumber: 2, name: 'Saison 2' },
+          ],
+          true,
+        );
+
+        expect(buttons(root)).toHaveLength(0);
+        http.expectOne('/series/1396/seasons/1');
+      });
+
+      it('should be absent for a season that failed to load', async () => {
+        const view = await render([{ seasonNumber: 1, name: 'Saison 1' }], true);
+        view.http
+          .expectOne('/series/1396/seasons/1')
+          .flush(null, { status: 500, statusText: 'Error' });
+        await view.fixture.whenStable();
+
+        expect(buttons(view.root)).toHaveLength(0);
+      });
+
+      it('should be absent when no episode has aired', async () => {
+        const { root } = await renderSeason([
+          { episodeNumber: 1, airDate: '2999-01-01' },
+          { episodeNumber: 2 },
+        ]);
+
+        expect(buttons(root)).toHaveLength(0);
+      });
+
+      it('should be absent when the series is not in the watchlist', async () => {
+        const { root } = await renderSeason(MIXED, false);
+
+        expect(buttons(root)).toHaveLength(0);
+      });
+    });
+
     describe('partial failure', () => {
       const TEN = Array.from({ length: 10 }, (_, index) => ({
         episodeNumber: index + 1,
